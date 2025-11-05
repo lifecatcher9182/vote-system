@@ -249,15 +249,21 @@ export default function ResultsPage({
             <div className="flex gap-3">
               <Link 
                 href={`/admin/elections/${election.id}/monitor`}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
               >
                 📊 모니터링
               </Link>
               <Link 
-                href={`/admin/elections/${election.id}`}
-                className="text-blue-600 hover:text-blue-800"
+                href="/admin/results"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
               >
-                ← 투표 상세로
+                ← 결과 목록
+              </Link>
+              <Link 
+                href="/admin/dashboard"
+                className="text-blue-600 hover:text-blue-800 px-4 py-2"
+              >
+                🏠 대시보드
               </Link>
             </div>
           </div>

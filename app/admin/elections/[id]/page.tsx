@@ -203,13 +203,21 @@ export default function ElectionDetailPage({
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">투표 상세</h1>
-            <Link 
-              href="/admin/elections"
-              className="text-blue-600 hover:text-blue-800"
-            >
-              ← 투표 목록으로
-            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">투표 관리</h1>
+            <div className="flex gap-3">
+              <Link 
+                href="/admin/elections"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              >
+                ← 투표 목록
+              </Link>
+              <Link 
+                href="/admin/dashboard"
+                className="text-blue-600 hover:text-blue-800 px-4 py-2"
+              >
+                🏠 대시보드
+              </Link>
+            </div>
           </div>
         </div>
       </header>

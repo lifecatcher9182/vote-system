@@ -141,13 +141,21 @@ export default function ElectionsPage() {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">투표 관리</h1>
-            <Link 
-              href="/admin/dashboard"
-              className="text-blue-600 hover:text-blue-800"
-            >
-              ← 대시보드로
-            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">📋 투표 목록</h1>
+            <div className="flex gap-3">
+              <Link 
+                href="/admin/results"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                📊 결과 보기
+              </Link>
+              <Link 
+                href="/admin/dashboard"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              >
+                🏠 대시보드
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -268,18 +276,34 @@ export default function ElectionsPage() {
                         {new Date(election.created_at).toLocaleDateString('ko-KR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link
-                          href={`/admin/elections/${election.id}`}
-                          className="text-blue-600 hover:text-blue-900 mr-4"
-                        >
-                          상세
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteElection(election.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          삭제
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/admin/elections/${election.id}/monitor`}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="실시간 모니터링"
+                          >
+                            📊
+                          </Link>
+                          <Link
+                            href={`/admin/elections/${election.id}/results`}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="결과 보기"
+                          >
+                            📈
+                          </Link>
+                          <Link
+                            href={`/admin/elections/${election.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            관리
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteElection(election.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            삭제
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

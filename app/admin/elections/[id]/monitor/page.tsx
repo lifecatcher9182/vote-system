@@ -209,12 +209,26 @@ export default function MonitorPage({
               <h1 className="text-3xl font-bold text-gray-900">실시간 모니터링</h1>
               <p className="text-sm text-gray-600 mt-1">{election.title}</p>
             </div>
-            <Link 
-              href={`/admin/elections/${election.id}`}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              ← 투표 상세로
-            </Link>
+            <div className="flex gap-3">
+              <Link 
+                href={`/admin/elections/${election.id}/results`}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                📈 결과 보기
+              </Link>
+              <Link 
+                href="/admin/results"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              >
+                ← 결과 목록
+              </Link>
+              <Link 
+                href="/admin/dashboard"
+                className="text-blue-600 hover:text-blue-800 px-4 py-2"
+              >
+                🏠 대시보드
+              </Link>
+            </div>
           </div>
         </div>
       </header>
