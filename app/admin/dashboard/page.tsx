@@ -218,7 +218,18 @@ export default function AdminDashboard() {
           {/* 빠른 액션 */}
           <div className="mt-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">빠른 작업</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button 
+                onClick={() => router.push('/admin/elections')}
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  📋 투표 목록
+                </h3>
+                <p className="text-sm text-gray-600">
+                  생성된 모든 투표를 확인하고 관리합니다
+                </p>
+              </button>
+
               <button 
                 onClick={() => router.push('/admin/elections/create')}
                 className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">

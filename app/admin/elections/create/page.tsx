@@ -202,7 +202,7 @@ export default function CreateElectionPage() {
       }
 
       alert('투표가 성공적으로 생성되었습니다!');
-      router.push('/admin/elections');
+      router.push('/admin/dashboard');
     } catch (error) {
       console.error('투표 생성 중 오류:', error);
       alert('투표 생성 중 오류가 발생했습니다.');
