@@ -132,7 +132,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
         {/* Primary Color */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            메인 컬러 (Primary Color)
+            배경 컬러 (Primary Color)
           </label>
           <div className="flex gap-3">
             <div className="relative">
@@ -162,7 +162,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
                 placeholder="#2563eb"
               />
               <p className="text-xs text-gray-500">
-                버튼, 링크, 헤더 등에 사용됩니다
+                페이지 배경, 헤더, 카드 배경 등에 사용됩니다
               </p>
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
         {/* Secondary Color */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            보조 컬러 (Secondary Color)
+            버튼 컬러 (Secondary Color)
           </label>
           <div className="flex gap-3">
             <div className="relative">
@@ -201,42 +201,8 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
                 placeholder="#10b981"
               />
               <p className="text-xs text-gray-500">
-                강조 배지, 통계 카드 등에 사용됩니다
+                버튼, 링크, 강조 요소 등에 사용됩니다
               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Preview */}
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm font-medium text-gray-700 mb-3">미리보기</p>
-          <div className="space-y-2">
-            <button
-              className="px-4 py-2 text-white rounded-lg font-medium"
-              style={{ backgroundColor: primaryColor }}
-            >
-              메인 버튼
-            </button>
-            <button
-              className="px-4 py-2 text-white rounded-lg font-medium ml-2"
-              style={{ backgroundColor: secondaryColor }}
-            >
-              보조 버튼
-            </button>
-            <div className="mt-2">
-              <span 
-                className="text-sm font-semibold"
-                style={{ color: primaryColor }}
-              >
-                메인 링크 색상
-              </span>
-              <span className="mx-2">|</span>
-              <span 
-                className="px-2 py-1 text-xs font-semibold rounded-full text-white"
-                style={{ backgroundColor: secondaryColor }}
-              >
-                보조 배지
-              </span>
             </div>
           </div>
         </div>
@@ -246,7 +212,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex-1 px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {saving ? '저장 중...' : '💾 색상 저장'}
           </button>
@@ -258,12 +224,12 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
           </button>
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-700">
           <p className="font-semibold mb-2">💡 적용 범위</p>
           <ul className="space-y-1 list-disc list-inside">
-            <li>투표자 페이지 및 관리자 페이지 전체</li>
-            <li>버튼, 링크, 배지, 헤더 배경</li>
-            <li>통계 카드 및 강조 요소</li>
+            <li><strong>배경 컬러</strong>: 페이지 배경, 헤더, 카드 배경</li>
+            <li><strong>버튼 컬러</strong>: 버튼, 링크, 배지, 강조 요소</li>
+            <li>투표자 페이지 및 관리자 페이지 전체 적용</li>
             <li>저장 후 모든 페이지에 즉시 적용됩니다</li>
           </ul>
         </div>

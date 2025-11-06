@@ -108,8 +108,8 @@ export default function ElectionsPage() {
   const getStatusBadge = (status: Election['status']) => {
     const badges = {
       waiting: { text: '대기', color: 'bg-gray-100 text-gray-800' },
-      registering: { text: '등록중', color: 'bg-blue-100 text-blue-800' },
-      active: { text: '진행중', color: 'bg-green-100 text-green-800' },
+      registering: { text: '등록중', color: 'bg-[var(--color-secondary)] bg-opacity-10 text-gray-700' },
+      active: { text: '진행중', color: 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' },
       closed: { text: '종료', color: 'bg-red-100 text-red-800' },
     };
 
@@ -129,7 +129,7 @@ export default function ElectionsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function ElectionsPage() {
             <div className="flex gap-3">
               <Link 
                 href="/admin/results"
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
               >
                 📊 결과 보기
               </Link>
@@ -169,7 +169,7 @@ export default function ElectionsPage() {
                 onClick={() => setFilter('all')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === 'all'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--color-secondary)] text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -179,7 +179,7 @@ export default function ElectionsPage() {
                 onClick={() => setFilter('active')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === 'active'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--color-secondary)] text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -189,7 +189,7 @@ export default function ElectionsPage() {
                 onClick={() => setFilter('closed')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   filter === 'closed'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--color-secondary)] text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -199,7 +199,7 @@ export default function ElectionsPage() {
 
             <Link
               href="/admin/elections/create"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="px-6 py-3 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors font-semibold"
             >
               + 새 투표 생성
             </Link>
@@ -215,7 +215,7 @@ export default function ElectionsPage() {
               <div className="mt-6">
                 <Link
                   href="/admin/elections/create"
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90"
                 >
                   + 투표 생성
                 </Link>
@@ -279,21 +279,21 @@ export default function ElectionsPage() {
                         <div className="flex justify-end gap-2">
                           <Link
                             href={`/admin/elections/${election.id}/monitor`}
-                            className="text-purple-600 hover:text-purple-900"
+                            className="text-[var(--color-secondary)] hover:opacity-80"
                             title="실시간 모니터링"
                           >
                             📊
                           </Link>
                           <Link
                             href={`/admin/elections/${election.id}/results`}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-[var(--color-secondary)] hover:opacity-80"
                             title="결과 보기"
                           >
                             📈
                           </Link>
                           <Link
                             href={`/admin/elections/${election.id}`}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-[var(--color-secondary)] hover:opacity-80"
                           >
                             관리
                           </Link>

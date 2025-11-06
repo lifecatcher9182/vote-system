@@ -96,7 +96,7 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <button 
                 onClick={() => router.push('/admin/elections')}
-                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-secondary)] transition-colors text-left">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   📋 투표 목록
                 </h3>
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
 
               <button 
                 onClick={() => router.push('/admin/elections/create')}
-                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-secondary)] transition-colors text-left">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   + 새 투표 생성
                 </h3>
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
 
               <button 
                 onClick={() => router.push('/admin/codes')}
-                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-secondary)] transition-colors text-left">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   + 참여코드 생성
                 </h3>
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
 
               <button 
                 onClick={() => router.push('/admin/villages')}
-                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-secondary)] transition-colors text-left">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   🏘️ 마을 관리
                 </h3>
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
 
               <button 
                 onClick={() => router.push('/admin/results')}
-                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-secondary)] transition-colors text-left">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   📊 결과 보기
                 </h3>
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
 
               <button 
                 onClick={() => router.push('/admin/settings')}
-                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-[var(--color-secondary)] transition-colors text-left">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   ⚙️ 시스템 설정
                 </h3>

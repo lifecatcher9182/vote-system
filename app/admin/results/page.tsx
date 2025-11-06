@@ -143,8 +143,8 @@ export default function AllResultsPage() {
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { text: string; color: string }> = {
       waiting: { text: '대기', color: 'bg-gray-100 text-gray-800' },
-      registering: { text: '등록중', color: 'bg-blue-100 text-blue-800' },
-      active: { text: '진행중', color: 'bg-green-100 text-green-800' },
+      registering: { text: '등록중', color: 'bg-[var(--color-secondary)] bg-opacity-10 text-gray-700' },
+      active: { text: '진행중', color: 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' },
       closed: { text: '종료', color: 'bg-red-100 text-red-800' },
     };
 
@@ -160,7 +160,7 @@ export default function AllResultsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -175,7 +175,7 @@ export default function AllResultsPage() {
             <h1 className="text-3xl font-bold text-gray-900">📊 전체 투표 결과</h1>
             <Link 
               href="/admin/dashboard"
-              className="text-blue-600 hover:text-blue-800"
+              className="text-[var(--color-secondary)] hover:opacity-80"
             >
               ← 대시보드로
             </Link>
@@ -191,7 +191,7 @@ export default function AllResultsPage() {
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'all'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[var(--color-secondary)] text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -201,7 +201,7 @@ export default function AllResultsPage() {
               onClick={() => setFilter('active')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === 'active'
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-[var(--color-primary)] text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -226,7 +226,7 @@ export default function AllResultsPage() {
               <p className="text-gray-600">투표가 없습니다.</p>
               <Link
                 href="/admin/elections/create"
-                className="mt-4 inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="mt-4 inline-block px-6 py-3 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90"
               >
                 + 투표 생성하기
               </Link>
@@ -272,23 +272,23 @@ export default function AllResultsPage() {
                             </div>
                           </div>
 
-                          <div className="bg-green-50 rounded-lg p-3">
+                          <div className="bg-gray-50 rounded-lg p-3">
                             <div className="text-xs text-gray-600 mb-1">투표 완료</div>
-                            <div className="text-2xl font-bold text-green-600">
+                            <div className="text-2xl font-bold text-[var(--color-primary)]">
                               {electionStats.usedCodes}
                             </div>
                           </div>
 
-                          <div className="bg-blue-50 rounded-lg p-3">
+                          <div className="bg-gray-50 rounded-lg p-3">
                             <div className="text-xs text-gray-600 mb-1">투표율</div>
-                            <div className="text-2xl font-bold text-blue-600">
+                            <div className="text-2xl font-bold text-[var(--color-secondary)]">
                               {electionStats.participationRate.toFixed(1)}%
                             </div>
                           </div>
 
-                          <div className="bg-purple-50 rounded-lg p-3">
+                          <div className="bg-gray-50 rounded-lg p-3">
                             <div className="text-xs text-gray-600 mb-1">총 투표</div>
-                            <div className="text-2xl font-bold text-purple-600">
+                            <div className="text-2xl font-bold text-[var(--color-secondary)]">
                               {electionStats.totalVotes}
                             </div>
                           </div>
@@ -309,13 +309,13 @@ export default function AllResultsPage() {
                       <div className="flex gap-2">
                         <Link
                           href={`/admin/elections/${election.id}/monitor`}
-                          className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-center text-sm font-medium"
+                          className="flex-1 px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-center text-sm font-medium"
                         >
                           📊 실시간 모니터링
                         </Link>
                         <Link
                           href={`/admin/elections/${election.id}/results`}
-                          className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-center text-sm font-medium"
+                          className="flex-1 px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-center text-sm font-medium"
                         >
                           📈 상세 결과
                         </Link>

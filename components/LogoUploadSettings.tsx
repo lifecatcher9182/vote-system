@@ -231,8 +231,8 @@ export default function LogoUploadSettings() {
               file:mr-4 file:py-2 file:px-4
               file:rounded-lg file:border-0
               file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100
+              file:bg-gray-50 file:text-gray-600
+              hover:file:bg-[var(--color-secondary)] bg-opacity-10
               cursor-pointer"
           />
           <p className="mt-1 text-xs text-gray-500">
@@ -245,7 +245,7 @@ export default function LogoUploadSettings() {
           <button
             onClick={handleUpload}
             disabled={uploading || !selectedFile}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex-1 px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {uploading ? '업로드 중...' : '📤 업로드'}
           </button>
@@ -259,7 +259,7 @@ export default function LogoUploadSettings() {
           )}
         </div>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-700">
           <p className="font-semibold mb-2">💡 로고 표시 위치</p>
           <ul className="space-y-1 list-disc list-inside">
             <li>투표자 메인 페이지 헤더</li>

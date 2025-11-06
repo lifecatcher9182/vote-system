@@ -112,7 +112,7 @@ export default function VillagesPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -127,7 +127,7 @@ export default function VillagesPage() {
             <h1 className="text-3xl font-bold text-gray-900">마을 관리</h1>
             <Link 
               href="/admin/dashboard"
-              className="text-blue-600 hover:text-blue-800"
+              className="text-[var(--color-secondary)] hover:opacity-80"
             >
               ← 대시보드로
             </Link>
@@ -140,7 +140,7 @@ export default function VillagesPage() {
           <div className="mb-6">
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="px-6 py-3 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors font-semibold"
             >
               + 새 마을 추가
             </button>
@@ -247,7 +247,7 @@ export default function VillagesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors"
                 >
                   추가
                 </button>

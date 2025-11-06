@@ -55,7 +55,7 @@ export default function VotePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, var(--color-primary), #f3f4f6)' }}>
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -92,7 +92,7 @@ export default function VotePage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full bg-[var(--color-secondary)] text-white py-3 rounded-lg font-semibold hover:opacity-90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? '확인 중...' : '참여하기'}
           </button>
@@ -107,8 +107,8 @@ export default function VotePage() {
           </Link>
         </div>
 
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-700">
             💡 <strong>참여코드가 없으신가요?</strong><br />
             관리자에게 문의하여 참여코드를 받으세요.
           </p>

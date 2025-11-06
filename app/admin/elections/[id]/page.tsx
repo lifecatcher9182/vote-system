@@ -175,8 +175,8 @@ export default function ElectionDetailPage({
   const getStatusBadge = (status: Election['status']) => {
     const badges = {
       waiting: { text: '대기', color: 'bg-gray-100 text-gray-800' },
-      registering: { text: '등록중', color: 'bg-blue-100 text-blue-800' },
-      active: { text: '진행중', color: 'bg-green-100 text-green-800' },
+      registering: { text: '등록중', color: 'bg-[var(--color-secondary)] bg-opacity-10 text-gray-700' },
+      active: { text: '진행중', color: 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' },
       closed: { text: '종료', color: 'bg-red-100 text-red-800' },
     };
 
@@ -192,7 +192,7 @@ export default function ElectionDetailPage({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -214,7 +214,7 @@ export default function ElectionDetailPage({
               </Link>
               <Link 
                 href="/admin/dashboard"
-                className="text-blue-600 hover:text-blue-800 px-4 py-2"
+                className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
               >
                 🏠 대시보드
               </Link>
@@ -279,14 +279,14 @@ export default function ElectionDetailPage({
                   <h2 className="text-xl font-bold">후보자 목록 ({candidates.length}명)</h2>
                   <button
                     onClick={() => setShowAddCandidate(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 text-sm"
                   >
                     + 후보자 추가
                   </button>
                 </div>
 
                 {showAddCandidate && (
-                  <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                     <div className="flex gap-2">
                       <input
                         type="text"
@@ -302,7 +302,7 @@ export default function ElectionDetailPage({
                       />
                       <button
                         onClick={handleAddCandidate}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90"
                       >
                         추가
                       </button>
@@ -383,14 +383,14 @@ export default function ElectionDetailPage({
                   <button
                     onClick={() => handleStatusChange('registering')}
                     disabled={election.status === 'registering'}
-                    className="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-4 py-2 bg-[var(--color-secondary)] bg-opacity-10 text-gray-600 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     등록중
                   </button>
                   <button
                     onClick={() => handleStatusChange('active')}
                     disabled={election.status === 'active'}
-                    className="w-full px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-4 py-2 bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)] rounded-lg hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     진행중
                   </button>
@@ -403,7 +403,7 @@ export default function ElectionDetailPage({
                   </button>
                 </div>
 
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-700">
                   <p className="font-semibold mb-1">상태 설명</p>
                   <ul className="space-y-1 list-disc list-inside">
                     <li><strong>대기</strong>: 투표 준비 중</li>
@@ -420,19 +420,19 @@ export default function ElectionDetailPage({
                 <div className="space-y-2">
                   <Link
                     href={`/admin/elections/${election.id}/monitor`}
-                    className="block w-full px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 text-center text-sm font-medium"
+                    className="block w-full px-4 py-2 bg-[var(--color-secondary)] bg-opacity-10 text-[var(--color-secondary)] rounded-lg hover:bg-purple-200 text-center text-sm font-medium"
                   >
                     📊 실시간 모니터링
                   </Link>
                   <Link
                     href={`/admin/elections/${election.id}/results`}
-                    className="block w-full px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-center text-sm font-medium"
+                    className="block w-full px-4 py-2 bg-[var(--color-secondary)] bg-opacity-10 text-[var(--color-secondary)] rounded-lg hover:bg-indigo-200 text-center text-sm font-medium"
                   >
                     📈 결과 보기
                   </Link>
                   <Link
                     href="/admin/codes"
-                    className="block w-full px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-center text-sm font-medium"
+                    className="block w-full px-4 py-2 bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)] rounded-lg hover:bg-green-200 text-center text-sm font-medium"
                   >
                     🎟️ 참여코드 관리
                   </Link>

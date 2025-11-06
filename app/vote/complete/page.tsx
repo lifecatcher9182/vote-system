@@ -8,12 +8,12 @@ export default function VoteCompletePage() {
   const electionTitle = searchParams.get('election') || '';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, var(--color-primary), #f3f4f6)' }}>
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         {/* 성공 아이콘 */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-            <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-[var(--color-primary)] bg-opacity-10 rounded-full mb-4">
+            <svg className="w-12 h-12 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -27,7 +27,7 @@ export default function VoteCompletePage() {
 
         {/* 투표 정보 */}
         {electionTitle && (
-          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <p className="text-sm text-gray-600 mb-1">투표한 선거</p>
             <p className="font-semibold text-gray-900">{electionTitle}</p>
           </div>
@@ -38,11 +38,11 @@ export default function VoteCompletePage() {
           <h2 className="font-semibold text-gray-900 mb-2">안내사항</h2>
           <ul className="text-sm text-gray-700 space-y-2">
             <li className="flex items-start">
-              <span className="text-green-600 mr-2">✓</span>
+              <span className="text-[var(--color-primary)] mr-2">✓</span>
               <span>투표 결과는 투표 종료 후 확인할 수 있습니다.</span>
             </li>
             <li className="flex items-start">
-              <span className="text-green-600 mr-2">✓</span>
+              <span className="text-[var(--color-primary)] mr-2">✓</span>
               <span>참여해 주셔서 감사합니다.</span>
             </li>
             <li className="flex items-start">
@@ -55,7 +55,7 @@ export default function VoteCompletePage() {
         {/* 홈으로 버튼 */}
         <Link
           href="/"
-          className="block w-full bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          className="block w-full bg-[var(--color-secondary)] text-white text-center py-3 rounded-lg font-semibold hover:opacity-90 transition-colors"
         >
           홈으로 돌아가기
         </Link>

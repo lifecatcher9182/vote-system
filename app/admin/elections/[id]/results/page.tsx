@@ -227,7 +227,7 @@ export default function ResultsPage({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -249,7 +249,7 @@ export default function ResultsPage({
             <div className="flex gap-3">
               <Link 
                 href={`/admin/elections/${election.id}/monitor`}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
               >
                 📊 모니터링
               </Link>
@@ -261,7 +261,7 @@ export default function ResultsPage({
               </Link>
               <Link 
                 href="/admin/dashboard"
-                className="text-blue-600 hover:text-blue-800 px-4 py-2"
+                className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
               >
                 🏠 대시보드
               </Link>
@@ -306,8 +306,8 @@ export default function ResultsPage({
                 <div className="text-sm text-gray-600">상태</div>
                 <div className={`font-semibold ${
                   election.status === 'closed' ? 'text-gray-600' :
-                  election.status === 'active' ? 'text-green-600' :
-                  'text-blue-600'
+                  election.status === 'active' ? 'text-[var(--color-primary)]' :
+                  'text-[var(--color-secondary)]'
                 }`}>
                   {election.status === 'closed' ? '종료' :
                    election.status === 'active' ? '진행중' :
@@ -326,7 +326,7 @@ export default function ResultsPage({
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">투표 완료</div>
-              <div className="text-3xl font-bold text-green-600">{stats.usedCodes}</div>
+              <div className="text-3xl font-bold text-[var(--color-primary)]">{stats.usedCodes}</div>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
@@ -336,19 +336,19 @@ export default function ResultsPage({
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">투표율</div>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-[var(--color-secondary)]">
                 {stats.participationRate.toFixed(1)}%
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">투표자 수</div>
-              <div className="text-3xl font-bold text-purple-600">{stats.uniqueVoters}</div>
+              <div className="text-3xl font-bold text-[var(--color-secondary)]">{stats.uniqueVoters}</div>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">총 투표 수</div>
-              <div className="text-3xl font-bold text-indigo-600">{stats.totalVotes}</div>
+              <div className="text-3xl font-bold text-[var(--color-secondary)]">{stats.totalVotes}</div>
             </div>
           </div>
 
@@ -366,7 +366,7 @@ export default function ResultsPage({
                         index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
                         index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
                         index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
-                        'bg-gradient-to-br from-blue-300 to-blue-400 text-blue-900'
+                        'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
                       }`}>
                         {index + 1}
                       </div>
@@ -464,7 +464,7 @@ export default function ResultsPage({
                     <div className="flex justify-between items-center mb-2">
                       <div className="font-semibold text-gray-900">{villageStat.villageName}</div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-blue-600">
+                        <div className="text-lg font-bold text-[var(--color-secondary)]">
                           {villageStat.participationRate.toFixed(1)}%
                         </div>
                         <div className="text-xs text-gray-500">

@@ -73,7 +73,7 @@ export default function MainVoteQRCode() {
             />
             <button
               onClick={copyUrl}
-              className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap"
+              className="px-3 py-2 bg-[var(--color-secondary)] text-white rounded hover:opacity-90 text-sm whitespace-nowrap"
             >
               복사
             </button>
@@ -82,12 +82,12 @@ export default function MainVoteQRCode() {
 
         <button
           onClick={downloadPNG}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium"
+          className="w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 text-sm font-medium"
         >
           💾 PNG로 다운로드
         </button>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 text-left">
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-700 text-left">
           <p className="font-semibold mb-2">💡 활용 방법</p>
           <ul className="space-y-1 list-disc list-inside">
             <li>모든 투표에 공통으로 사용 가능</li>

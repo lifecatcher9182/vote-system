@@ -214,7 +214,7 @@ export default function CreateElectionPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -229,7 +229,7 @@ export default function CreateElectionPage() {
             <h1 className="text-3xl font-bold text-gray-900">투표 생성</h1>
             <Link 
               href="/admin/elections"
-              className="text-blue-600 hover:text-blue-800"
+              className="text-[var(--color-secondary)] hover:opacity-80"
             >
               ← 투표 목록으로
             </Link>
@@ -266,7 +266,7 @@ export default function CreateElectionPage() {
                   onClick={() => setElectionType('delegate')}
                   className={`p-4 border-2 rounded-lg font-medium transition-all ${
                     electionType === 'delegate'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      ? 'border-[var(--color-secondary)] bg-gray-50 text-gray-600'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -277,7 +277,7 @@ export default function CreateElectionPage() {
                   onClick={() => setElectionType('officer')}
                   className={`p-4 border-2 rounded-lg font-medium transition-all ${
                     electionType === 'officer'
-                      ? 'border-blue-600 bg-blue-50 text-blue-700'
+                      ? 'border-[var(--color-secondary)] bg-gray-50 text-gray-600'
                       : 'border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -369,7 +369,7 @@ export default function CreateElectionPage() {
                 <button
                   type="button"
                   onClick={addCandidate}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-3 py-1 text-sm bg-[var(--color-secondary)] text-white rounded hover:opacity-90"
                 >
                   + 후보자 추가
                 </button>
@@ -406,7 +406,7 @@ export default function CreateElectionPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {submitting ? '생성 중...' : '투표 생성'}
               </button>
@@ -420,9 +420,9 @@ export default function CreateElectionPage() {
           </form>
 
           {/* 도움말 */}
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">💡 투표 생성 안내</h3>
-            <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+          <div className="mt-6 bg-gray-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-2">💡 투표 생성 안내</h3>
+            <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
               <li><strong>총대 선출</strong>: 마을별 대표를 선출하는 투표입니다.</li>
               <li><strong>임원 선출</strong>: 회장, 부회장 등 특정 직책을 선출하는 투표입니다.</li>
               <li><strong>최대 선택 수</strong>: 투표자가 선택할 수 있는 후보자의 최대 수입니다.</li>

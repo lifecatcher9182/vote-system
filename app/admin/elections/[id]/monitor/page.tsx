@@ -190,7 +190,7 @@ export default function MonitorPage({
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function MonitorPage({
             <div className="flex gap-3">
               <Link 
                 href={`/admin/elections/${election.id}/results`}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
               >
                 📈 결과 보기
               </Link>
@@ -224,7 +224,7 @@ export default function MonitorPage({
               </Link>
               <Link 
                 href="/admin/dashboard"
-                className="text-blue-600 hover:text-blue-800 px-4 py-2"
+                className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
               >
                 🏠 대시보드
               </Link>
@@ -242,7 +242,7 @@ export default function MonitorPage({
                 <button
                   onClick={() => setAutoRefresh(!autoRefresh)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    autoRefresh ? 'bg-blue-600' : 'bg-gray-300'
+                    autoRefresh ? 'bg-[var(--color-secondary)]' : 'bg-gray-300'
                   }`}
                 >
                   <span
@@ -257,7 +257,7 @@ export default function MonitorPage({
               </div>
               <button
                 onClick={refreshData}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
               >
                 🔄 지금 새로고침
               </button>
@@ -276,7 +276,7 @@ export default function MonitorPage({
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">투표 완료</div>
-              <div className="text-3xl font-bold text-green-600">{stats.usedCodes}</div>
+              <div className="text-3xl font-bold text-[var(--color-primary)]">{stats.usedCodes}</div>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
@@ -286,14 +286,14 @@ export default function MonitorPage({
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">투표율</div>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-[var(--color-secondary)]">
                 {stats.participationRate.toFixed(1)}%
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
               <div className="text-sm text-gray-600 mb-1">총 투표 수</div>
-              <div className="text-3xl font-bold text-purple-600">{stats.totalVotes}</div>
+              <div className="text-3xl font-bold text-[var(--color-secondary)]">{stats.totalVotes}</div>
             </div>
           </div>
 
@@ -332,7 +332,7 @@ export default function MonitorPage({
                           <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
                             index === 0 ? 'bg-yellow-100 text-yellow-700' :
                             index === 1 ? 'bg-gray-200 text-gray-700' :
-                            index === 2 ? 'bg-orange-100 text-orange-700' :
+                            index === 2 ? 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' :
                             'bg-gray-100 text-gray-600'
                           }`}>
                             {index + 1}

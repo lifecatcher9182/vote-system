@@ -220,9 +220,9 @@ export default function VoteWithCodePage({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(to bottom right, var(--color-primary), #f3f4f6)' }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -230,7 +230,7 @@ export default function VoteWithCodePage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className="min-h-screen py-8" style={{ background: 'linear-gradient(to bottom right, var(--color-primary), #f3f4f6)' }}>
       <div className="max-w-4xl mx-auto px-4">
         {/* 헤더 */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
@@ -262,7 +262,7 @@ export default function VoteWithCodePage({
                   <button
                     key={election.id}
                     onClick={() => handleElectionSelect(election)}
-                    className="w-full p-4 bg-gray-50 hover:bg-blue-50 border-2 border-gray-200 hover:border-blue-500 rounded-lg transition-all text-left"
+                    className="w-full p-4 bg-gray-50 hover:bg-gray-50 border-2 border-gray-200 hover:border-[var(--color-secondary)] rounded-lg transition-all text-left"
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -277,7 +277,7 @@ export default function VoteWithCodePage({
                           {election.round}차 • 최대 {election.max_selections}명 선택
                         </p>
                       </div>
-                      <span className="text-blue-600 text-2xl">→</span>
+                      <span className="text-[var(--color-secondary)] text-2xl">→</span>
                     </div>
                   </button>
                 ))}
@@ -294,7 +294,7 @@ export default function VoteWithCodePage({
                     setSelectedElection(null);
                     setSelectedCandidates([]);
                   }}
-                  className="text-sm text-blue-600 hover:text-blue-800 mb-4"
+                  className="text-sm text-[var(--color-secondary)] hover:opacity-80 mb-4"
                 >
                   ← 투표 다시 선택
                 </button>
@@ -305,8 +305,8 @@ export default function VoteWithCodePage({
                     : `임원 선출 - ${selectedElection.position}`
                   }
                 </p>
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700">
                     💡 최대 <strong>{selectedElection.max_selections}명</strong>까지 선택할 수 있습니다.
                     {selectedCandidates.length > 0 && (
                       <span className="ml-2">
@@ -329,14 +329,14 @@ export default function VoteWithCodePage({
                       onClick={() => handleCandidateToggle(candidate.id)}
                       className={`w-full p-4 border-2 rounded-lg transition-all text-left ${
                         selectedCandidates.includes(candidate.id)
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-[var(--color-secondary)] bg-gray-50'
                           : 'border-gray-200 hover:border-gray-300 bg-white'
                       }`}
                     >
                       <div className="flex items-center gap-4">
                         <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                           selectedCandidates.includes(candidate.id)
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-[var(--color-secondary)] text-white'
                             : 'bg-gray-200 text-gray-600'
                         }`}>
                           {selectedCandidates.includes(candidate.id) ? '✓' : index + 1}
@@ -360,7 +360,7 @@ export default function VoteWithCodePage({
                     const candidate = candidates.find(c => c.id === candidateId);
                     return (
                       <div key={candidateId} className="flex items-center gap-2">
-                        <span className="text-blue-600">✓</span>
+                        <span className="text-[var(--color-secondary)]">✓</span>
                         <span className="font-medium">{candidate?.name}</span>
                       </div>
                     );
@@ -369,7 +369,7 @@ export default function VoteWithCodePage({
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="w-full bg-[var(--color-secondary)] text-white py-4 rounded-lg font-bold hover:opacity-90 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {submitting ? '투표 제출 중...' : '투표 제출하기'}
                 </button>

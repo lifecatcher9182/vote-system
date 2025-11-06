@@ -208,7 +208,7 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">로딩 중...</p>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold text-gray-900">⚙️ 시스템 설정</h1>
             <Link 
               href="/admin/dashboard"
-              className="text-blue-600 hover:text-blue-800 px-4 py-2"
+              className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
             >
               🏠 대시보드
             </Link>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveSystemName}
                     disabled={saving}
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? '저장 중...' : '💾 저장'}
                   </button>
@@ -280,7 +280,7 @@ export default function SettingsPage() {
                 </h2>
 
                 {/* 관리자 추가 폼 */}
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     새 관리자 추가
                   </label>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                     />
                     <button
                       onClick={handleAddAdmin}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 whitespace-nowrap"
+                      className="px-6 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 whitespace-nowrap"
                     >
                       추가
                     </button>
@@ -321,19 +321,19 @@ export default function SettingsPage() {
                         key={admin.id}
                         className={`flex items-center justify-between p-4 rounded-lg ${
                           admin.email === currentUserEmail
-                            ? 'bg-green-50 border-2 border-green-200'
+                            ? 'bg-gray-50 border-2 border-green-200'
                             : 'bg-gray-50'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                          <div className="w-8 h-8 bg-[var(--color-secondary)] rounded-full flex items-center justify-center text-white font-bold">
                             {admin.email.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{admin.email}</span>
                               {admin.email === currentUserEmail && (
-                                <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full">
+                                <span className="px-2 py-0.5 bg-[var(--color-primary)] text-white text-xs rounded-full">
                                   본인
                                 </span>
                               )}

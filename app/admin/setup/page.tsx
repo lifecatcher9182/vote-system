@@ -69,7 +69,7 @@ export default function SetupCheckPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
           <p className="mt-4 text-gray-600">설정 상태 확인 중...</p>
         </div>
       </div>
@@ -86,12 +86,12 @@ export default function SetupCheckPage() {
 
           <div className="space-y-6">
             {/* 1. 데이터베이스 연결 */}
-            <div className="border-l-4 border-green-500 bg-green-50 p-4">
+            <div className="border-l-4 border-[var(--color-primary)] bg-gray-50 p-4">
               <div className="flex items-center">
                 <span className="text-2xl mr-3">✅</span>
                 <div>
                   <h3 className="font-semibold text-green-900">Supabase 연결 완료</h3>
-                  <p className="text-sm text-green-700">
+                  <p className="text-sm text-[var(--color-primary)]">
                     URL: {process.env.NEXT_PUBLIC_SUPABASE_URL}
                   </p>
                 </div>
@@ -100,12 +100,12 @@ export default function SetupCheckPage() {
 
             {/* 2. 테이블 생성 */}
             {status.tablesExist ? (
-              <div className="border-l-4 border-green-500 bg-green-50 p-4">
+              <div className="border-l-4 border-[var(--color-primary)] bg-gray-50 p-4">
                 <div className="flex items-center">
                   <span className="text-2xl mr-3">✅</span>
                   <div>
                     <h3 className="font-semibold text-green-900">데이터베이스 테이블 생성 완료</h3>
-                    <p className="text-sm text-green-700">
+                    <p className="text-sm text-[var(--color-primary)]">
                       등록된 관리자 이메일: {status.adminEmailsCount}개
                     </p>
                   </div>
@@ -128,7 +128,7 @@ export default function SetupCheckPage() {
                             href={`https://supabase.com/dashboard/project/${process.env.NEXT_PUBLIC_SUPABASE_URL?.split('.')[0].replace('https://', '')}/sql`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="text-[var(--color-secondary)] hover:underline"
                           >
                             Supabase SQL Editor 열기
                           </a>
@@ -145,12 +145,12 @@ export default function SetupCheckPage() {
 
             {/* 3. 관리자 이메일 등록 */}
             {status.adminEmailsCount > 0 ? (
-              <div className="border-l-4 border-green-500 bg-green-50 p-4">
+              <div className="border-l-4 border-[var(--color-primary)] bg-gray-50 p-4">
                 <div className="flex items-center">
                   <span className="text-2xl mr-3">✅</span>
                   <div>
                     <h3 className="font-semibold text-green-900">관리자 이메일 등록 완료</h3>
-                    <p className="text-sm text-green-700">
+                    <p className="text-sm text-[var(--color-primary)]">
                       {status.adminEmailsCount}개의 관리자 계정이 등록되어 있습니다.
                     </p>
                   </div>
@@ -178,21 +178,21 @@ VALUES ('your-email@gmail.com');`}
             ) : null}
 
             {/* 4. Google OAuth 설정 */}
-            <div className="border-l-4 border-blue-500 bg-blue-50 p-4">
+            <div className="border-l-4 border-[var(--color-secondary)] bg-gray-50 p-4">
               <div className="flex items-center">
                 <span className="text-2xl mr-3">ℹ️</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 mb-2">Google OAuth 설정 필요</h3>
-                  <p className="text-sm text-blue-700 mb-3">
+                  <h3 className="font-semibold text-gray-800 mb-2">Google OAuth 설정 필요</h3>
+                  <p className="text-sm text-gray-600 mb-3">
                     다음 단계를 완료하세요:
                   </p>
-                  <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
                     <li>
                       <a 
                         href="https://console.cloud.google.com/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline font-semibold"
+                        className="text-[var(--color-secondary)] hover:underline font-semibold"
                       >
                         Google Cloud Console
                       </a>에서 프로젝트 생성
@@ -209,7 +209,7 @@ VALUES ('your-email@gmail.com');`}
                         href="https://supabase.com/dashboard/project/gmniknsurottqhdduyhu/auth/providers"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline font-semibold"
+                        className="text-[var(--color-secondary)] hover:underline font-semibold"
                       >
                         Supabase Authentication Providers
                       </a>에서 Google 활성화
@@ -220,7 +220,7 @@ VALUES ('your-email@gmail.com');`}
                     <a 
                       href="/GOOGLE_LOGIN_SETUP.md"
                       target="_blank"
-                      className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      className="inline-block px-4 py-2 bg-[var(--color-secondary)] text-white rounded hover:opacity-90 text-sm"
                     >
                       📖 자세한 설정 가이드 보기
                     </a>
@@ -249,7 +249,7 @@ VALUES ('your-email@gmail.com');`}
                 setLoading(true);
                 checkSetup();
               }}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors"
             >
               🔄 상태 다시 확인
             </button>
@@ -257,7 +257,7 @@ VALUES ('your-email@gmail.com');`}
             {status.tablesExist && status.adminEmailsCount > 0 && (
               <Link
                 href="/admin"
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-6 py-3 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 transition-colors"
               >
                 ✅ 관리자 로그인 테스트
               </Link>
