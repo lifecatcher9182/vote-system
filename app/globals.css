@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* 테마 색상 변수 (ThemeProvider에서 동적으로 업데이트됨) */
+  --color-primary: #2563eb;
+  --color-secondary: #10b981;
 }
 
 @theme inline {

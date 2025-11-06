@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import { use } from 'react';
+import QRCodeSection from '@/components/QRCodeSection';
 
 interface Election {
   id: string;
@@ -355,6 +356,12 @@ export default function ElectionDetailPage({
 
             {/* 상태 관리 */}
             <div className="space-y-6">
+              {/* QR 코드 섹션 */}
+              <QRCodeSection 
+                electionId={election.id}
+                title={election.title}
+              />
+
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-bold mb-4">상태 관리</h2>
                 

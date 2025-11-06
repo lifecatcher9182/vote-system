@@ -273,6 +273,17 @@ export default function AdminDashboard() {
                   완료된 투표의 결과를 확인합니다
                 </p>
               </button>
+
+              <button 
+                onClick={() => router.push('/admin/settings')}
+                className="p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors text-left">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  ⚙️ 시스템 설정
+                </h3>
+                <p className="text-sm text-gray-600">
+                  관리자 및 시스템 설정을 관리합니다
+                </p>
+              </button>
             </div>
           </div>
         </div>

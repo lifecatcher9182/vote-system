@@ -13,7 +13,9 @@ CREATE TABLE admin_emails (
 CREATE TABLE system_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   logo_url TEXT,
-  primary_color TEXT DEFAULT '#3B82F6',
+  primary_color TEXT DEFAULT '#2563eb',
+  secondary_color TEXT DEFAULT '#10b981',
+  system_name TEXT DEFAULT '청년국 투표 시스템',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -123,11 +125,43 @@ CREATE POLICY "Anyone can insert votes" ON votes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public read votes" ON votes FOR SELECT USING (true);
 
 -- ============================================
+-- Storage 버킷 생성 및 정책
+-- ============================================
+
+-- 로고 이미지를 저장할 버킷 생성
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('logos', 'logos', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS 정책
+-- 모든 사용자가 로고 읽기 가능 (public read)
+CREATE POLICY "Public read logos" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'logos');
+
+-- 인증된 사용자만 로고 업로드 가능
+CREATE POLICY "Authenticated upload logos" 
+ON storage.objects FOR INSERT 
+WITH CHECK (bucket_id = 'logos' AND auth.role() = 'authenticated');
+
+-- 인증된 사용자만 로고 업데이트 가능
+CREATE POLICY "Authenticated update logos" 
+ON storage.objects FOR UPDATE 
+USING (bucket_id = 'logos' AND auth.role() = 'authenticated');
+
+-- 인증된 사용자만 로고 삭제 가능
+CREATE POLICY "Authenticated delete logos" 
+ON storage.objects FOR DELETE 
+USING (bucket_id = 'logos' AND auth.role() = 'authenticated');
+
+-- ============================================
 -- 초기 데이터 삽입
 -- ============================================
 
 -- 시스템 설정 초기값
-INSERT INTO system_config (primary_color) VALUES ('#3B82F6');
+INSERT INTO system_config (primary_color, secondary_color, system_name) 
+VALUES ('#2563eb', '#10b981', '청년국 투표 시스템')
+ON CONFLICT (id) DO NOTHING;
 
 -- 예시 관리자 이메일 (본인의 Google 이메일로 변경하세요!)
 -- INSERT INTO admin_emails (email) VALUES ('your-email@gmail.com');
