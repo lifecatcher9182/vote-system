@@ -61,6 +61,35 @@ export type Database = {
           created_at?: string
         }
       }
+      election_groups: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          group_type: 'delegate' | 'officer'
+          status: 'waiting' | 'active' | 'closed'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          group_type: 'delegate' | 'officer'
+          status?: 'waiting' | 'active' | 'closed'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          group_type?: 'delegate' | 'officer'
+          status?: 'waiting' | 'active' | 'closed'
+          created_at?: string
+          updated_at?: string
+        }
+      }
       elections: {
         Row: {
           id: string
@@ -74,6 +103,7 @@ export type Database = {
           winning_criteria: WinningCriteria
           series_id: string | null
           series_title: string | null
+          group_id: string | null
           created_at: string
           updated_at: string
         }
@@ -89,6 +119,7 @@ export type Database = {
           winning_criteria?: WinningCriteria
           series_id?: string | null
           series_title?: string | null
+          group_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -104,6 +135,7 @@ export type Database = {
           winning_criteria?: WinningCriteria
           series_id?: string | null
           series_title?: string | null
+          group_id?: string | null
           created_at?: string
           updated_at?: string
         }
