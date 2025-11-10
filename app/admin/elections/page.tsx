@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
+import SystemLogo from '@/components/SystemLogo';
 
 interface Election {
   id: string;
@@ -150,6 +151,11 @@ export default function ElectionsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      {/* Logo - 좌측 상단 고정 */}
+      <div className="fixed top-6 left-6 z-50">
+        <SystemLogo size="sm" linkToHome />
+      </div>
+
       {/* Header - Glass Effect */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',

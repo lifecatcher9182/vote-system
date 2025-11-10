@@ -71,6 +71,9 @@ export type Database = {
           max_selections: number
           round: number
           status: 'waiting' | 'registering' | 'active' | 'closed'
+          winning_criteria: WinningCriteria
+          series_id: string | null
+          series_title: string | null
           created_at: string
           updated_at: string
         }
@@ -83,6 +86,9 @@ export type Database = {
           max_selections: number
           round?: number
           status?: 'waiting' | 'registering' | 'active' | 'closed'
+          winning_criteria?: WinningCriteria
+          series_id?: string | null
+          series_title?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -95,6 +101,9 @@ export type Database = {
           max_selections?: number
           round?: number
           status?: 'waiting' | 'registering' | 'active' | 'closed'
+          winning_criteria?: WinningCriteria
+          series_id?: string | null
+          series_title?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -132,6 +141,8 @@ export type Database = {
           is_used: boolean
           voter_name: string | null
           used_at: string | null
+          first_login_at: string | null
+          last_login_at: string | null
           created_at: string
         }
         Insert: {
@@ -143,6 +154,8 @@ export type Database = {
           is_used?: boolean
           voter_name?: string | null
           used_at?: string | null
+          first_login_at?: string | null
+          last_login_at?: string | null
           created_at?: string
         }
         Update: {
@@ -154,6 +167,8 @@ export type Database = {
           is_used?: boolean
           voter_name?: string | null
           used_at?: string | null
+          first_login_at?: string | null
+          last_login_at?: string | null
           created_at?: string
         }
       }
@@ -183,3 +198,13 @@ export type Database = {
     }
   }
 }
+
+// 당선 기준 타입
+export type WinningCriteria = 
+  | { type: 'plurality' } // 최다 득표
+  | { type: 'absolute_majority' } // 절대 과반수 (50% 초과)
+  | { 
+      type: 'percentage'
+      percentage: number // 66.67 (2/3), 50 (과반) 등
+      base: 'attended' | 'issued' // 참석자 기준 or 발급 코드 기준
+    };

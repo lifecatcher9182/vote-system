@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
+import { WinningCriteria } from '@/lib/database.types';
 import Link from 'next/link';
 
 interface Election {
@@ -15,6 +16,9 @@ interface Election {
   max_selections: number;
   round: number;
   status: string;
+  winning_criteria: WinningCriteria;
+  series_id: string | null;
+  series_title: string | null;
   created_at: string;
   villages?: {
     name: string;
@@ -29,7 +33,8 @@ interface Candidate {
 
 interface VoteStats {
   totalCodes: number;
-  usedCodes: number;
+  attendedCodes: number; // 참석자 (로그인한 사람)
+  usedCodes: number; // deprecated
   unusedCodes: number;
   participationRate: number;
   totalVotes: number;
@@ -55,6 +60,7 @@ export default function ResultsPage({
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [stats, setStats] = useState<VoteStats>({
     totalCodes: 0,
+    attendedCodes: 0,
     usedCodes: 0,
     unusedCodes: 0,
     participationRate: 0,
@@ -139,7 +145,8 @@ export default function ResultsPage({
     }
 
     const totalCodes = codes?.length || 0;
-    const usedCodes = codes?.filter(c => c.is_used).length || 0;
+    const attendedCodes = codes?.filter(c => c.first_login_at !== null).length || 0; // 참석자 (로그인한 사람)
+    const usedCodes = codes?.filter(c => c.is_used).length || 0; // deprecated
     const unusedCodes = totalCodes - usedCodes;
     const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
 
@@ -158,6 +165,7 @@ export default function ResultsPage({
 
     setStats({
       totalCodes,
+      attendedCodes,
       usedCodes,
       unusedCodes,
       participationRate,
@@ -235,33 +243,108 @@ export default function ResultsPage({
   }
 
   const maxVotes = Math.max(...candidates.map(c => c.vote_count), 1);
-  const winners = candidates.filter(c => c.vote_count > 0).slice(0, election.max_selections);
+  
+  // 득표수가 있는 후보자들만 필터링
+  const candidatesWithVotes = candidates.filter(c => c.vote_count > 0);
+  
+  // 당선 기준 계산
+  const calculateWinners = () => {
+    if (candidatesWithVotes.length === 0) {
+      return { winners: [], hasTie: false, meetsThreshold: false, requiredVotes: 0, thresholdMessage: '' };
+    }
+
+    const criteria = election.winning_criteria;
+    let requiredVotes = 0;
+    let thresholdMessage = '';
+    let meetsThreshold = false;
+
+    // 1. 당선 기준에 따라 필요 득표수 계산
+    if (criteria.type === 'plurality') {
+      // 최다 득표
+      thresholdMessage = '최다 득표자';
+      meetsThreshold = true; // 최다 득표는 항상 충족
+    } else if (criteria.type === 'absolute_majority') {
+      // 절대 과반수 (50% 초과)
+      const base = stats.attendedCodes > 0 ? stats.attendedCodes : stats.totalCodes;
+      requiredVotes = Math.floor(base / 2) + 1;
+      thresholdMessage = `${base}명의 과반(${requiredVotes}표 이상)`;
+      meetsThreshold = candidatesWithVotes[0].vote_count > Math.floor(base / 2);
+    } else if (criteria.type === 'percentage') {
+      // 특정 득표율
+      const base = criteria.base === 'attended' 
+        ? (stats.attendedCodes > 0 ? stats.attendedCodes : stats.totalCodes)
+        : stats.totalCodes;
+      requiredVotes = Math.ceil(base * (criteria.percentage / 100));
+      const baseText = criteria.base === 'attended' ? '참석자' : '발급 코드';
+      thresholdMessage = `${baseText} ${base}명의 ${criteria.percentage}%(${requiredVotes}표 이상)`;
+      meetsThreshold = candidatesWithVotes[0].vote_count >= requiredVotes;
+    }
+
+    // 2. 동점자 처리
+    let winners: typeof candidates = [];
+    let hasTie = false;
+
+    if (!meetsThreshold && criteria.type !== 'plurality') {
+      // 기준 미달 → 당선자 없음
+      winners = [];
+      hasTie = false;
+    } else if (candidatesWithVotes.length >= election.max_selections) {
+      const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
+      const tiedCandidates = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
+      
+      if (tiedCandidates.length > election.max_selections) {
+        // 동점으로 인해 당선자를 확정할 수 없는 경우
+        hasTie = true;
+        winners = tiedCandidates;
+      } else {
+        winners = candidatesWithVotes.slice(0, election.max_selections);
+      }
+    } else {
+      // 후보자 수가 선발 인원보다 적은 경우
+      winners = candidatesWithVotes;
+    }
+
+    return { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage };
+  };
+
+  const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage } = calculateWinners();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <header style={{ 
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+      }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">투표 결과</h1>
-              <p className="text-sm text-gray-600 mt-1">{election.title}</p>
+              <h1 className="text-3xl font-semibold" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.03em'
+              }}>
+                투표 결과
+              </h1>
+              <p className="text-sm text-gray-600 mt-1" style={{ letterSpacing: '-0.01em' }}>
+                {election.title}
+              </p>
             </div>
             <div className="flex gap-3">
               <Link 
                 href={`/admin/elections/${election.id}/monitor`}
-                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
+                className="btn-apple-secondary text-sm"
               >
                 📊 모니터링
               </Link>
               <Link 
                 href="/admin/results"
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                className="btn-apple-secondary text-sm"
               >
                 ← 결과 목록
               </Link>
               <Link 
                 href="/admin/dashboard"
-                className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
+                className="btn-apple-primary text-sm"
               >
                 🏠 대시보드
               </Link>
@@ -270,45 +353,57 @@ export default function ResultsPage({
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* 투표 정보 */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">투표 정보</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <main className="max-w-7xl mx-auto py-12 px-6">
+        {/* 투표 정보 */}
+        <div className="card-apple p-8 mb-6">
+          <h2 className="text-xl font-semibold mb-6" style={{ 
+            color: '#1d1d1f',
+            letterSpacing: '-0.02em'
+          }}>
+            투표 정보
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+            <div>
+              <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표 유형</div>
+              <div className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>
+                {election.election_type === 'delegate' ? '대의원' : '임원'}
+              </div>
+            </div>
+            {election.position && (
               <div>
-                <div className="text-sm text-gray-600">투표 유형</div>
-                <div className="font-semibold">
-                  {election.election_type === 'delegate' ? '대의원' : '임원'}
+                <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>직책</div>
+                <div className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>
+                  {election.position}
                 </div>
               </div>
-              {election.position && (
-                <div>
-                  <div className="text-sm text-gray-600">직책</div>
-                  <div className="font-semibold">{election.position}</div>
-                </div>
-              )}
-              {election.villages && (
-                <div>
-                  <div className="text-sm text-gray-600">마을</div>
-                  <div className="font-semibold">{election.villages.name}</div>
-                </div>
-              )}
+            )}
+            {election.villages && (
               <div>
-                <div className="text-sm text-gray-600">최대 선택</div>
-                <div className="font-semibold">{election.max_selections}명</div>
+                <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>마을</div>
+                <div className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>
+                  {election.villages.name}
+                </div>
+              </div>
+            )}
+              <div>
+                <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>최대 선택</div>
+                <div className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>{election.max_selections}명</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">투표 차수</div>
-                <div className="font-semibold">{election.round}차</div>
+                <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표 차수</div>
+                <div className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>{election.round}차</div>
               </div>
               <div>
-                <div className="text-sm text-gray-600">상태</div>
+                <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>당선 기준</div>
+                <div className="font-semibold" style={{ color: 'var(--color-secondary)', letterSpacing: '-0.01em' }}>{thresholdMessage}</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>상태</div>
                 <div className={`font-semibold ${
                   election.status === 'closed' ? 'text-gray-600' :
                   election.status === 'active' ? 'text-[var(--color-primary)]' :
                   'text-[var(--color-secondary)]'
-                }`}>
+                }`} style={{ letterSpacing: '-0.01em' }}>
                   {election.status === 'closed' ? '종료' :
                    election.status === 'active' ? '진행중' :
                    election.status === 'registering' ? '등록중' : '대기'}
@@ -318,62 +413,102 @@ export default function ResultsPage({
           </div>
 
           {/* 투표 통계 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600 mb-1">전체 코드</div>
-              <div className="text-3xl font-bold text-gray-900">{stats.totalCodes}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 mb-6">
+            <div className="card-apple p-6">
+              <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>발급 코드</div>
+              <div className="text-3xl font-semibold text-gray-900" style={{ letterSpacing: '-0.03em' }}>{stats.totalCodes}</div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600 mb-1">투표 완료</div>
-              <div className="text-3xl font-bold text-[var(--color-primary)]">{stats.usedCodes}</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600 mb-1">미투표</div>
-              <div className="text-3xl font-bold text-gray-500">{stats.unusedCodes}</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600 mb-1">투표율</div>
-              <div className="text-3xl font-bold text-[var(--color-secondary)]">
-                {stats.participationRate.toFixed(1)}%
+            <div className="card-apple p-6">
+              <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>참석 확인</div>
+              <div className="text-3xl font-semibold" style={{ color: 'var(--color-primary)', letterSpacing: '-0.03em' }}>{stats.attendedCodes}</div>
+              <div className="text-xs text-gray-500 mt-2" style={{ letterSpacing: '-0.01em' }}>
+                ({stats.totalCodes > 0 ? ((stats.attendedCodes / stats.totalCodes) * 100).toFixed(1) : 0}%)
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600 mb-1">투표자 수</div>
-              <div className="text-3xl font-bold text-[var(--color-secondary)]">{stats.uniqueVoters}</div>
+            <div className="card-apple p-6">
+              <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표 완료</div>
+              <div className="text-3xl font-semibold" style={{ color: 'var(--color-secondary)', letterSpacing: '-0.03em' }}>{stats.uniqueVoters}</div>
+              <div className="text-xs text-gray-500 mt-2" style={{ letterSpacing: '-0.01em' }}>
+                ({stats.attendedCodes > 0 ? ((stats.uniqueVoters / stats.attendedCodes) * 100).toFixed(1) : 0}% of 참석)
+              </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm text-gray-600 mb-1">총 투표 수</div>
-              <div className="text-3xl font-bold text-[var(--color-secondary)]">{stats.totalVotes}</div>
+            <div className="card-apple p-6">
+              <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미참석</div>
+              <div className="text-3xl font-semibold text-gray-500" style={{ letterSpacing: '-0.03em' }}>{stats.totalCodes - stats.attendedCodes}</div>
+            </div>
+
+            <div className="card-apple p-6">
+              <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>총 투표 수</div>
+              <div className="text-3xl font-semibold text-blue-600" style={{ letterSpacing: '-0.03em' }}>{stats.totalVotes}</div>
             </div>
           </div>
 
-          {/* 당선자 */}
-          {winners.length > 0 && (
-            <div className="bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-400 rounded-lg p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                🏆 당선자
+          {/* 당선자 또는 기준 미달 */}
+          {!meetsThreshold && election.winning_criteria.type !== 'plurality' ? (
+            <div className="card-apple p-8 mb-6" style={{ 
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(249, 115, 22, 0.05) 100%)',
+              border: '2px solid rgba(239, 68, 68, 0.2)'
+            }}>
+              <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.02em'
+              }}>
+                ❌ 당선자 없음 (기준 미달)
               </h2>
+              <div className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border border-red-200">
+                <p className="text-sm text-gray-700 mb-2" style={{ letterSpacing: '-0.01em' }}>
+                  <strong>당선 기준:</strong> {thresholdMessage}
+                </p>
+                <p className="text-sm text-gray-700" style={{ letterSpacing: '-0.01em' }}>
+                  <strong>최고 득표:</strong> {candidatesWithVotes[0]?.name} {candidatesWithVotes[0]?.vote_count}표
+                  {requiredVotes > 0 && ` (필요: ${requiredVotes}표)`}
+                </p>
+                <p className="text-sm text-red-600 mt-2 font-semibold">
+                  → {election.round === 1 ? '2차 투표를 진행하거나' : election.round === 2 ? '3차 투표(최다득표)를 진행하거나' : ''} 
+                  {' '}별도 규정에 따라 결정해주세요.
+                </p>
+              </div>
+            </div>
+          ) : winners.length > 0 ? (
+            <div className={`border-2 rounded-lg p-6 mb-6 ${
+              hasTie 
+                ? 'bg-gradient-to-br from-orange-50 to-red-100 border-orange-400'
+                : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-400'
+            }`}>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                {hasTie ? '⚠️ 동점으로 당선자 미확정' : '🏆 당선자'}
+              </h2>
+              {hasTie && (
+                <div className="mb-4 p-4 bg-white/80 rounded-lg border border-orange-300">
+                  <p className="text-sm text-gray-700">
+                    <strong>동점 발생:</strong> {election.max_selections}명을 선출해야 하지만, 
+                    {winners[election.max_selections - 1]?.vote_count}표로 동점인 후보가 {winners.length}명입니다.
+                    {election.round > 1 ? ' 이미 결선 투표입니다.' : ' 결선 투표를 진행하거나 별도의 규정에 따라 결정해주세요.'}
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {winners.map((winner, index) => (
-                  <div key={winner.id} className="bg-white rounded-lg p-4 shadow-md">
+                  <div key={winner.id} className={`bg-white rounded-lg p-4 shadow-md ${
+                    hasTie ? 'border-2 border-orange-300' : ''
+                  }`}>
                     <div className="flex items-center gap-3">
                       <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
+                        hasTie ? 'bg-orange-200 text-orange-900' :
                         index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
                         index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
                         index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
                         'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
                       }`}>
-                        {index + 1}
+                        {hasTie ? '?' : index + 1}
                       </div>
                       <div className="flex-1">
                         <div className="font-bold text-lg text-gray-900">{winner.name}</div>
                         <div className="text-sm text-gray-600">
-                          {winner.vote_count}표 ({((winner.vote_count / stats.totalVotes) * 100).toFixed(1)}%)
+                          {winner.vote_count}표 ({stats.totalVotes > 0 ? ((winner.vote_count / stats.totalVotes) * 100).toFixed(1) : 0}%)
                         </div>
                       </div>
                     </div>
@@ -381,7 +516,7 @@ export default function ResultsPage({
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* 전체 후보자 득표 결과 */}
           <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -396,30 +531,34 @@ export default function ResultsPage({
                 {candidates.map((candidate, index) => {
                   const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
                   const votePercentage = stats.totalVotes > 0 ? (candidate.vote_count / stats.totalVotes) * 100 : 0;
-                  const isWinner = index < election.max_selections && candidate.vote_count > 0;
+                  const isWinner = !hasTie && index < election.max_selections && candidate.vote_count > 0;
+                  const isTied = hasTie && winners.some(w => w.id === candidate.id);
 
                   return (
                     <div 
                       key={candidate.id} 
                       className={`border rounded-lg p-4 ${
+                        isTied ? 'border-orange-400 bg-orange-50' :
                         isWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
                       }`}
                     >
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-3">
                           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                            isTied ? 'bg-orange-200 text-orange-800' :
                             isWinner ? (
                               index === 0 ? 'bg-yellow-200 text-yellow-800' :
                               index === 1 ? 'bg-gray-300 text-gray-700' :
                               'bg-orange-200 text-orange-800'
                             ) : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {index + 1}
+                            {isTied ? '?' : index + 1}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900 flex items-center gap-2">
                               {candidate.name}
                               {isWinner && <span className="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full font-bold">당선</span>}
+                              {isTied && <span className="text-xs px-2 py-1 bg-orange-200 text-orange-800 rounded-full font-bold">동점</span>}
                             </div>
                             <div className="text-sm text-gray-500">
                               득표율: {votePercentage.toFixed(1)}%
@@ -438,6 +577,7 @@ export default function ResultsPage({
                       <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                         <div
                           className={`h-full transition-all duration-500 ${
+                            isTied ? 'bg-gradient-to-r from-orange-400 to-red-500' :
                             isWinner ? (
                               index === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
                               index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
@@ -483,7 +623,6 @@ export default function ResultsPage({
               </div>
             </div>
           )}
-        </div>
       </main>
     </div>
   );

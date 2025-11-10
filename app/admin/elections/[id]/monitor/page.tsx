@@ -201,30 +201,41 @@ export default function MonitorPage({
   const winner = candidates.length > 0 ? candidates[0] : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <header style={{ 
+        background: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+      }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">실시간 모니터링</h1>
-              <p className="text-sm text-gray-600 mt-1">{election.title}</p>
+              <h1 className="text-3xl font-semibold" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.03em'
+              }}>
+                실시간 모니터링
+              </h1>
+              <p className="text-sm text-gray-600 mt-1" style={{ letterSpacing: '-0.01em' }}>
+                {election.title}
+              </p>
             </div>
             <div className="flex gap-3">
               <Link 
                 href={`/admin/elections/${election.id}/results`}
-                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium"
+                className="btn-apple-secondary text-sm"
               >
                 📈 결과 보기
               </Link>
               <Link 
                 href="/admin/results"
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                className="btn-apple-secondary text-sm"
               >
                 ← 결과 목록
               </Link>
               <Link 
                 href="/admin/dashboard"
-                className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
+                className="btn-apple-primary text-sm"
               >
                 🏠 대시보드
               </Link>

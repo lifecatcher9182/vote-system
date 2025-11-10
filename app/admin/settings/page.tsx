@@ -8,6 +8,7 @@ import Link from 'next/link';
 import MainVoteQRCode from '@/components/MainVoteQRCode';
 import LogoUploadSettings from '@/components/LogoUploadSettings';
 import ColorThemeSettings from '@/components/ColorThemeSettings';
+import SystemLogo from '@/components/SystemLogo';
 
 interface AdminEmail {
   id: string;
@@ -222,6 +223,11 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      {/* Logo - 좌측 상단 고정 */}
+      <div className="fixed top-6 left-6 z-50">
+        <SystemLogo size="sm" linkToHome />
+      </div>
+
       {/* Header - Glass Effect */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',

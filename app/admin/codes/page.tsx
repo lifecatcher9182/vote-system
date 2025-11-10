@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import { nanoid } from 'nanoid';
+import SystemLogo from '@/components/SystemLogo';
 
 interface VoterCode {
   id: string;
@@ -16,6 +17,8 @@ interface VoterCode {
   is_used: boolean;
   voter_name: string | null;
   used_at: string | null;
+  first_login_at: string | null;
+  last_login_at: string | null;
   created_at: string;
   villages?: {
     name: string;
@@ -40,7 +43,7 @@ export default function CodesPage() {
   const [codes, setCodes] = useState<VoterCode[]>([]);
   const [elections, setElections] = useState<Election[]>([]);
   const [villages, setVillages] = useState<Village[]>([]);
-  const [filter, setFilter] = useState<'all' | 'used' | 'unused'>('all');
+  const [filter, setFilter] = useState<'all' | 'voted' | 'attended' | 'not_attended'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
   // 생성 모달 상태
@@ -74,7 +77,7 @@ export default function CodesPage() {
   const loadCodes = useCallback(async () => {
     const supabase = createClient();
     
-    let query = supabase
+    const { data, error } = await supabase
       .from('voter_codes')
       .select(`
         *,
@@ -84,20 +87,26 @@ export default function CodesPage() {
       `)
       .order('created_at', { ascending: false });
 
-    if (filter === 'used') {
-      query = query.eq('is_used', true);
-    } else if (filter === 'unused') {
-      query = query.eq('is_used', false);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
       console.error('코드 로딩 오류:', error);
       return;
     }
 
-    setCodes(data || []);
+    let filteredData = data || [];
+
+    // 클라이언트 사이드 필터링
+    if (filter === 'voted') {
+      // 투표 완료 (is_used = true)
+      filteredData = filteredData.filter(c => c.is_used);
+    } else if (filter === 'attended') {
+      // 참석 확인 (로그인했지만 투표 안함)
+      filteredData = filteredData.filter(c => c.first_login_at && !c.is_used);
+    } else if (filter === 'not_attended') {
+      // 미참석 (로그인 안함)
+      filteredData = filteredData.filter(c => !c.first_login_at);
+    }
+
+    setCodes(filteredData);
   }, [filter]);
 
   const loadElections = useCallback(async () => {
@@ -105,7 +114,6 @@ export default function CodesPage() {
     const { data, error } = await supabase
       .from('elections')
       .select('id, title, election_type, status')
-      .in('status', ['registering', 'active'])
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -113,6 +121,7 @@ export default function CodesPage() {
       return;
     }
 
+    console.log('불러온 투표 목록:', data); // 디버깅용
     setElections(data || []);
   }, []);
 
@@ -272,6 +281,11 @@ export default function CodesPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      {/* Logo - 좌측 상단 고정 */}
+      <div className="fixed top-6 left-6 z-50">
+        <SystemLogo size="sm" linkToHome />
+      </div>
+
       {/* Header */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
@@ -330,7 +344,7 @@ export default function CodesPage() {
           <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>사용됨</p>
+                <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표 완료</p>
                 <p className="text-4xl font-semibold text-green-500" style={{ letterSpacing: '-0.03em' }}>
                   {stats.used}
                 </p>
@@ -346,9 +360,25 @@ export default function CodesPage() {
           <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미사용</p>
+                <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>참석 확인</p>
+                <p className="text-4xl font-semibold text-blue-500" style={{ letterSpacing: '-0.03em' }}>
+                  {codes.filter(c => c.first_login_at && !c.is_used).length}
+                </p>
+              </div>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-200" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
+                <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미참석</p>
                 <p className="text-4xl font-semibold" style={{ color: '#6b7280', letterSpacing: '-0.03em' }}>
-                  {stats.unused}
+                  {codes.filter(c => !c.first_login_at).length}
                 </p>
               </div>
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-200" style={{ background: 'rgba(107, 114, 128, 0.1)' }}>
@@ -377,30 +407,43 @@ export default function CodesPage() {
               전체
             </button>
             <button
-              onClick={() => setFilter('unused')}
+              onClick={() => setFilter('voted')}
               className={`px-6 py-3 rounded-2xl font-medium transition-all duration-200 ${
-                filter === 'unused' ? 'text-white' : 'text-gray-700'
+                filter === 'voted' ? 'text-white' : 'text-gray-700'
               }`}
               style={{ 
-                background: filter === 'unused' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'unused' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                background: filter === 'voted' ? 'var(--color-secondary)' : 'white',
+                boxShadow: filter === 'voted' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
-              미사용
+              투표 완료
             </button>
             <button
-              onClick={() => setFilter('used')}
+              onClick={() => setFilter('attended')}
               className={`px-6 py-3 rounded-2xl font-medium transition-all duration-200 ${
-                filter === 'used' ? 'text-white' : 'text-gray-700'
+                filter === 'attended' ? 'text-white' : 'text-gray-700'
               }`}
               style={{ 
-                background: filter === 'used' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'used' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                background: filter === 'attended' ? 'var(--color-secondary)' : 'white',
+                boxShadow: filter === 'attended' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
-              사용됨
+              참석 확인
+            </button>
+            <button
+              onClick={() => setFilter('not_attended')}
+              className={`px-6 py-3 rounded-2xl font-medium transition-all duration-200 ${
+                filter === 'not_attended' ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{ 
+                background: filter === 'not_attended' ? 'var(--color-secondary)' : 'white',
+                boxShadow: filter === 'not_attended' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              미참석
             </button>
           </div>
 
@@ -499,7 +542,15 @@ export default function CodesPage() {
                             color: '#10b981',
                             letterSpacing: '-0.01em'
                           }}>
-                            사용됨
+                            ✅ 투표 완료
+                          </span>
+                        ) : code.first_login_at ? (
+                          <span className="px-3 py-1.5 text-xs font-semibold rounded-full" style={{ 
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            color: '#3b82f6',
+                            letterSpacing: '-0.01em'
+                          }}>
+                            🟢 참석 확인
                           </span>
                         ) : (
                           <span className="px-3 py-1.5 text-xs font-semibold rounded-full" style={{ 
@@ -507,7 +558,7 @@ export default function CodesPage() {
                             color: '#6b7280',
                             letterSpacing: '-0.01em'
                           }}>
-                            미사용
+                            ⚠️ 미참석
                           </span>
                         )}
                       </td>
@@ -639,7 +690,10 @@ export default function CodesPage() {
                     <div className="text-sm text-gray-600 text-center py-6" style={{ letterSpacing: '-0.01em' }}>
                       {codeType === 'delegate' ? '총대 선출' : '임원 선출'} 투표가 없습니다.
                       <br />
-                      <Link href="/admin/elections/create" className="font-medium hover:underline" style={{ color: 'var(--color-secondary)' }}>
+                      <span className="text-xs text-gray-400 mt-2 block">
+                        (전체 투표: {elections.length}개, {codeType} 타입: {elections.filter(e => e.election_type === codeType).length}개)
+                      </span>
+                      <Link href="/admin/elections/create" className="font-medium hover:underline mt-2 inline-block" style={{ color: 'var(--color-secondary)' }}>
                         투표를 먼저 생성하세요
                       </Link>
                     </div>

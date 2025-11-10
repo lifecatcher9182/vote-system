@@ -38,6 +38,18 @@ CREATE TABLE elections (
   max_selections INTEGER NOT NULL DEFAULT 1,
   round INTEGER NOT NULL DEFAULT 1,
   status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'registering', 'active', 'closed')),
+  
+  -- 당선 기준 설정
+  winning_criteria JSONB DEFAULT '{"type": "plurality"}',
+  -- type: "plurality" (최다득표), "percentage" (득표율), "absolute_majority" (과반수)
+  -- percentage: 66.67 (2/3), 50 (과반) 등
+  -- base: "attended" (참석자 기준), "issued" (발급 코드 기준)
+  -- 예시: {"type": "percentage", "percentage": 66.67, "base": "attended"}
+  
+  -- 선거 시리즈 (재투표 연결)
+  series_id UUID,
+  series_title TEXT, -- "2024 회장 선거" 같은 시리즈 제목
+  
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -58,9 +70,14 @@ CREATE TABLE voter_codes (
   code_type TEXT NOT NULL CHECK (code_type IN ('delegate', 'officer')),
   accessible_elections UUID[] DEFAULT '{}',
   village_id UUID REFERENCES villages(id) ON DELETE SET NULL,
-  is_used BOOLEAN DEFAULT FALSE,
+  is_used BOOLEAN DEFAULT FALSE, -- deprecated, votes 테이블로 확인
   voter_name TEXT,
-  used_at TIMESTAMPTZ,
+  used_at TIMESTAMPTZ, -- deprecated
+  
+  -- 참석 체크 (로그인 기록)
+  first_login_at TIMESTAMPTZ, -- 최초 로그인 시각 (참석 확인)
+  last_login_at TIMESTAMPTZ,  -- 마지막 로그인
+  
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -70,7 +87,10 @@ CREATE TABLE votes (
   election_id UUID NOT NULL REFERENCES elections(id) ON DELETE CASCADE,
   candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
   voter_code_id UUID NOT NULL REFERENCES voter_codes(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  -- 중복 투표 방지: 한 코드는 같은 투표에 한 번만 참여 가능
+  UNIQUE(election_id, voter_code_id)
 );
 
 -- ============================================
@@ -79,10 +99,13 @@ CREATE TABLE votes (
 
 CREATE INDEX idx_elections_status ON elections(status);
 CREATE INDEX idx_elections_type ON elections(election_type);
+CREATE INDEX idx_elections_series ON elections(series_id);
 CREATE INDEX idx_voter_codes_code ON voter_codes(code);
 CREATE INDEX idx_voter_codes_is_used ON voter_codes(is_used);
+CREATE INDEX idx_voter_codes_first_login ON voter_codes(first_login_at);
 CREATE INDEX idx_votes_election ON votes(election_id);
 CREATE INDEX idx_votes_candidate ON votes(candidate_id);
+CREATE INDEX idx_votes_voter_code ON votes(voter_code_id);
 CREATE INDEX idx_candidates_election ON candidates(election_id);
 
 -- ============================================

@@ -70,6 +70,31 @@ export default function VoteWithCodePage({
       return;
     }
 
+    // 첫 로그인 시 참석 체크 (first_login_at 기록)
+    if (!codeData.first_login_at) {
+      const now = new Date().toISOString();
+      const { error: updateError } = await supabase
+        .from('voter_codes')
+        .update({
+          first_login_at: now,
+          last_login_at: now
+        })
+        .eq('id', codeData.id);
+
+      if (!updateError) {
+        codeData.first_login_at = now;
+        codeData.last_login_at = now;
+      }
+    } else {
+      // 재방문 시 last_login_at만 업데이트
+      await supabase
+        .from('voter_codes')
+        .update({
+          last_login_at: new Date().toISOString()
+        })
+        .eq('id', codeData.id);
+    }
+
     setVoterCode(codeData);
 
     // 2. 접근 가능한 투표 목록 조회

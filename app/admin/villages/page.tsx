@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
+import SystemLogo from '@/components/SystemLogo';
 
 interface Village {
   id: string;
   name: string;
   code: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -17,6 +19,7 @@ export default function VillagesPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [villages, setVillages] = useState<Village[]>([]);
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newVillage, setNewVillage] = useState({ name: '', code: '' });
 
@@ -108,6 +111,28 @@ export default function VillagesPage() {
     loadVillages();
   };
 
+  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('villages')
+      .update({ is_active: !currentStatus })
+      .eq('id', id);
+
+    if (error) {
+      console.error('상태 변경 오류:', error);
+      alert('상태 변경에 실패했습니다.');
+      return;
+    }
+
+    loadVillages();
+  };
+
+  const filteredVillages = villages.filter(v => {
+    if (filter === 'active') return v.is_active;
+    if (filter === 'inactive') return !v.is_active;
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
@@ -126,6 +151,11 @@ export default function VillagesPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      {/* Logo - 좌측 상단 고정 */}
+      <div className="fixed top-6 left-6 z-50">
+        <SystemLogo size="sm" linkToHome />
+      </div>
+
       {/* Header */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
@@ -163,7 +193,49 @@ export default function VillagesPage() {
       </header>
 
       <main className="max-w-7xl mx-auto py-12 px-6">
-        <div className="mb-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex gap-3">
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-6 py-3 rounded-2xl font-medium transition-all duration-200 ${
+                filter === 'all' ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{ 
+                background: filter === 'all' ? 'var(--color-secondary)' : 'white',
+                boxShadow: filter === 'all' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              전체 ({villages.length})
+            </button>
+            <button
+              onClick={() => setFilter('active')}
+              className={`px-6 py-3 rounded-2xl font-medium transition-all duration-200 ${
+                filter === 'active' ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{ 
+                background: filter === 'active' ? 'var(--color-secondary)' : 'white',
+                boxShadow: filter === 'active' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              활성화 ({villages.filter(v => v.is_active).length})
+            </button>
+            <button
+              onClick={() => setFilter('inactive')}
+              className={`px-6 py-3 rounded-2xl font-medium transition-all duration-200 ${
+                filter === 'inactive' ? 'text-white' : 'text-gray-700'
+              }`}
+              style={{ 
+                background: filter === 'inactive' ? 'var(--color-secondary)' : 'white',
+                boxShadow: filter === 'inactive' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              비활성화 ({villages.filter(v => !v.is_active).length})
+            </button>
+          </div>
+          
           <button
             onClick={() => setShowAddModal(true)}
             className="btn-apple-primary inline-flex items-center gap-2 text-base"
@@ -175,7 +247,7 @@ export default function VillagesPage() {
           </button>
         </div>
 
-        {villages.length === 0 ? (
+        {filteredVillages.length === 0 ? (
           <div className="card-apple p-16 text-center">
             <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +255,9 @@ export default function VillagesPage() {
               </svg>
             </div>
             <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
-              등록된 마을이 없습니다
+              {filter === 'active' ? '활성화된 마을이 없습니다' : 
+               filter === 'inactive' ? '비활성화된 마을이 없습니다' :
+               '등록된 마을이 없습니다'}
             </h3>
             <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>총대 선출을 위한 마을을 추가하세요</p>
             <button
@@ -197,52 +271,88 @@ export default function VillagesPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {villages.map((village) => (
-              <div 
-                key={village.id}
-                className="card-apple p-6 hover:scale-[1.02] transition-all duration-200"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl" style={{ background: 'var(--color-secondary)' }}>
-                    {village.name.charAt(0)}
-                  </div>
-                  <button
-                    onClick={() => handleDeleteVillage(village.id)}
-                    className="p-2 rounded-xl transition-all duration-200 hover:scale-110"
-                    style={{ background: 'rgba(239, 68, 68, 0.1)' }}
-                    title="삭제"
+          <div className="card-apple overflow-hidden">
+            <table className="w-full">
+              <thead style={{ background: 'rgba(0, 0, 0, 0.02)', borderBottom: '1px solid rgba(0, 0, 0, 0.06)' }}>
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    마을 이름
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    마을 코드
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    상태
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    생성일
+                  </th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    관리
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredVillages.map((village, index) => (
+                  <tr 
+                    key={village.id}
+                    style={{ 
+                      borderBottom: index < filteredVillages.length - 1 ? '1px solid rgba(0, 0, 0, 0.04)' : 'none'
+                    }}
+                    className="hover:bg-gray-50 transition-colors"
                   >
-                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
-                  {village.name}
-                </h3>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    <span className="font-mono font-semibold">{village.code}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span>{new Date(village.created_at).toLocaleDateString('ko-KR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold" style={{ background: 'var(--color-secondary)' }}>
+                          {village.name.charAt(0)}
+                        </div>
+                        <span className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>
+                          {village.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-mono font-semibold text-gray-700" style={{ letterSpacing: '0.05em' }}>
+                        {village.code}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => handleToggleActive(village.id, village.is_active)}
+                        className="px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 hover:scale-105"
+                        style={{ 
+                          background: village.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                          color: village.is_active ? '#22c55e' : '#6b7280',
+                          letterSpacing: '-0.01em'
+                        }}
+                      >
+                        {village.is_active ? '✓ 활성화' : '✕ 비활성화'}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                      {new Date(village.created_at).toLocaleDateString('ko-KR', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                      })}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDeleteVillage(village.id)}
+                        className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
+                        style={{ 
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#ef4444',
+                          letterSpacing: '-0.01em'
+                        }}
+                      >
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </main>

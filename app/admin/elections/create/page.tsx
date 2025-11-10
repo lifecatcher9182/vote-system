@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
+import { WinningCriteria } from '@/lib/database.types';
 import Link from 'next/link';
+import SystemLogo from '@/components/SystemLogo';
 
 interface Village {
   id: string;
@@ -34,6 +36,11 @@ export default function CreateElectionPage() {
     { id: '1', name: '' },
     { id: '2', name: '' },
   ]);
+
+  // 당선 기준 상태
+  const [criteriaType, setCriteriaType] = useState<'plurality' | 'absolute_majority' | 'percentage'>('plurality');
+  const [percentage, setPercentage] = useState(66.67);
+  const [base, setBase] = useState<'attended' | 'issued'>('attended');
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -152,6 +159,7 @@ export default function CreateElectionPage() {
         max_selections: number;
         round: number;
         status: string;
+        winning_criteria: WinningCriteria;
         village_id?: string;
         position?: string;
       } = {
@@ -160,6 +168,10 @@ export default function CreateElectionPage() {
         max_selections: maxSelections,
         round: round,
         status: 'waiting',
+        winning_criteria: 
+          criteriaType === 'plurality' ? { type: 'plurality' } :
+          criteriaType === 'absolute_majority' ? { type: 'absolute_majority' } :
+          { type: 'percentage', percentage, base },
       };
 
       if (electionType === 'delegate') {
@@ -228,6 +240,11 @@ export default function CreateElectionPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      {/* Logo - 좌측 상단 고정 */}
+      <div className="fixed top-6 left-6 z-50">
+        <SystemLogo size="sm" linkToHome />
+      </div>
+
       {/* Header */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
@@ -401,7 +418,7 @@ export default function CreateElectionPage() {
               투표 설정
             </h2>
             
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6 mb-8">
               <div>
                 <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                   라운드
@@ -426,6 +443,180 @@ export default function CreateElectionPage() {
                   min="1"
                   className="input-apple"
                 />
+              </div>
+            </div>
+
+            {/* 당선 기준 설정 */}
+            <div className="pt-6 border-t" style={{ borderColor: 'rgba(0, 0, 0, 0.05)' }}>
+              <label className="block text-base font-semibold mb-4" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                당선 기준 <span className="text-red-500">*</span>
+              </label>
+              
+              <div className="space-y-3 mb-5">
+                <label className="flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01]" style={{
+                  border: criteriaType === 'plurality' ? '2px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.08)',
+                  background: criteriaType === 'plurality' ? 'rgba(0, 113, 227, 0.03)' : 'white'
+                }}>
+                  <input
+                    type="radio"
+                    name="criteria"
+                    value="plurality"
+                    checked={criteriaType === 'plurality'}
+                    onChange={(e) => setCriteriaType(e.target.value as 'plurality')}
+                    className="mt-1"
+                    style={{ accentColor: 'var(--color-secondary)' }}
+                  />
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm mb-1" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                      최다 득표
+                    </div>
+                    <div className="text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                      가장 많은 표를 받은 후보가 당선됩니다 (3차 투표 권장)
+                    </div>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01]" style={{
+                  border: criteriaType === 'absolute_majority' ? '2px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.08)',
+                  background: criteriaType === 'absolute_majority' ? 'rgba(0, 113, 227, 0.03)' : 'white'
+                }}>
+                  <input
+                    type="radio"
+                    name="criteria"
+                    value="absolute_majority"
+                    checked={criteriaType === 'absolute_majority'}
+                    onChange={(e) => setCriteriaType(e.target.value as 'absolute_majority')}
+                    className="mt-1"
+                    style={{ accentColor: 'var(--color-secondary)' }}
+                  />
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm mb-1" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                      절대 과반수
+                    </div>
+                    <div className="text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                      50% 초과 득표 필요 (참석자의 과반)
+                    </div>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01]" style={{
+                  border: criteriaType === 'percentage' ? '2px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.08)',
+                  background: criteriaType === 'percentage' ? 'rgba(0, 113, 227, 0.03)' : 'white'
+                }}>
+                  <input
+                    type="radio"
+                    name="criteria"
+                    value="percentage"
+                    checked={criteriaType === 'percentage'}
+                    onChange={(e) => setCriteriaType(e.target.value as 'percentage')}
+                    className="mt-1"
+                    style={{ accentColor: 'var(--color-secondary)' }}
+                  />
+                  <div className="flex-1">
+                    <div className="font-semibold text-sm mb-1" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                      득표율 기준
+                    </div>
+                    <div className="text-xs text-gray-600 mb-3" style={{ letterSpacing: '-0.01em' }}>
+                      특정 득표율 이상 필요 (1, 2차 투표 권장)
+                    </div>
+
+                    {criteriaType === 'percentage' && (
+                      <div className="space-y-3 pt-3 border-t" style={{ borderColor: 'rgba(0, 0, 0, 0.05)' }}>
+                        <div>
+                          <label className="block text-xs font-medium mb-2 text-gray-700" style={{ letterSpacing: '-0.01em' }}>
+                            필요 득표율 (%)
+                          </label>
+                          <div className="grid grid-cols-4 gap-2 mb-2">
+                            {[50, 60, 66.67, 75].map((val) => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => setPercentage(val)}
+                                className="px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+                                style={{
+                                  background: percentage === val ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)',
+                                  color: percentage === val ? 'white' : '#6b7280'
+                                }}
+                              >
+                                {val === 66.67 ? '2/3' : val === 50 ? '과반' : `${val}%`}
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            type="number"
+                            value={percentage}
+                            onChange={(e) => setPercentage(parseFloat(e.target.value) || 50)}
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            className="input-apple text-sm"
+                            placeholder="예: 66.67 (2/3)"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium mb-2 text-gray-700" style={{ letterSpacing: '-0.01em' }}>
+                            기준 인원
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setBase('attended')}
+                              className="px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+                              style={{
+                                background: base === 'attended' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)',
+                                color: base === 'attended' ? 'white' : '#6b7280'
+                              }}
+                            >
+                              참석자 기준 ⭐
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBase('issued')}
+                              className="px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+                              style={{
+                                background: base === 'issued' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)',
+                                color: base === 'issued' ? 'white' : '#6b7280'
+                              }}
+                            >
+                              발급 코드 기준
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2" style={{ letterSpacing: '-0.01em' }}>
+                            {base === 'attended' 
+                              ? '💡 현장에서 실제 참석한 인원을 기준으로 계산합니다 (권장)'
+                              : '📋 미리 발급한 코드 수를 기준으로 계산합니다'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {/* 미리보기 */}
+              <div className="p-4 rounded-xl" style={{ background: 'rgba(59, 130, 246, 0.05)' }}>
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold mb-1 text-blue-900" style={{ letterSpacing: '-0.01em' }}>
+                      당선 기준 미리보기
+                    </div>
+                    <div className="text-xs text-blue-700" style={{ letterSpacing: '-0.01em' }}>
+                      {criteriaType === 'plurality' && '최다 득표자가 당선됩니다'}
+                      {criteriaType === 'absolute_majority' && '참석자의 50% 초과 득표 필요'}
+                      {criteriaType === 'percentage' && (
+                        <>
+                          {base === 'attended' ? '참석자' : '발급 코드'}의 {percentage}% 이상 득표 필요
+                          {percentage === 66.67 && ' (2/3)'}
+                          {percentage === 50 && ' (과반)'}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
