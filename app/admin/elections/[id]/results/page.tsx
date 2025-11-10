@@ -479,7 +479,9 @@ export default function ResultsPage({
                 : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-400'
             }`}>
               <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                {hasTie ? '⚠️ 동점으로 당선자 미확정' : '🏆 당선자'}
+                {hasTie ? '⚠️ 동점으로 당선자 미확정' : 
+                 election.max_selections === 1 ? '🏆 당선자' : 
+                 `🏆 당선자 (상위 ${election.max_selections}명)`}
               </h2>
               {hasTie && (
                 <div className="mb-4 p-4 bg-white/80 rounded-lg border border-orange-300">
@@ -491,29 +493,39 @@ export default function ResultsPage({
                 </div>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {winners.map((winner, index) => (
-                  <div key={winner.id} className={`bg-white rounded-lg p-4 shadow-md ${
-                    hasTie ? 'border-2 border-orange-300' : ''
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
-                        hasTie ? 'bg-orange-200 text-orange-900' :
-                        index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
-                        index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
-                        index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
-                        'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
-                      }`}>
-                        {hasTie ? '?' : index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-lg text-gray-900">{winner.name}</div>
-                        <div className="text-sm text-gray-600">
-                          {winner.vote_count}표 ({stats.totalVotes > 0 ? ((winner.vote_count / stats.totalVotes) * 100).toFixed(1) : 0}%)
+                {winners.map((winner, index) => {
+                  // 실제 순위 계산 (득표수 기준)
+                  let actualRank = 1;
+                  for (let i = 0; i < index; i++) {
+                    if (winners[i].vote_count > winner.vote_count) {
+                      actualRank++;
+                    }
+                  }
+                  
+                  return (
+                    <div key={winner.id} className={`bg-white rounded-lg p-4 shadow-md ${
+                      hasTie ? 'border-2 border-orange-300' : ''
+                    }`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
+                          hasTie ? 'bg-orange-200 text-orange-900' :
+                          actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                          actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                          actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                          'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                        }`}>
+                          {hasTie ? '?' : actualRank}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-lg text-gray-900">{winner.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {winner.vote_count}표 ({stats.totalVotes > 0 ? ((winner.vote_count / stats.totalVotes) * 100).toFixed(1) : 0}%)
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ) : null}
@@ -533,6 +545,14 @@ export default function ResultsPage({
                   const votePercentage = stats.totalVotes > 0 ? (candidate.vote_count / stats.totalVotes) * 100 : 0;
                   const isWinner = !hasTie && index < election.max_selections && candidate.vote_count > 0;
                   const isTied = hasTie && winners.some(w => w.id === candidate.id);
+                  
+                  // 실제 순위 계산 (득표수 기준, 동점자는 같은 순위)
+                  let actualRank = 1;
+                  for (let i = 0; i < index; i++) {
+                    if (candidates[i].vote_count > candidate.vote_count) {
+                      actualRank++;
+                    }
+                  }
 
                   return (
                     <div 
@@ -547,12 +567,12 @@ export default function ResultsPage({
                           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                             isTied ? 'bg-orange-200 text-orange-800' :
                             isWinner ? (
-                              index === 0 ? 'bg-yellow-200 text-yellow-800' :
-                              index === 1 ? 'bg-gray-300 text-gray-700' :
+                              actualRank === 1 ? 'bg-yellow-200 text-yellow-800' :
+                              actualRank === 2 ? 'bg-gray-300 text-gray-700' :
                               'bg-orange-200 text-orange-800'
                             ) : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isTied ? '?' : index + 1}
+                            {isTied ? '?' : actualRank}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900 flex items-center gap-2">
@@ -579,8 +599,8 @@ export default function ResultsPage({
                           className={`h-full transition-all duration-500 ${
                             isTied ? 'bg-gradient-to-r from-orange-400 to-red-500' :
                             isWinner ? (
-                              index === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
-                              index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                              actualRank === 1 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
+                              actualRank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
                               'bg-gradient-to-r from-orange-400 to-orange-500'
                             ) : 'bg-blue-400'
                           }`}

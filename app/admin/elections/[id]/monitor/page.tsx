@@ -198,7 +198,10 @@ export default function MonitorPage({
   }
 
   const maxVotes = Math.max(...candidates.map(c => c.vote_count), 1);
-  const winner = candidates.length > 0 ? candidates[0] : null;
+  // max_selections 기준으로 상위 N명을 당선자로 표시
+  const winners = candidates.length > 0 
+    ? candidates.slice(0, Math.min(election.max_selections, candidates.length)).filter(c => c.vote_count > 0)
+    : [];
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
@@ -308,16 +311,43 @@ export default function MonitorPage({
             </div>
           </div>
 
-          {/* 현재 1위 */}
-          {winner && winner.vote_count > 0 && (
+          {/* 현재 당선권 */}
+          {winners.length > 0 && (
             <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-lg p-6 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="text-5xl">🏆</div>
-                <div>
-                  <div className="text-sm text-amber-700 font-semibold mb-1">현재 1위</div>
-                  <div className="text-2xl font-bold text-gray-900">{winner.name}</div>
-                  <div className="text-lg text-gray-600">{winner.vote_count}표</div>
+              <div className="mb-3">
+                <div className="text-sm text-amber-700 font-semibold mb-1">
+                  {election.max_selections === 1 ? '🏆 현재 1위' : `🏆 현재 당선권 (상위 ${election.max_selections}명)`}
                 </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {winners.map((winner, index) => {
+                  // 실제 순위 계산 (득표수 기준, 동점자는 같은 순위)
+                  let actualRank = 1;
+                  for (let i = 0; i < index; i++) {
+                    if (winners[i].vote_count > winner.vote_count) {
+                      actualRank++;
+                    }
+                  }
+                  
+                  return (
+                    <div key={winner.id} className="bg-white rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+                          actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                          actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                          actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                          'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                        }`}>
+                          {actualRank}
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-bold text-gray-900">{winner.name}</div>
+                          <div className="text-sm text-gray-600">{winner.vote_count}표</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -335,18 +365,26 @@ export default function MonitorPage({
                 {candidates.map((candidate, index) => {
                   const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
                   const votePercentage = stats.totalVotes > 0 ? (candidate.vote_count / stats.totalVotes) * 100 : 0;
+                  
+                  // 실제 순위 계산 (득표수 기준, 동점자는 같은 순위)
+                  let actualRank = 1;
+                  for (let i = 0; i < index; i++) {
+                    if (candidates[i].vote_count > candidate.vote_count) {
+                      actualRank++;
+                    }
+                  }
 
                   return (
                     <div key={candidate.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-3">
                           <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                            index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                            index === 1 ? 'bg-gray-200 text-gray-700' :
-                            index === 2 ? 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' :
+                            actualRank === 1 ? 'bg-yellow-100 text-yellow-700' :
+                            actualRank === 2 ? 'bg-gray-200 text-gray-700' :
+                            actualRank === 3 ? 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' :
                             'bg-gray-100 text-gray-600'
                           }`}>
-                            {index + 1}
+                            {actualRank}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900">{candidate.name}</div>
@@ -367,9 +405,9 @@ export default function MonitorPage({
                       <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                         <div
                           className={`h-full transition-all duration-500 ${
-                            index === 0 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
-                            index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
-                            index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                            actualRank === 1 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
+                            actualRank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                            actualRank === 3 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
                             'bg-blue-500'
                           }`}
                           style={{ width: `${percentage}%` }}
