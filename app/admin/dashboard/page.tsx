@@ -257,7 +257,7 @@ export default function AdminDashboard() {
             </button>
 
             <button 
-              onClick={() => router.push('/admin/elections/create')}
+              onClick={() => router.push('/admin/election-groups/create')}
               className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
             >
               <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-secondary)' }}>
@@ -269,30 +269,26 @@ export default function AdminDashboard() {
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
-                새 투표 생성
+                새 투표 그룹 생성
               </h3>
               <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                총대 또는 임원 선출 투표를 생성합니다
+                총대 또는 임원 투표 그룹을 생성하고 일괄 관리합니다
               </p>
             </button>
 
             <button 
-              onClick={() => router.push('/admin/codes')}
+              onClick={() => router.push('/admin/election-groups')}
               className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
             >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-secondary)' }}>
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
+              <div className="text-4xl mb-4">📁</div>
               <h3 className="text-xl font-semibold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
-                참여코드 생성
+                투표 그룹
               </h3>
               <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                투표자를 위한 참여코드를 일괄 생성합니다
+                총대/임원 투표 그룹을 관리합니다
               </p>
             </button>
 

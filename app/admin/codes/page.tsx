@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
@@ -39,12 +39,16 @@ interface Village {
 
 export default function CodesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const groupId = searchParams?.get('group_id');
+  
   const [loading, setLoading] = useState(true);
   const [codes, setCodes] = useState<VoterCode[]>([]);
   const [elections, setElections] = useState<Election[]>([]);
   const [villages, setVillages] = useState<Village[]>([]);
   const [filter, setFilter] = useState<'all' | 'voted' | 'attended' | 'not_attended'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [groupInfo, setGroupInfo] = useState<{ title: string; group_type: 'delegate' | 'officer' } | null>(null);
   
   // 생성 모달 상태
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -77,6 +81,17 @@ export default function CodesPage() {
   const loadCodes = useCallback(async () => {
     const supabase = createClient();
     
+    // group_id가 있으면 먼저 그룹의 투표 ID들을 가져옴
+    let groupElectionIds: string[] = [];
+    if (groupId) {
+      const { data: groupElections } = await supabase
+        .from('elections')
+        .select('id')
+        .eq('group_id', groupId);
+      
+      groupElectionIds = groupElections?.map(e => e.id) || [];
+    }
+    
     const { data, error } = await supabase
       .from('voter_codes')
       .select(`
@@ -94,6 +109,16 @@ export default function CodesPage() {
 
     let filteredData = data || [];
 
+    // group_id가 있으면 해당 그룹의 투표들에 속한 코드만 필터링
+    if (groupId && groupElectionIds.length > 0) {
+      filteredData = filteredData.filter(code => {
+        // accessible_elections 배열과 그룹의 투표 ID들이 겹치는지 확인
+        return code.accessible_elections.some((electionId: string) => 
+          groupElectionIds.includes(electionId)
+        );
+      });
+    }
+
     // 클라이언트 사이드 필터링
     if (filter === 'voted') {
       // 투표 완료 (is_used = true)
@@ -107,14 +132,22 @@ export default function CodesPage() {
     }
 
     setCodes(filteredData);
-  }, [filter]);
+  }, [filter, groupId]);
 
   const loadElections = useCallback(async () => {
     const supabase = createClient();
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('elections')
       .select('id, title, election_type, status')
       .order('created_at', { ascending: false });
+    
+    // group_id가 있으면 해당 그룹의 투표만 로딩
+    if (groupId) {
+      query = query.eq('group_id', groupId);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error('투표 로딩 오류:', error);
@@ -123,7 +156,7 @@ export default function CodesPage() {
 
     console.log('불러온 투표 목록:', data); // 디버깅용
     setElections(data || []);
-  }, []);
+  }, [groupId]);
 
   const loadVillages = useCallback(async () => {
     const supabase = createClient();
@@ -143,12 +176,28 @@ export default function CodesPage() {
   useEffect(() => {
     const initialize = async () => {
       await checkAuth();
+      
+      // group_id가 있으면 그룹 정보 로딩
+      if (groupId) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('election_groups')
+          .select('title, group_type')
+          .eq('id', groupId)
+          .single();
+        
+        if (data) {
+          setGroupInfo(data);
+          setCodeType(data.group_type);
+        }
+      }
+      
       await loadElections();
       await loadVillages();
     };
 
     initialize();
-  }, [checkAuth, loadElections, loadVillages]);
+  }, [checkAuth, loadElections, loadVillages, groupId]);
 
   useEffect(() => {
     if (!loading) {
@@ -157,7 +206,12 @@ export default function CodesPage() {
   }, [filter, loading, loadCodes]);
 
   const handleGenerateCodes = async () => {
-    if (selectedElections.length === 0) {
+    // 그룹 기반인 경우 해당 그룹의 모든 투표를 자동 선택
+    const electionsToAccess = groupId 
+      ? elections.map(e => e.id) 
+      : selectedElections;
+    
+    if (electionsToAccess.length === 0) {
       alert('접근 가능한 투표를 최소 1개 선택하세요.');
       return;
     }
@@ -188,7 +242,7 @@ export default function CodesPage() {
         } = {
           code: nanoid(10),
           code_type: codeType,
-          accessible_elections: selectedElections,
+          accessible_elections: electionsToAccess,
           is_used: false,
         };
 
@@ -300,24 +354,45 @@ export default function CodesPage() {
                 letterSpacing: '-0.03em'
               }}>
                 참여코드 관리
+                {groupInfo && (
+                  <span className="ml-3 text-xl text-gray-600">
+                    • {groupInfo.title}
+                  </span>
+                )}
               </h1>
               <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                투표 참여코드를 생성하고 관리합니다
+                {groupInfo 
+                  ? `${groupInfo.group_type === 'delegate' ? '총대' : '임원'} 투표 그룹의 참여코드를 생성하고 관리합니다` 
+                  : '투표 참여코드를 생성하고 관리합니다'}
               </p>
             </div>
-            <Link 
-              href="/admin/dashboard"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
-              style={{ 
-                background: 'rgba(0, 0, 0, 0.04)',
-                color: '#1d1d1f'
-              }}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              대시보드
-            </Link>
+            <div className="flex gap-3">
+              {groupId && (
+                <Link 
+                  href={`/admin/election-groups/${groupId}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
+                  style={{ 
+                    background: 'rgba(0, 0, 0, 0.04)',
+                    color: '#1d1d1f'
+                  }}
+                >
+                  ← 그룹으로
+                </Link>
+              )}
+              <Link 
+                href="/admin/dashboard"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.04)',
+                  color: '#1d1d1f'
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                대시보드
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -685,43 +760,80 @@ export default function CodesPage() {
                 <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                   접근 가능한 투표 <span className="text-red-500">*</span>
                 </label>
-                <div className="border-2 rounded-2xl p-4 max-h-60 overflow-y-auto" style={{ borderColor: 'rgba(0, 0, 0, 0.1)' }}>
-                  {elections.filter(e => e.election_type === codeType).length === 0 ? (
-                    <div className="text-sm text-gray-600 text-center py-6" style={{ letterSpacing: '-0.01em' }}>
-                      {codeType === 'delegate' ? '총대 선출' : '임원 선출'} 투표가 없습니다.
-                      <br />
-                      <span className="text-xs text-gray-400 mt-2 block">
-                        (전체 투표: {elections.length}개, {codeType} 타입: {elections.filter(e => e.election_type === codeType).length}개)
-                      </span>
-                      <Link href="/admin/elections/create" className="font-medium hover:underline mt-2 inline-block" style={{ color: 'var(--color-secondary)' }}>
-                        투표를 먼저 생성하세요
-                      </Link>
+                
+                {groupId ? (
+                  // 그룹 기반: 자동으로 그룹의 모든 투표 선택
+                  <div className="border-2 rounded-2xl p-4" style={{ 
+                    borderColor: 'rgba(0, 113, 227, 0.3)',
+                    background: 'rgba(0, 113, 227, 0.05)'
+                  }}>
+                    <div className="flex items-start gap-3 mb-3">
+                      <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-sm text-gray-700" style={{ letterSpacing: '-0.01em' }}>
+                        <p className="font-semibold mb-1">이 그룹의 모든 투표에 자동으로 접근 가능합니다</p>
+                        <p className="text-xs text-gray-600">
+                          생성된 코드로 그룹 내 {elections.length}개 투표 모두 참여 가능합니다
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {elections
-                        .filter(e => e.election_type === codeType)
-                        .map((election) => (
-                          <label
-                            key={election.id}
-                            className="flex items-center p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedElections.includes(election.id)}
-                              onChange={() => toggleElectionSelection(election.id)}
-                              className="mr-3 h-5 w-5 rounded border-gray-300"
-                              style={{ accentColor: 'var(--color-secondary)' }}
-                            />
-                            <span className="text-sm" style={{ letterSpacing: '-0.01em' }}>{election.title}</span>
-                          </label>
+                    {elections.length > 0 && (
+                      <div className="space-y-2 pl-8">
+                        {elections.map((election) => (
+                          <div key={election.id} className="text-sm text-gray-600 flex items-center gap-2">
+                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {election.title}
+                          </div>
                         ))}
-                    </div>
-                  )}
-                </div>
-                <p className="mt-2 text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                  선택한 투표에만 이 코드로 참여할 수 있습니다
-                </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  // 일반 모드: 수동 선택
+                  <div className="border-2 rounded-2xl p-4 max-h-60 overflow-y-auto" style={{ borderColor: 'rgba(0, 0, 0, 0.1)' }}>
+                    {elections.filter(e => e.election_type === codeType).length === 0 ? (
+                      <div className="text-sm text-gray-600 text-center py-6" style={{ letterSpacing: '-0.01em' }}>
+                        {codeType === 'delegate' ? '총대 선출' : '임원 선출'} 투표가 없습니다.
+                        <br />
+                        <span className="text-xs text-gray-400 mt-2 block">
+                          (전체 투표: {elections.length}개, {codeType} 타입: {elections.filter(e => e.election_type === codeType).length}개)
+                        </span>
+                        <Link href="/admin/elections/create" className="font-medium hover:underline mt-2 inline-block" style={{ color: 'var(--color-secondary)' }}>
+                          투표를 먼저 생성하세요
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {elections
+                          .filter(e => e.election_type === codeType)
+                          .map((election) => (
+                            <label
+                              key={election.id}
+                              className="flex items-center p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedElections.includes(election.id)}
+                                onChange={() => toggleElectionSelection(election.id)}
+                                className="mr-3 h-5 w-5 rounded border-gray-300"
+                                style={{ accentColor: 'var(--color-secondary)' }}
+                              />
+                              <span className="text-sm" style={{ letterSpacing: '-0.01em' }}>{election.title}</span>
+                            </label>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {!groupId && (
+                  <p className="mt-2 text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    선택한 투표에만 이 코드로 참여할 수 있습니다
+                  </p>
+                )}
               </div>
             </div>
 

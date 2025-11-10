@@ -377,6 +377,42 @@ export default function ElectionGroupDetailPage({
           </div>
         )}
 
+        {/* 참여코드 관리 - 항상 표시 */}
+        <div className="card-apple p-8 mb-6">
+          <div className="flex gap-4">
+            <div className="text-5xl">🎟️</div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold mb-2" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.02em'
+              }}>
+                참여코드 관리
+              </h3>
+              <p className="text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
+                {elections.length > 0 
+                  ? '이 그룹의 모든 투표에 접근 가능한 참여코드를 생성하고 관리합니다.'
+                  : '투표를 생성한 후 참여코드를 생성할 수 있습니다.'}
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => router.push(`/admin/codes?group_id=${group.id}`)}
+                  disabled={elections.length === 0}
+                  className="btn-apple-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
+                >
+                  참여코드 생성
+                </button>
+                <button 
+                  onClick={() => router.push(`/admin/codes?group_id=${group.id}`)}
+                  className="btn-apple-secondary"
+                >
+                  생성된 코드 보기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 하위 투표 목록 */}
         <div className="card-apple p-8">
           <div className="flex justify-between items-center mb-6">
