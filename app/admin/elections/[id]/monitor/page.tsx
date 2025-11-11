@@ -92,7 +92,7 @@ export default function MonitorPage({
     if (electionError || !electionData) {
       console.error('투표 로딩 오류:', electionError);
       alert('투표를 불러오지 못했습니다.');
-      router.push('/admin/elections');
+      router.push('/admin/dashboard');
       return;
     }
 
@@ -229,12 +229,6 @@ export default function MonitorPage({
                 className="btn-apple-secondary text-sm"
               >
                 📈 결과 보기
-              </Link>
-              <Link 
-                href="/admin/results"
-                className="btn-apple-secondary text-sm"
-              >
-                ← 결과 목록
               </Link>
               <Link 
                 href="/admin/dashboard"

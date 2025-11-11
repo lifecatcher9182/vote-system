@@ -104,7 +104,7 @@ export default function ElectionDetailPage({
     if (electionError) {
       console.error('투표 로딩 오류:', electionError);
       alert('투표를 불러오지 못했습니다.');
-      router.push('/admin/elections');
+      router.push('/admin/dashboard');
       return;
     }
 

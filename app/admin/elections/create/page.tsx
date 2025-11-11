@@ -768,7 +768,7 @@ export default function CreateElectionPage() {
               ) : '투표 생성'}
             </button>
             <Link
-              href="/admin/elections"
+              href="/admin/dashboard"
               className="px-8 py-4 rounded-2xl font-semibold text-lg text-center transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.04)',
