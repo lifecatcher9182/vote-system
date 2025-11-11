@@ -459,15 +459,22 @@ export default function ElectionDetailPage({
 
   const getStatusBadge = (status: Election['status']) => {
     const badges = {
-      waiting: { text: '대기', color: 'bg-gray-100 text-gray-800' },
-      registering: { text: '등록중', color: 'bg-[var(--color-secondary)] bg-opacity-10 text-gray-700' },
-      active: { text: '진행중', color: 'bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)]' },
-      closed: { text: '종료', color: 'bg-red-100 text-red-800' },
+      waiting: { text: '대기', bg: '#f3f4f6', color: '#374151', border: '#d1d5db' },
+      registering: { text: '등록중', bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
+      active: { text: '등록중', bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' }, // active를 registering으로 매핑
+      closed: { text: '종료', bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
     };
 
     const badge = badges[status];
     return (
-      <span className={`px-3 py-1 text-sm font-semibold rounded ${badge.color}`}>
+      <span 
+        className="px-3 py-1.5 text-sm font-semibold rounded-lg"
+        style={{
+          background: badge.bg,
+          color: badge.color,
+          border: `1.5px solid ${badge.border}`
+        }}
+      >
         {badge.text}
       </span>
     );
@@ -723,51 +730,70 @@ export default function ElectionDetailPage({
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-bold mb-4">상태 관리</h2>
                 
-                <div className="mb-4">
+                <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">현재 상태</span>
                     {getStatusBadge(election.status)}
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <button
                     onClick={() => handleStatusChange('waiting')}
                     disabled={election.status === 'waiting'}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed"
+                    style={{
+                      background: election.status === 'waiting' ? '#f3f4f6' : 'white',
+                      border: election.status === 'waiting' ? '2px solid #9ca3af' : '2px solid #e5e7eb',
+                      color: election.status === 'waiting' ? '#374151' : '#6b7280',
+                      opacity: election.status === 'waiting' ? 0.7 : 1
+                    }}
                   >
-                    대기
+                    {election.status === 'waiting' && '✓ '}대기
                   </button>
                   <button
                     onClick={() => handleStatusChange('registering')}
                     disabled={election.status === 'registering'}
-                    className="w-full px-4 py-2 bg-[var(--color-secondary)] bg-opacity-10 text-gray-600 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed"
+                    style={{
+                      background: election.status === 'registering' ? '#dbeafe' : 'white',
+                      border: election.status === 'registering' ? '2px solid #3b82f6' : '2px solid #e5e7eb',
+                      color: election.status === 'registering' ? '#1e40af' : '#6b7280',
+                      opacity: election.status === 'registering' ? 0.7 : 1
+                    }}
                   >
-                    등록중
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange('active')}
-                    disabled={election.status === 'active'}
-                    className="w-full px-4 py-2 bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)] rounded-lg hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                  >
-                    진행중
+                    {election.status === 'registering' && '✓ '}등록중
                   </button>
                   <button
                     onClick={() => handleStatusChange('closed')}
                     disabled={election.status === 'closed'}
-                    className="w-full px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed"
+                    style={{
+                      background: election.status === 'closed' ? '#fee2e2' : 'white',
+                      border: election.status === 'closed' ? '2px solid #ef4444' : '2px solid #e5e7eb',
+                      color: election.status === 'closed' ? '#991b1b' : '#6b7280',
+                      opacity: election.status === 'closed' ? 0.7 : 1
+                    }}
                   >
-                    종료
+                    {election.status === 'closed' && '✓ '}종료
                   </button>
                 </div>
 
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-700">
-                  <p className="font-semibold mb-1">상태 설명</p>
-                  <ul className="space-y-1 list-disc list-inside">
-                    <li><strong>대기</strong>: 투표 준비 중</li>
-                    <li><strong>등록중</strong>: 참여코드 발급 가능</li>
-                    <li><strong>진행중</strong>: 투표 진행 중</li>
-                    <li><strong>종료</strong>: 투표 마감</li>
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-700">
+                  <p className="font-semibold mb-2">상태 설명</p>
+                  <ul className="space-y-1.5 list-none">
+                    <li className="flex items-start gap-2">
+                      <span className="text-gray-400">•</span>
+                      <span><strong>대기</strong>: 투표 준비 중</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gray-400">•</span>
+                      <span><strong>등록중</strong>: 후보자 등록 및 투표 진행 중</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gray-400">•</span>
+                      <span><strong>종료</strong>: 투표 마감</span>
+                    </li>
                   </ul>
                 </div>
               </div>
