@@ -35,6 +35,7 @@ export default function AdminDashboard() {
     totalGroups: 0,
   });
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [activitySort, setActivitySort] = useState<'created_at' | 'updated_at'>('updated_at'); // 최근 활동순이 기본
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -89,12 +90,11 @@ export default function AdminDashboard() {
       totalGroups: groupsCount || 0,
     });
 
-    // 최근 그룹 로드
+    // 최근 그룹 로드 (정렬은 클라이언트에서 처리)
     const { data: groups } = await supabase
       .from('election_groups')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(2);
+      .limit(10);
 
     if (groups) {
       // 최근 활동 생성
@@ -103,19 +103,22 @@ export default function AdminDashboard() {
         title: string;
         group_type: 'delegate' | 'officer';
         created_at: string;
+        updated_at: string;
       }) => ({
         id: group.id,
         type: 'group' as const,
         title: group.title,
         description: group.group_type === 'delegate' ? '총대 투표 그룹' : '임원 투표 그룹',
-        timestamp: group.created_at,
+        timestamp: activitySort === 'created_at' ? group.created_at : group.updated_at,
         icon: group.group_type === 'delegate' ? '🏘️' : '👔',
         color: group.group_type === 'delegate' ? 'bg-blue-500' : 'bg-purple-500'
       }));
 
-      setRecentActivities(activities);
+      // 정렬 후 상위 2개만 표시
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setRecentActivities(activities.slice(0, 2));
     }
-  }, []);
+  }, [activitySort]);
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -432,12 +435,42 @@ export default function AdminDashboard() {
           {/* Right Column - Recent Activity */}
           <div className="flex flex-col h-full">
             <div className="card-apple p-6 flex-1 flex flex-col">
-              <h2 className="text-xl font-bold mb-5" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                📊 최근 활동
-              </h2>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-bold" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.02em'
+                }}>
+                  📊 최근 활동
+                </h2>
+                
+                {/* 정렬 토글 */}
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setActivitySort('updated_at')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      activitySort === 'updated_at' ? 'text-white' : 'text-gray-600'
+                    }`}
+                    style={{ 
+                      background: activitySort === 'updated_at' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)'
+                    }}
+                    title="최근 수정된 순서"
+                  >
+                    🕒
+                  </button>
+                  <button
+                    onClick={() => setActivitySort('created_at')}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      activitySort === 'created_at' ? 'text-white' : 'text-gray-600'
+                    }`}
+                    style={{ 
+                      background: activitySort === 'created_at' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)'
+                    }}
+                    title="생성된 순서"
+                  >
+                    📅
+                  </button>
+                </div>
+              </div>
               
               {recentActivities.length > 0 ? (
                 <div className="space-y-3 flex-1">
