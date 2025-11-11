@@ -23,6 +23,16 @@ export default function ElectionGroupsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState<ElectionGroup[]>([]);
+  
+  // 필터링 및 정렬 상태
+  const [filterType, setFilterType] = useState<'all' | 'delegate' | 'officer'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'waiting' | 'active' | 'closed'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'type' | 'status'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  
+  // 페이징 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 30;
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -100,8 +110,56 @@ export default function ElectionGroupsPage() {
     );
   }
 
-  const delegateGroups = groups.filter(g => g.group_type === 'delegate');
-  const officerGroups = groups.filter(g => g.group_type === 'officer');
+  // 필터링
+  let filteredGroups = groups;
+  
+  if (filterType !== 'all') {
+    filteredGroups = filteredGroups.filter(g => g.group_type === filterType);
+  }
+  
+  if (filterStatus !== 'all') {
+    filteredGroups = filteredGroups.filter(g => g.status === filterStatus);
+  }
+  
+  // 정렬
+  filteredGroups = [...filteredGroups].sort((a, b) => {
+    let comparison = 0;
+    
+    switch (sortBy) {
+      case 'date':
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        break;
+      case 'title':
+        comparison = a.title.localeCompare(b.title, 'ko');
+        break;
+      case 'type':
+        comparison = a.group_type.localeCompare(b.group_type);
+        break;
+      case 'status':
+        const statusOrder = { waiting: 0, active: 1, closed: 2 };
+        comparison = statusOrder[a.status] - statusOrder[b.status];
+        break;
+    }
+    
+    return sortOrder === 'asc' ? comparison : -comparison;
+  });
+  
+  // 페이징
+  const totalPages = Math.ceil(filteredGroups.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedGroups = filteredGroups.slice(startIndex, endIndex);
+  
+  // 정렬 변경 핸들러
+  const handleSort = (newSortBy: typeof sortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('desc');
+    }
+    setCurrentPage(1);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
@@ -145,169 +203,334 @@ export default function ElectionGroupsPage() {
       </header>
 
       <main className="max-w-7xl mx-auto py-12 px-6">
-        {/* 총대 투표 그룹 */}
-        <div className="mb-12">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold" style={{ 
-              color: '#1d1d1f',
-              letterSpacing: '-0.02em'
-            }}>
-              📋 총대 투표 그룹
-            </h2>
-          </div>
-
-          {delegateGroups.length === 0 ? (
-            <div className="card-apple p-12 text-center">
-              <div className="text-6xl mb-4">📋</div>
-              <p className="text-gray-600 mb-6">총대 투표 그룹이 없습니다.</p>
-              <Link 
-                href="/admin/election-groups/create"
-                className="btn-apple-primary inline-block"
-              >
-                첫 그룹 만들기
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {delegateGroups.map((group) => (
-                <Link
-                  key={group.id}
-                  href={`/admin/election-groups/${group.id}`}
-                  className="card-apple p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        {/* 필터 및 정렬 */}
+        <div className="card-apple p-6 mb-6">
+          <div className="flex flex-wrap gap-4 items-center">
+            {/* 투표 유형 필터 */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">유형:</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setFilterType('all'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterType === 'all' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="text-4xl">📋</div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      group.status === 'active' ? 'bg-green-100 text-green-700' :
-                      group.status === 'closed' ? 'bg-gray-100 text-gray-600' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {group.status === 'active' ? '진행중' :
-                       group.status === 'closed' ? '종료' : '대기'}
-                    </span>
-                  </div>
-
-                  <h3 className="text-xl font-semibold mb-2" style={{ 
-                    color: '#1d1d1f',
-                    letterSpacing: '-0.02em'
-                  }}>
-                    {group.title}
-                  </h3>
-
-                  {group.description && (
-                    <p className="text-sm text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
-                      {group.description}
-                    </p>
-                  )}
-
-                  <div className="flex gap-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-semibold" style={{ color: 'var(--color-secondary)' }}>
-                        {group.election_count}
-                      </span>
-                      <span className="ml-1">개 투표</span>
-                    </div>
-                    {group.active_elections! > 0 && (
-                      <div>
-                        <span className="font-semibold text-green-600">
-                          {group.active_elections}
-                        </span>
-                        <span className="ml-1">개 진행중</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500">
-                      {new Date(group.created_at).toLocaleDateString('ko-KR')}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                  전체
+                </button>
+                <button
+                  onClick={() => { setFilterType('delegate'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterType === 'delegate' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  📋 총대
+                </button>
+                <button
+                  onClick={() => { setFilterType('officer'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterType === 'officer' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  👔 임원
+                </button>
+              </div>
             </div>
-          )}
+
+            {/* 상태 필터 */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">상태:</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setFilterStatus('all'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterStatus === 'all' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  전체
+                </button>
+                <button
+                  onClick={() => { setFilterStatus('waiting'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterStatus === 'waiting' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  대기
+                </button>
+                <button
+                  onClick={() => { setFilterStatus('active'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterStatus === 'active' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  진행중
+                </button>
+                <button
+                  onClick={() => { setFilterStatus('closed'); setCurrentPage(1); }}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterStatus === 'closed' 
+                      ? 'bg-[var(--color-secondary)] text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  종료
+                </button>
+              </div>
+            </div>
+
+            {/* 검색 결과 표시 */}
+            <div className="ml-auto text-sm text-gray-600">
+              총 <span className="font-semibold text-[var(--color-secondary)]">{filteredGroups.length}</span>개 그룹
+            </div>
+          </div>
         </div>
 
-        {/* 임원 투표 그룹 */}
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold" style={{ 
-              color: '#1d1d1f',
-              letterSpacing: '-0.02em'
-            }}>
-              👔 임원 투표 그룹
-            </h2>
-          </div>
-
-          {officerGroups.length === 0 ? (
-            <div className="card-apple p-12 text-center">
-              <div className="text-6xl mb-4">👔</div>
-              <p className="text-gray-600 mb-6">임원 투표 그룹이 없습니다.</p>
+        {/* 테이블 */}
+        <div className="card-apple overflow-hidden">
+          {filteredGroups.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="text-6xl mb-4">
+                {filterType === 'delegate' ? '📋' : filterType === 'officer' ? '👔' : '📁'}
+              </div>
+              <p className="text-gray-600 mb-6">
+                {filterType === 'all' && filterStatus === 'all' 
+                  ? '투표 그룹이 없습니다.' 
+                  : '조건에 맞는 그룹이 없습니다.'}
+              </p>
               <Link 
                 href="/admin/election-groups/create"
                 className="btn-apple-primary inline-block"
               >
-                첫 그룹 만들기
+                + 새 그룹 만들기
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {officerGroups.map((group) => (
-                <Link
-                  key={group.id}
-                  href={`/admin/election-groups/${group.id}`}
-                  className="card-apple p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="text-4xl">👔</div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      group.status === 'active' ? 'bg-green-100 text-green-700' :
-                      group.status === 'closed' ? 'bg-gray-100 text-gray-600' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {group.status === 'active' ? '진행중' :
-                       group.status === 'closed' ? '종료' : '대기'}
-                    </span>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                      <th 
+                        className="text-left py-4 px-6 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('type')}
+                      >
+                        <div className="flex items-center gap-2">
+                          유형
+                          {sortBy === 'type' && (
+                            <span className="text-[var(--color-secondary)]">
+                              {sortOrder === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="text-left py-4 px-6 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('title')}
+                      >
+                        <div className="flex items-center gap-2">
+                          제목
+                          {sortBy === 'title' && (
+                            <span className="text-[var(--color-secondary)]">
+                              {sortOrder === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
+                        설명
+                      </th>
+                      <th 
+                        className="text-center py-4 px-6 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          상태
+                          {sortBy === 'status' && (
+                            <span className="text-[var(--color-secondary)]">
+                              {sortOrder === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
+                        투표 수
+                      </th>
+                      <th 
+                        className="text-center py-4 px-6 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('date')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          생성일
+                          {sortBy === 'date' && (
+                            <span className="text-[var(--color-secondary)]">
+                              {sortOrder === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
+                        관리
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {paginatedGroups.map((group) => (
+                      <tr 
+                        key={group.id}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => router.push(`/admin/election-groups/${group.id}`)}
+                      >
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">
+                              {group.group_type === 'delegate' ? '📋' : '👔'}
+                            </span>
+                            <span className="text-sm font-medium text-gray-700">
+                              {group.group_type === 'delegate' ? '총대' : '임원'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="font-semibold text-gray-900" style={{ letterSpacing: '-0.01em' }}>
+                            {group.title}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-600 max-w-md truncate">
+                            {group.description || '-'}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <span 
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-block"
+                            style={{
+                              background: group.status === 'active' ? '#dcfce7' : 
+                                          group.status === 'closed' ? '#f3f4f6' : '#fef3c7',
+                              color: group.status === 'active' ? '#166534' : 
+                                     group.status === 'closed' ? '#374151' : '#854d0e',
+                              border: `1.5px solid ${
+                                group.status === 'active' ? '#86efac' : 
+                                group.status === 'closed' ? '#d1d5db' : '#fde047'
+                              }`
+                            }}
+                          >
+                            {group.status === 'active' ? '진행중' :
+                             group.status === 'closed' ? '종료' : '대기'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <div className="flex flex-col gap-1">
+                            <div className="text-sm">
+                              <span className="font-semibold text-[var(--color-secondary)]">
+                                {group.election_count}
+                              </span>
+                              <span className="text-gray-600 text-xs ml-1">개</span>
+                            </div>
+                            {group.active_elections! > 0 && (
+                              <div className="text-xs text-green-600">
+                                ({group.active_elections}개 진행중)
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6 text-center text-sm text-gray-600">
+                          {new Date(group.created_at).toLocaleDateString('ko-KR', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit'
+                          })}
+                        </td>
+                        <td className="py-4 px-6 text-center">
+                          <Link
+                            href={`/admin/election-groups/${group.id}`}
+                            className="inline-flex items-center px-3 py-1.5 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            관리 →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 페이징 */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 py-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: currentPage === 1 ? '#f3f4f6' : 'white',
+                      border: '1px solid #e5e7eb',
+                      color: '#374151'
+                    }}
+                  >
+                    ← 이전
+                  </button>
+
+                  <div className="flex gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        // 현재 페이지 주변만 표시
+                        return page === 1 || page === totalPages || 
+                               (page >= currentPage - 2 && page <= currentPage + 2);
+                      })
+                      .map((page, index, arr) => {
+                        // ... 표시
+                        if (index > 0 && page - arr[index - 1] > 1) {
+                          return (
+                            <span key={`ellipsis-${page}`} className="px-2 py-2 text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                            style={{
+                              background: currentPage === page ? 'var(--color-secondary)' : 'white',
+                              border: currentPage === page ? 'none' : '1px solid #e5e7eb',
+                              color: currentPage === page ? 'white' : '#374151'
+                            }}
+                          >
+                            {page}
+                          </button>
+                        );
+                      })}
                   </div>
 
-                  <h3 className="text-xl font-semibold mb-2" style={{ 
-                    color: '#1d1d1f',
-                    letterSpacing: '-0.02em'
-                  }}>
-                    {group.title}
-                  </h3>
-
-                  {group.description && (
-                    <p className="text-sm text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
-                      {group.description}
-                    </p>
-                  )}
-
-                  <div className="flex gap-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-semibold" style={{ color: 'var(--color-secondary)' }}>
-                        {group.election_count}
-                      </span>
-                      <span className="ml-1">개 투표</span>
-                    </div>
-                    {group.active_elections! > 0 && (
-                      <div>
-                        <span className="font-semibold text-green-600">
-                          {group.active_elections}
-                        </span>
-                        <span className="ml-1">개 진행중</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <p className="text-xs text-gray-500">
-                      {new Date(group.created_at).toLocaleDateString('ko-KR')}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: currentPage === totalPages ? '#f3f4f6' : 'white',
+                      border: '1px solid #e5e7eb',
+                      color: '#374151'
+                    }}
+                  >
+                    다음 →
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
