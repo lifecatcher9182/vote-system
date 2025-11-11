@@ -49,6 +49,15 @@ export default function ElectionDetailPage({
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
   const [codeQuantity, setCodeQuantity] = useState(10);
   const [generatingCodes, setGeneratingCodes] = useState(false);
+  const [voterCodes, setVoterCodes] = useState<Array<{
+    id: string;
+    code: string;
+    is_used: boolean;
+    village_id: string | null;
+    created_at: string;
+    first_login_at: string | null;
+    has_voted: boolean;
+  }>>([]);
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -107,6 +116,43 @@ export default function ElectionDetailPage({
     setCandidates(candidatesData || []);
   }, [resolvedParams.id, router]);
 
+  const loadVoterCodes = useCallback(async () => {
+    if (!election) return;
+    
+    const supabase = createClient();
+    
+    // voter_codes와 votes를 조인해서 투표 여부 확인
+    const { data: codesData, error } = await supabase
+      .from('voter_codes')
+      .select('id, code, is_used, village_id, created_at, first_login_at')
+      .contains('accessible_elections', [election.id])
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('코드 로딩 오류:', error);
+      return;
+    }
+
+    // 각 코드에 대해 투표 여부 확인
+    const codesWithVoteStatus = await Promise.all(
+      (codesData || []).map(async (code) => {
+        const { data: voteData } = await supabase
+          .from('votes')
+          .select('id')
+          .eq('voter_code_id', code.id)
+          .eq('election_id', election.id)
+          .single();
+
+        return {
+          ...code,
+          has_voted: !!voteData
+        };
+      })
+    );
+
+    setVoterCodes(codesWithVoteStatus);
+  }, [election]);
+
   useEffect(() => {
     const initialize = async () => {
       await checkAuth();
@@ -115,6 +161,12 @@ export default function ElectionDetailPage({
 
     initialize();
   }, [checkAuth, loadElection]);
+
+  useEffect(() => {
+    if (activeTab === 'codes' && election) {
+      loadVoterCodes();
+    }
+  }, [activeTab, election, loadVoterCodes]);
 
   const handleStatusChange = async (newStatus: Election['status']) => {
     if (!election) return;
@@ -216,13 +268,33 @@ export default function ElectionDetailPage({
       alert(`${codeQuantity}개의 코드가 생성되었습니다.`);
       setShowCreateCodeModal(false);
       setCodeQuantity(10);
-      // 코드 목록 새로고침은 나중에 구현
+      loadVoterCodes();
     } catch (error) {
       console.error('코드 생성 오류:', error);
       alert('코드 생성 중 오류가 발생했습니다.');
     } finally {
       setGeneratingCodes(false);
     }
+  };
+
+  const handleDeleteCode = async (codeId: string) => {
+    if (!confirm('정말 이 코드를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('voter_codes')
+      .delete()
+      .eq('id', codeId);
+
+    if (error) {
+      console.error('코드 삭제 오류:', error);
+      alert('코드 삭제에 실패했습니다.');
+      return;
+    }
+
+    loadVoterCodes();
   };
 
   const getStatusBadge = (status: Election['status']) => {
@@ -523,31 +595,6 @@ export default function ElectionDetailPage({
                   </ul>
                 </div>
               </div>
-
-              {/* 빠른 작업 */}
-              <div className="bg-white shadow rounded-lg p-6">
-                <h2 className="text-xl font-bold mb-4">빠른 작업</h2>
-                <div className="space-y-2">
-                  <Link
-                    href={`/admin/elections/${election.id}/monitor`}
-                    className="block w-full px-4 py-2 bg-[var(--color-secondary)] bg-opacity-10 text-[var(--color-secondary)] rounded-lg hover:bg-purple-200 text-center text-sm font-medium"
-                  >
-                    📊 실시간 모니터링
-                  </Link>
-                  <Link
-                    href={`/admin/elections/${election.id}/results`}
-                    className="block w-full px-4 py-2 bg-[var(--color-secondary)] bg-opacity-10 text-[var(--color-secondary)] rounded-lg hover:bg-indigo-200 text-center text-sm font-medium"
-                  >
-                    📈 결과 보기
-                  </Link>
-                  <Link
-                    href="/admin/codes"
-                    className="block w-full px-4 py-2 bg-[var(--color-primary)] bg-opacity-10 text-[var(--color-primary)] rounded-lg hover:bg-green-200 text-center text-sm font-medium"
-                  >
-                    🎟️ 참여코드 관리
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
           )}
@@ -633,28 +680,114 @@ export default function ElectionDetailPage({
                   이 투표({election.title})의 참여 코드를 생성하고 관리합니다.
                 </p>
                 
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
-                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                    </svg>
+                {voterCodes.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
+                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                      생성된 코드가 없습니다
+                    </h3>
+                    <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>
+                      &ldquo;코드 생성&rdquo; 버튼을 눌러 참여 코드를 만드세요
+                    </p>
+                    <button
+                      onClick={() => setShowCreateCodeModal(true)}
+                      className="btn-apple-primary inline-flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      코드 생성
+                    </button>
                   </div>
-                  <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
-                    생성된 코드가 없습니다
-                  </h3>
-                  <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>
-                    &ldquo;코드 생성&rdquo; 버튼을 눌러 참여 코드를 만드세요
-                  </p>
-                  <button
-                    onClick={() => setShowCreateCodeModal(true)}
-                    className="btn-apple-primary inline-flex items-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    코드 생성
-                  </button>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-sm text-gray-600">
+                        총 {voterCodes.length}개의 코드
+                        {codeFilter !== 'all' && ` (${
+                          voterCodes.filter(code => {
+                            if (codeFilter === 'voted') return code.has_voted;
+                            if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
+                            if (codeFilter === 'not_attended') return !code.first_login_at;
+                            return true;
+                          }).length
+                        }개 표시)`}
+                      </p>
+                    </div>
+                    
+                    <div className="grid gap-3">
+                      {voterCodes
+                        .filter(code => {
+                          if (codeFilter === 'all') return true;
+                          if (codeFilter === 'voted') return code.has_voted;
+                          if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
+                          if (codeFilter === 'not_attended') return !code.first_login_at;
+                          return true;
+                        })
+                        .map((code) => (
+                        <div 
+                          key={code.id}
+                          className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
+                          style={{ background: 'white' }}
+                        >
+                          <div className="flex items-center gap-4">
+                            <code className="px-3 py-1.5 rounded-lg text-lg font-mono font-semibold" style={{ 
+                              background: 'rgba(0, 0, 0, 0.04)',
+                              color: '#1d1d1f',
+                              letterSpacing: '0.05em'
+                            }}>
+                              {code.code}
+                            </code>
+                            <div className="flex gap-2">
+                              {code.has_voted ? (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                  투표 완료
+                                </span>
+                              ) : code.first_login_at ? (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                  참석 확인
+                                </span>
+                              ) : (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                  미참석
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(code.code);
+                                alert('코드가 복사되었습니다.');
+                              }}
+                              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                              style={{ 
+                                background: 'rgba(0, 0, 0, 0.04)',
+                                color: '#1d1d1f'
+                              }}
+                            >
+                              복사
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCode(code.id)}
+                              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                              style={{ 
+                                background: 'rgba(239, 68, 68, 0.1)',
+                                color: '#dc2626'
+                              }}
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 코드 생성 모달 */}

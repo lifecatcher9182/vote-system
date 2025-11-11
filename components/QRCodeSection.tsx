@@ -42,126 +42,6 @@ export default function QRCodeSection({ electionId, title }: QRCodeSectionProps)
     img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
   };
 
-  // 인쇄용 페이지 열기
-  const printQR = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const svg = qrRef.current?.querySelector('svg');
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>투표 QR 코드 - ${title}</title>
-        <style>
-          @media print {
-            @page { margin: 2cm; }
-            body { margin: 0; }
-          }
-          body {
-            font-family: system-ui, -apple-system, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 2rem;
-          }
-          .container {
-            text-align: center;
-            border: 2px solid #e5e7eb;
-            padding: 2rem;
-            border-radius: 1rem;
-            background: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          }
-          h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #1f2937;
-          }
-          .subtitle {
-            font-size: 1.25rem;
-            color: #6b7280;
-            margin-bottom: 2rem;
-          }
-          .qr-container {
-            display: inline-block;
-            padding: 1.5rem;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-          }
-          .url {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-top: 1rem;
-            word-break: break-all;
-          }
-          .instructions {
-            margin-top: 2rem;
-            padding: 1rem;
-            background: #f3f4f6;
-            border-radius: 0.5rem;
-            text-align: left;
-          }
-          .instructions h2 {
-            font-size: 1rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: #1f2937;
-          }
-          .instructions ol {
-            margin-left: 1.5rem;
-            color: #4b5563;
-          }
-          .instructions li {
-            margin-bottom: 0.25rem;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>📱 청년국 투표</h1>
-          <div class="subtitle">${title}</div>
-          
-          <div class="qr-container">
-            ${svgData}
-          </div>
-          
-          <div class="url">
-            <strong>투표 URL:</strong><br>
-            ${voteUrl}
-          </div>
-
-          <div class="instructions">
-            <h2>📋 투표 방법</h2>
-            <ol>
-              <li>스마트폰 카메라로 QR 코드를 스캔하세요</li>
-              <li>참여코드를 입력하세요</li>
-              <li>후보자를 선택하고 투표하세요</li>
-            </ol>
-          </div>
-        </div>
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 500);
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
-
   // URL 복사
   const copyUrl = () => {
     navigator.clipboard.writeText(voteUrl);
@@ -209,12 +89,6 @@ export default function QRCodeSection({ electionId, title }: QRCodeSectionProps)
             className="w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 text-sm font-medium"
           >
             💾 PNG로 다운로드
-          </button>
-          <button
-            onClick={printQR}
-            className="w-full px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 text-sm font-medium"
-          >
-            🖨️ 인쇄하기
           </button>
         </div>
 

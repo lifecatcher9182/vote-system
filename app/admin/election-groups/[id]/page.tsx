@@ -58,8 +58,7 @@ export default function ElectionGroupDetailPage({
     { name: '회장', selections: 1 },
     { name: '총무', selections: 1 },
     { name: '회계', selections: 1 },
-    { name: '서기', selections: 1 },
-    { name: '감사', selections: 2 }
+    { name: '서기', selections: 1 }
   ]);
 
   const checkAuth = useCallback(async () => {
@@ -506,38 +505,7 @@ export default function ElectionGroupDetailPage({
           </div>
         </div>
 
-        {/* 일괄 투표 생성 안내 */}
-        {elections.length === 0 && (
-          <div className="card-apple p-8 mb-6" style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%)',
-            border: '2px solid rgba(59, 130, 246, 0.2)'
-          }}>
-            <div className="flex gap-4">
-              <div className="text-5xl">🚀</div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold mb-2" style={{ 
-                  color: '#1d1d1f',
-                  letterSpacing: '-0.02em'
-                }}>
-                  일괄 투표 생성
-                </h3>
-                <p className="text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
-                  {group.group_type === 'delegate' 
-                    ? '활성화된 모든 마을에 대해 총대 투표를 자동으로 생성할 수 있습니다.'
-                    : '선택한 직책들에 대해 임원 투표를 자동으로 생성할 수 있습니다.'}
-                </p>
-                <button 
-                  onClick={() => setShowBatchModal(true)}
-                  className="btn-apple-primary"
-                >
-                  {group.group_type === 'delegate' ? '총대 투표 일괄 생성' : '임원 투표 일괄 생성'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 참여코드 관리 - 항상 표시 */}
+        {/* 참여코드 관리 */}
         <div className="card-apple p-8 mb-6">
           <div className="flex gap-4">
             <div className="text-5xl">🎟️</div>
@@ -576,33 +544,44 @@ export default function ElectionGroupDetailPage({
         {/* 하위 투표 목록 */}
         <div className="card-apple p-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold" style={{ 
-              color: '#1d1d1f',
-              letterSpacing: '-0.02em'
-            }}>
-              하위 투표 목록 ({elections.length})
-            </h2>
-            <div className="flex gap-2">
+            <div>
+              <h2 className="text-xl font-semibold" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.02em'
+              }}>
+                하위 투표 목록 ({elections.length})
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                {group.group_type === 'delegate' ? '마을별 총대 선출 투표' : '직책별 임원 선출 투표'}
+              </p>
+            </div>
+            <div className="flex gap-3">
               <button
                 onClick={() => setShowBatchModal(true)}
-                className="btn-apple-primary text-sm"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all text-sm font-medium shadow-sm hover:shadow-md flex items-center gap-2"
               >
-                ⚡ 일괄 생성
+                <span>⚡</span>
+                <span>일괄 생성</span>
               </button>
               <Link
                 href={`/admin/elections/create?group_id=${group.id}`}
-                className="btn-apple-secondary text-sm"
+                className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all text-sm font-medium flex items-center gap-2"
               >
-                + 개별 추가
+                <span>+</span>
+                <span>개별 추가</span>
               </Link>
             </div>
           </div>
 
           {elections.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
-              <p className="text-gray-500">아직 투표가 없습니다.</p>
-              <p className="text-sm text-gray-400 mt-2">상단의 일괄 생성 버튼을 사용하거나 개별 추가 버튼을 눌러보세요.</p>
+            <div className="text-center py-16">
+              <div className="text-7xl mb-4">📋</div>
+              <p className="text-lg text-gray-600 mb-2">아직 투표가 없습니다</p>
+              <p className="text-sm text-gray-400">
+                {group.group_type === 'delegate' 
+                  ? '일괄 생성으로 모든 마을의 투표를 한번에 만들거나, 개별 추가로 하나씩 만들 수 있습니다.'
+                  : '일괄 생성으로 여러 직책의 투표를 한번에 만들거나, 개별 추가로 하나씩 만들 수 있습니다.'}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -740,21 +719,33 @@ export default function ElectionGroupDetailPage({
                         <p className="font-medium text-gray-900">{position.name}</p>
                         <p className="text-xs text-gray-500">{position.name} 선출 투표가 생성됩니다</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm text-gray-600">선발 인원:</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="10"
-                          value={position.selections}
-                          onChange={(e) => {
-                            const newPositions = [...positions];
-                            newPositions[index].selections = parseInt(e.target.value) || 0;
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-gray-600">선발 인원:</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            value={position.selections}
+                            onChange={(e) => {
+                              const newPositions = [...positions];
+                              newPositions[index].selections = parseInt(e.target.value) || 0;
+                              setPositions(newPositions);
+                            }}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center"
+                          />
+                          <span className="text-sm text-gray-600">명</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const newPositions = positions.filter((_, i) => i !== index);
                             setPositions(newPositions);
                           }}
-                          className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center"
-                        />
-                        <span className="text-sm text-gray-600">명</span>
+                          className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="직책 삭제"
+                        >
+                          삭제
+                        </button>
                       </div>
                     </div>
                   ))}
