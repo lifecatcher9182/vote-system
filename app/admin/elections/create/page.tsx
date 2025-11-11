@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import { WinningCriteria } from '@/lib/database.types';
@@ -21,9 +21,13 @@ interface Candidate {
 
 export default function CreateElectionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const groupId = searchParams?.get('group_id');
+  
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [villages, setVillages] = useState<Village[]>([]);
+  const [groupInfo, setGroupInfo] = useState<{ title: string; group_type: 'delegate' | 'officer' } | null>(null);
 
   // 폼 상태
   const [title, setTitle] = useState('');
@@ -80,11 +84,27 @@ export default function CreateElectionPage() {
   useEffect(() => {
     const initialize = async () => {
       await checkAuth();
+      
+      // group_id가 있으면 그룹 정보 로딩 및 타입 자동 설정
+      if (groupId) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('election_groups')
+          .select('title, group_type')
+          .eq('id', groupId)
+          .single();
+        
+        if (data) {
+          setGroupInfo(data);
+          setElectionType(data.group_type); // 그룹 타입에 맞게 자동 설정
+        }
+      }
+      
       await loadVillages();
     };
 
     initialize();
-  }, [checkAuth, loadVillages]);
+  }, [checkAuth, loadVillages, groupId]);
 
   const addCandidate = () => {
     const newId = (candidates.length + 1).toString();
@@ -162,6 +182,7 @@ export default function CreateElectionPage() {
         winning_criteria: WinningCriteria;
         village_id?: string;
         position?: string;
+        group_id?: string;
       } = {
         title: title.trim(),
         election_type: electionType,
@@ -173,6 +194,11 @@ export default function CreateElectionPage() {
           criteriaType === 'absolute_majority' ? { type: 'absolute_majority' } :
           { type: 'percentage', percentage, base },
       };
+
+      // group_id가 있으면 추가
+      if (groupId) {
+        electionData.group_id = groupId;
+      }
 
       if (electionType === 'delegate') {
         electionData.village_id = villageId;
@@ -214,7 +240,13 @@ export default function CreateElectionPage() {
       }
 
       alert('투표가 성공적으로 생성되었습니다!');
-      router.push('/admin/dashboard');
+      
+      // 그룹에서 들어왔으면 그룹 페이지로, 아니면 대시보드로
+      if (groupId) {
+        router.push(`/admin/election-groups/${groupId}`);
+      } else {
+        router.push('/admin/dashboard');
+      }
     } catch (error) {
       console.error('투표 생성 중 오류:', error);
       alert('투표 생성 중 오류가 발생했습니다.');
@@ -259,13 +291,18 @@ export default function CreateElectionPage() {
                 letterSpacing: '-0.03em'
               }}>
                 새 투표 생성
+                {groupInfo && (
+                  <span className="ml-3 text-xl text-gray-600">
+                    • {groupInfo.title}
+                  </span>
+                )}
               </h1>
               <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
                 투표 정보와 후보자를 입력하세요
               </p>
             </div>
             <Link 
-              href="/admin/elections"
+              href={groupId ? `/admin/election-groups/${groupId}` : '/admin/election-groups'}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.04)',
@@ -275,7 +312,7 @@ export default function CreateElectionPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              투표 목록
+              {groupId ? '그룹으로' : '투표 그룹'}
             </Link>
           </div>
         </div>
@@ -314,52 +351,88 @@ export default function CreateElectionPage() {
               letterSpacing: '-0.02em'
             }}>
               투표 유형
+              {groupInfo && (
+                <span className="ml-3 text-sm font-normal text-gray-600">
+                  ({groupInfo.title})
+                </span>
+              )}
             </h2>
             
-            <div className="grid grid-cols-2 gap-5">
-              <button
-                type="button"
-                onClick={() => setElectionType('delegate')}
-                className="p-8 rounded-2xl font-semibold text-lg transition-all duration-200"
-                style={{
-                  border: electionType === 'delegate' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                  background: electionType === 'delegate' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                  color: electionType === 'delegate' ? 'var(--color-secondary)' : '#1d1d1f',
-                  letterSpacing: '-0.01em',
-                  transform: electionType === 'delegate' ? 'scale(1.02)' : 'scale(1)'
-                }}
-              >
-                <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{
-                  background: electionType === 'delegate' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)'
-                }}>
-                  <svg className="w-7 h-7" style={{ color: electionType === 'delegate' ? 'white' : '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  </svg>
+            {groupInfo ? (
+              // 그룹에서 들어온 경우: 타입 고정, 변경 불가
+              <div className="p-6 rounded-2xl" style={{
+                background: 'rgba(0, 113, 227, 0.05)',
+                border: '2px solid rgba(0, 113, 227, 0.2)'
+              }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{
+                    background: 'var(--color-secondary)'
+                  }}>
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {groupInfo.group_type === 'delegate' ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      )}
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-lg" style={{ color: 'var(--color-secondary)' }}>
+                      {groupInfo.group_type === 'delegate' ? '총대 선출' : '임원 선출'}
+                    </p>
+                    <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                      이 그룹의 투표 유형이 자동으로 선택되었습니다
+                    </p>
+                  </div>
                 </div>
-                총대 선출
-              </button>
-              <button
-                type="button"
-                onClick={() => setElectionType('officer')}
-                className="p-8 rounded-2xl font-semibold text-lg transition-all duration-200"
-                style={{
-                  border: electionType === 'officer' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                  background: electionType === 'officer' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                  color: electionType === 'officer' ? 'var(--color-secondary)' : '#1d1d1f',
-                  letterSpacing: '-0.01em',
-                  transform: electionType === 'officer' ? 'scale(1.02)' : 'scale(1)'
-                }}
-              >
-                <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{
-                  background: electionType === 'officer' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)'
-                }}>
-                  <svg className="w-7 h-7" style={{ color: electionType === 'officer' ? 'white' : '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                임원 선출
-              </button>
-            </div>
+              </div>
+            ) : (
+              // 일반 생성: 타입 선택 가능
+              <div className="grid grid-cols-2 gap-5">
+                <button
+                  type="button"
+                  onClick={() => setElectionType('delegate')}
+                  className="p-8 rounded-2xl font-semibold text-lg transition-all duration-200"
+                  style={{
+                    border: electionType === 'delegate' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
+                    background: electionType === 'delegate' ? 'rgba(0, 113, 227, 0.05)' : 'white',
+                    color: electionType === 'delegate' ? 'var(--color-secondary)' : '#1d1d1f',
+                    letterSpacing: '-0.01em',
+                    transform: electionType === 'delegate' ? 'scale(1.02)' : 'scale(1)'
+                  }}
+                >
+                  <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{
+                    background: electionType === 'delegate' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)'
+                  }}>
+                    <svg className="w-7 h-7" style={{ color: electionType === 'delegate' ? 'white' : '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                  </div>
+                  총대 선출
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setElectionType('officer')}
+                  className="p-8 rounded-2xl font-semibold text-lg transition-all duration-200"
+                  style={{
+                    border: electionType === 'officer' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
+                    background: electionType === 'officer' ? 'rgba(0, 113, 227, 0.05)' : 'white',
+                    color: electionType === 'officer' ? 'var(--color-secondary)' : '#1d1d1f',
+                    letterSpacing: '-0.01em',
+                    transform: electionType === 'officer' ? 'scale(1.02)' : 'scale(1)'
+                  }}
+                >
+                  <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{
+                    background: electionType === 'officer' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.05)'
+                  }}>
+                    <svg className="w-7 h-7" style={{ color: electionType === 'officer' ? 'white' : '#6b7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  임원 선출
+                </button>
+              </div>
+            )}
 
             {/* 마을/직책 선택 */}
             <div className="mt-6">

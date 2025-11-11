@@ -9,9 +9,19 @@ import SystemLogo from '@/components/SystemLogo';
 
 interface Stats {
   totalElections: number;
-  totalCodes: number;
   totalVillages: number;
   activeElections: number;
+  totalGroups: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: 'group' | 'election' | 'vote';
+  title: string;
+  description: string;
+  timestamp: string;
+  icon: string;
+  color: string;
 }
 
 export default function AdminDashboard() {
@@ -20,10 +30,11 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats>({
     totalElections: 0,
-    totalCodes: 0,
     totalVillages: 0,
     activeElections: 0,
+    totalGroups: 0,
   });
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -61,9 +72,9 @@ export default function AdminDashboard() {
       .select('*', { count: 'exact', head: true })
       .in('status', ['active', 'registering']);
 
-    // 참여코드 수
-    const { count: codesCount } = await supabase
-      .from('voter_codes')
+    // 투표 그룹 수
+    const { count: groupsCount } = await supabase
+      .from('election_groups')
       .select('*', { count: 'exact', head: true });
 
     // 마을 수
@@ -73,10 +84,37 @@ export default function AdminDashboard() {
 
     setStats({
       totalElections: electionsCount || 0,
-      totalCodes: codesCount || 0,
       totalVillages: villagesCount || 0,
       activeElections: activeCount || 0,
+      totalGroups: groupsCount || 0,
     });
+
+    // 최근 그룹 로드
+    const { data: groups } = await supabase
+      .from('election_groups')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(2);
+
+    if (groups) {
+      // 최근 활동 생성
+      const activities: RecentActivity[] = groups.map((group: {
+        id: string;
+        title: string;
+        group_type: 'delegate' | 'officer';
+        created_at: string;
+      }) => ({
+        id: group.id,
+        type: 'group' as const,
+        title: group.title,
+        description: group.group_type === 'delegate' ? '총대 투표 그룹' : '임원 투표 그룹',
+        timestamp: group.created_at,
+        icon: group.group_type === 'delegate' ? '🏘️' : '👔',
+        color: group.group_type === 'delegate' ? 'bg-blue-500' : 'bg-purple-500'
+      }));
+
+      setRecentActivities(activities);
+    }
   }, []);
 
   useEffect(() => {
@@ -147,198 +185,334 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-12 px-6">
-        {/* Stats Grid - Apple Card Style */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* 전체 투표 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
-                <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-            </div>
+      <main className="max-w-7xl mx-auto py-8 px-6">
+        {/* Hero Welcome Card */}
+        <div className="card-apple p-8 mb-8">
+          <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1" style={{ letterSpacing: '-0.01em' }}>전체 투표</p>
-              <p className="text-4xl font-semibold" style={{ 
+              <h2 className="text-3xl font-bold mb-2" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.03em'
+              }}>
+                환영합니다! 👋
+              </h2>
+              <p className="text-lg text-gray-600 mb-6" style={{ letterSpacing: '-0.01em' }}>
+                청년국 투표 관리 시스템에서 투표 그룹과 선거를 손쉽게 관리하세요.
+              </p>
+              <button
+                onClick={() => router.push('/admin/election-groups/create')}
+                className="px-8 py-3 rounded-full font-semibold text-white transition-all duration-200 hover:scale-105 shadow-lg"
+                style={{ 
+                  background: 'var(--color-secondary)',
+                }}
+              >
+                ✨ 새 투표 그룹 만들기
+              </button>
+            </div>
+            <div className="hidden lg:block text-8xl">
+              🗳️
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid - Modern Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* 전체 투표 */}
+          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+            background: '#ffffff',
+            border: '2px solid rgba(59, 130, 246, 0.3)'
+          }}>
+            <div className="absolute -right-4 -top-4 text-6xl opacity-5">📋</div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
+                  <span className="text-2xl">📋</span>
+                </div>
+                <p className="text-sm font-bold" style={{ 
+                  color: 'rgb(37, 99, 235)',
+                  letterSpacing: '-0.01em' 
+                }}>전체 투표</p>
+              </div>
+              <p className="text-5xl font-bold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.totalElections}
               </p>
+              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>생성된 총 투표 수</p>
             </div>
           </div>
 
           {/* 활성 투표 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.1)' }}>
-                <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+            background: '#ffffff',
+            border: '2px solid rgba(34, 197, 94, 0.3)'
+          }}>
+            <div className="absolute -right-4 -top-4 text-6xl opacity-5">✅</div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(34, 197, 94, 0.15)' }}>
+                  <span className="text-2xl">✅</span>
+                </div>
+                <p className="text-sm font-bold" style={{ 
+                  color: 'rgb(22, 163, 74)',
+                  letterSpacing: '-0.01em' 
+                }}>활성 투표</p>
               </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1" style={{ letterSpacing: '-0.01em' }}>활성 투표</p>
-              <p className="text-4xl font-semibold" style={{ 
+              <p className="text-5xl font-bold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.activeElections}
               </p>
+              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>현재 진행 중인 투표</p>
             </div>
           </div>
 
-          {/* 참여코드 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(168, 85, 247, 0.1)' }}>
-                <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
+          {/* 투표 그룹 */}
+          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+            background: '#ffffff',
+            border: '2px solid rgba(168, 85, 247, 0.3)'
+          }}>
+            <div className="absolute -right-4 -top-4 text-6xl opacity-5">📁</div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(168, 85, 247, 0.15)' }}>
+                  <span className="text-2xl">📁</span>
+                </div>
+                <p className="text-sm font-bold" style={{ 
+                  color: 'rgb(147, 51, 234)',
+                  letterSpacing: '-0.01em' 
+                }}>투표 그룹</p>
               </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1" style={{ letterSpacing: '-0.01em' }}>참여코드</p>
-              <p className="text-4xl font-semibold" style={{ 
+              <p className="text-5xl font-bold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.03em'
               }}>
-                {stats.totalCodes}
+                {stats.totalGroups || 0}
               </p>
+              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>총대/임원 투표 그룹</p>
             </div>
           </div>
 
           {/* 마을 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(249, 115, 22, 0.1)' }}>
-                <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                </svg>
+          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+            background: '#ffffff',
+            border: '2px solid rgba(249, 115, 22, 0.3)'
+          }}>
+            <div className="absolute -right-4 -top-4 text-6xl opacity-5">🏘️</div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
+                  <span className="text-2xl">🏘️</span>
+                </div>
+                <p className="text-sm font-bold" style={{ 
+                  color: 'rgb(234, 88, 12)',
+                  letterSpacing: '-0.01em' 
+                }}>마을</p>
               </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1" style={{ letterSpacing: '-0.01em' }}>마을</p>
-              <p className="text-4xl font-semibold" style={{ 
+              <p className="text-5xl font-bold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.totalVillages}
               </p>
+              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>등록된 마을 수</p>
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-6" style={{ 
-            color: '#1d1d1f',
-            letterSpacing: '-0.02em'
-          }}>
-            빠른 작업
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <button 
-              onClick={() => router.push('/admin/elections')}
-              className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
-            >
-              <div className="text-4xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold mb-2" style={{ 
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+          {/* Left Column - Quick Actions */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="card-apple p-6">
+              <h2 className="text-2xl font-bold mb-6" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
-                투표 목록
-              </h3>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                생성된 모든 투표를 확인하고 관리합니다
-              </p>
-            </button>
+                🚀 빠른 작업
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button 
+                  onClick={() => router.push('/admin/election-groups/create')}
+                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.02)',
+                    border: '2px solid rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-sm" style={{ 
+                    background: 'var(--color-secondary)'
+                  }}>
+                    <span className="text-2xl">✨</span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2" style={{ 
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    새 투표 그룹
+                  </h3>
+                  <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    총대/임원 그룹 생성
+                  </p>
+                </button>
 
-            <button 
-              onClick={() => router.push('/admin/election-groups/create')}
-              className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
-            >
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--color-secondary)' }}>
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
+                <button 
+                  onClick={() => router.push('/admin/election-groups')}
+                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.02)',
+                    border: '2px solid rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(168, 85, 247, 0.15)' }}>
+                    <span className="text-2xl">📁</span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2" style={{ 
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    투표 그룹 관리
+                  </h3>
+                  <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    그룹 보기 및 편집
+                  </p>
+                </button>
+
+                <button 
+                  onClick={() => router.push('/admin/villages')}
+                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.02)',
+                    border: '2px solid rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
+                    <span className="text-2xl">🏘️</span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2" style={{ 
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    마을 관리
+                  </h3>
+                  <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    총대 선출 마을 정보
+                  </p>
+                </button>
+
+                <button 
+                  onClick={() => router.push('/admin/settings')}
+                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.02)',
+                    border: '2px solid rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: 'rgba(100, 116, 139, 0.15)' }}>
+                    <span className="text-2xl">⚙️</span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2" style={{ 
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.02em'
+                  }}>
+                    시스템 설정
+                  </h3>
+                  <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    관리자 및 환경설정
+                  </p>
+                </button>
               </div>
-              <h3 className="text-xl font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                새 투표 그룹 생성
-              </h3>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                총대 또는 임원 투표 그룹을 생성하고 일괄 관리합니다
-              </p>
-            </button>
+            </div>
+          </div>
 
-            <button 
-              onClick={() => router.push('/admin/election-groups')}
-              className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
-            >
-              <div className="text-4xl mb-4">📁</div>
-              <h3 className="text-xl font-semibold mb-2" style={{ 
+          {/* Right Column - Recent Activity */}
+          <div className="flex flex-col h-full">
+            <div className="card-apple p-6 flex-1 flex flex-col">
+              <h2 className="text-xl font-bold mb-5" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
-                투표 그룹
-              </h3>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                총대/임원 투표 그룹을 관리합니다
-              </p>
-            </button>
+                📊 최근 활동
+              </h2>
+              
+              {recentActivities.length > 0 ? (
+                <div className="space-y-3 flex-1">
+                  {recentActivities.map((activity) => (
+                    <button
+                      key={activity.id}
+                      onClick={() => router.push(`/admin/election-groups/${activity.id}`)}
+                      className="w-full p-3.5 rounded-xl text-left transition-all duration-200 hover:scale-105"
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.02)',
+                        border: '1px solid rgba(0, 0, 0, 0.05)'
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 ${activity.color}`}>
+                          {activity.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-sm mb-0.5 truncate" style={{ color: '#1d1d1f' }}>
+                            {activity.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 mb-0.5">
+                            {activity.description}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(activity.timestamp).toLocaleDateString('ko-KR', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 flex-1 flex flex-col items-center justify-center">
+                  <div className="text-4xl mb-2">📭</div>
+                  <p className="text-sm text-gray-500">
+                    아직 활동이 없습니다
+                  </p>
+                </div>
+              )}
 
-            <button 
-              onClick={() => router.push('/admin/villages')}
-              className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
-            >
-              <div className="text-4xl mb-4">🏘️</div>
-              <h3 className="text-xl font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                마을 관리
-              </h3>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                총대 선출을 위한 마을 정보를 관리합니다
-              </p>
-            </button>
-
-            <button 
-              onClick={() => router.push('/admin/results')}
-              className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
-            >
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                결과 보기
-              </h3>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                완료된 투표의 결과를 확인합니다
-              </p>
-            </button>
-
-            <button 
-              onClick={() => router.push('/admin/settings')}
-              className="group card-apple p-8 text-left transition-all duration-200 hover:scale-105"
-            >
-              <div className="text-4xl mb-4">⚙️</div>
-              <h3 className="text-xl font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                시스템 설정
-              </h3>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                관리자 및 시스템 설정을 관리합니다
-              </p>
-            </button>
+              {/* Quick Info - 같은 카드 안에 */}
+              <div className="mt-5 pt-5 border-t" style={{ borderColor: 'rgba(0, 0, 0, 0.06)' }}>
+                <h2 className="text-lg font-bold mb-3" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.02em'
+                }}>
+                  💡 빠른 정보
+                </h2>
+                
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
+                    <span className="text-sm text-gray-600">활성화율</span>
+                    <span className="text-sm font-bold" style={{ color: '#1d1d1f' }}>
+                      {stats.totalElections > 0 
+                        ? Math.round((stats.activeElections / stats.totalElections) * 100) 
+                        : 0}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
+                    <span className="text-sm text-gray-600">그룹당 평균 투표</span>
+                    <span className="text-sm font-bold" style={{ color: '#1d1d1f' }}>
+                      {stats.totalGroups > 0 
+                        ? (stats.totalElections / stats.totalGroups).toFixed(1)
+                        : 0}개
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
