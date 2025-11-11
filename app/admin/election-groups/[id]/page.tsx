@@ -130,6 +130,29 @@ export default function ElectionGroupDetailPage({
     setElections(electionsWithCounts);
   }, [resolvedParams.id]);
 
+  const handleDeleteElection = async (electionId: string, electionTitle: string) => {
+    if (!confirm(`"${electionTitle}" 투표를 삭제하시겠습니까?\n\n관련된 후보자, 투표 데이터도 모두 삭제됩니다.`)) {
+      return;
+    }
+
+    const supabase = createClient();
+
+    // 투표 삭제 (cascade로 후보자, 투표 데이터도 자동 삭제됨)
+    const { error } = await supabase
+      .from('elections')
+      .delete()
+      .eq('id', electionId);
+
+    if (error) {
+      console.error('투표 삭제 오류:', error);
+      alert('투표 삭제에 실패했습니다.');
+      return;
+    }
+
+    alert('투표가 삭제되었습니다.');
+    loadElections(); // 목록 새로고침
+  };
+
   const handleStatusChange = async (newStatus: 'waiting' | 'active' | 'closed') => {
     if (!group) return;
 
@@ -490,12 +513,21 @@ export default function ElectionGroupDetailPage({
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Link
-                          href={`/admin/elections/${election.id}`}
-                          className="text-sm text-[var(--color-secondary)] hover:underline"
-                        >
-                          관리
-                        </Link>
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            href={`/admin/elections/${election.id}`}
+                            className="text-sm text-[var(--color-secondary)] hover:underline"
+                          >
+                            관리
+                          </Link>
+                          <button
+                            onClick={() => handleDeleteElection(election.id, election.title)}
+                            className="text-sm text-red-600 hover:underline"
+                            title="투표 삭제"
+                          >
+                            삭제
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

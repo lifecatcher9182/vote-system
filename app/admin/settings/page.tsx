@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
-import MainVoteQRCode from '@/components/MainVoteQRCode';
 import LogoUploadSettings from '@/components/LogoUploadSettings';
 import ColorThemeSettings from '@/components/ColorThemeSettings';
 import SystemLogo from '@/components/SystemLogo';
@@ -464,11 +463,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* 오른쪽 섹션 - QR 코드 및 추가 설정 */}
+          {/* 오른쪽 섹션 - 시스템 정보 */}
           <div className="space-y-8">
-            {/* QR 코드 다운로드 */}
-            <MainVoteQRCode />
-
             {/* 시스템 정보 */}
             <div className="card-apple p-6">
               <h2 className="text-lg font-semibold mb-5" style={{ 
@@ -514,18 +510,18 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    QR 코드
-                  </p>
-                  <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>
-                    메인 투표 페이지 QR 코드를 다운로드하여 주보나 포스터에 사용하세요
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                     시스템 이름
                   </p>
                   <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>
                     투표자 페이지 상단에 표시될 시스템 이름을 설정하세요
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    투표 QR 코드
+                  </p>
+                  <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>
+                    각 투표의 QR 코드는 투표 모니터 페이지에서 다운로드할 수 있습니다
                   </p>
                 </div>
               </div>

@@ -678,42 +678,63 @@ export default function CodesPage() {
               <div>
                 <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                   코드 유형 <span className="text-red-500">*</span>
+                  {groupId && groupInfo && (
+                    <span className="ml-2 text-xs font-normal text-gray-500">
+                      ({groupInfo.group_type === 'delegate' ? '총대' : '임원'} 그룹)
+                    </span>
+                  )}
                 </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCodeType('delegate');
-                      setSelectedElections([]);
-                    }}
-                    className="p-6 rounded-2xl font-semibold transition-all duration-200"
-                    style={{
-                      border: codeType === 'delegate' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                      background: codeType === 'delegate' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                      color: codeType === 'delegate' ? 'var(--color-secondary)' : '#1d1d1f',
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    총대 코드
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCodeType('officer');
-                      setSelectedVillage('');
-                      setSelectedElections([]);
-                    }}
-                    className="p-6 rounded-2xl font-semibold transition-all duration-200"
-                    style={{
-                      border: codeType === 'officer' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                      background: codeType === 'officer' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                      color: codeType === 'officer' ? 'var(--color-secondary)' : '#1d1d1f',
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    임원 코드
-                  </button>
-                </div>
+                {groupId ? (
+                  // 그룹 모드: 선택된 타입만 표시 (비활성화)
+                  <div className="p-6 rounded-2xl font-semibold" style={{
+                    border: '3px solid var(--color-secondary)',
+                    background: 'rgba(0, 113, 227, 0.05)',
+                    color: 'var(--color-secondary)',
+                    letterSpacing: '-0.01em'
+                  }}>
+                    {codeType === 'delegate' ? '총대 코드' : '임원 코드'}
+                    <p className="text-xs font-normal text-gray-600 mt-2">
+                      그룹 유형에 따라 자동으로 선택되었습니다
+                    </p>
+                  </div>
+                ) : (
+                  // 일반 모드: 선택 가능
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCodeType('delegate');
+                        setSelectedElections([]);
+                      }}
+                      className="p-6 rounded-2xl font-semibold transition-all duration-200"
+                      style={{
+                        border: codeType === 'delegate' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
+                        background: codeType === 'delegate' ? 'rgba(0, 113, 227, 0.05)' : 'white',
+                        color: codeType === 'delegate' ? 'var(--color-secondary)' : '#1d1d1f',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      총대 코드
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCodeType('officer');
+                        setSelectedVillage('');
+                        setSelectedElections([]);
+                      }}
+                      className="p-6 rounded-2xl font-semibold transition-all duration-200"
+                      style={{
+                        border: codeType === 'officer' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
+                        background: codeType === 'officer' ? 'rgba(0, 113, 227, 0.05)' : 'white',
+                        color: codeType === 'officer' ? 'var(--color-secondary)' : '#1d1d1f',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      임원 코드
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 생성 개수 */}

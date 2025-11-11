@@ -284,20 +284,12 @@ export default function ElectionDetailPage({
             }}>
               투표 관리
             </h1>
-            <div className="flex gap-3">
-              <Link 
-                href="/admin/elections"
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
-              >
-                ← 투표 목록
-              </Link>
-              <Link 
-                href="/admin/dashboard"
-                className="text-[var(--color-secondary)] hover:opacity-80 px-4 py-2"
-              >
-                🏠 대시보드
-              </Link>
-            </div>
+            <Link 
+              href="/admin/dashboard"
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              ← 대시보드
+            </Link>
           </div>
         </div>
       </header>
