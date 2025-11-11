@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
+import { nanoid } from 'nanoid';
 
 interface ElectionGroup {
   id: string;
@@ -60,6 +61,21 @@ export default function ElectionGroupDetailPage({
     { name: '회계', selections: 1 },
     { name: '서기', selections: 1 }
   ]);
+
+  // 코드 관리 상태 (임원 투표용)
+  const [codeFilter, setCodeFilter] = useState<'all' | 'voted' | 'attended' | 'not_attended'>('all');
+  const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
+  const [codeQuantity, setCodeQuantity] = useState(10);
+  const [generatingCodes, setGeneratingCodes] = useState(false);
+  const [voterCodes, setVoterCodes] = useState<Array<{
+    id: string;
+    code: string;
+    is_used: boolean;
+    village_id: string | null;
+    created_at: string;
+    first_login_at: string | null;
+    vote_count: number; // 이 코드로 투표한 투표 수
+  }>>([]);
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -195,6 +211,126 @@ export default function ElectionGroupDetailPage({
     const activeVillages = (data || []).filter(v => v.is_active !== false);
     setVillages(activeVillages.map(v => ({ ...v, selections: 1 })));
   }, []);
+
+  // 임원 투표용 코드 로딩
+  const loadVoterCodes = useCallback(async () => {
+    if (!group || group.group_type !== 'officer') return;
+    
+    const supabase = createClient();
+    
+    // 이 그룹의 모든 투표 ID 가져오기
+    const electionIds = elections.map(e => e.id);
+    if (electionIds.length === 0) return;
+    
+    // voter_codes에서 이 그룹의 투표에 접근 가능한 코드 조회
+    const { data: codesData, error } = await supabase
+      .from('voter_codes')
+      .select('id, code, is_used, village_id, created_at, first_login_at')
+      .eq('code_type', 'officer')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('코드 로딩 오류:', error);
+      return;
+    }
+
+    // accessible_elections에 이 그룹의 투표 ID가 포함된 코드만 필터링
+    const filteredCodes = (codesData || []).filter(code => {
+      // accessible_elections가 배열 형태로 저장되어 있는지 확인
+      const accessibleElections = (code as { accessible_elections?: string[] }).accessible_elections || [];
+      return electionIds.some(id => accessibleElections.includes(id));
+    });
+
+    // 각 코드에 대해 투표 수 계산
+    const codesWithVoteCount = await Promise.all(
+      filteredCodes.map(async (code) => {
+        const { data: voteData } = await supabase
+          .from('votes')
+          .select('id')
+          .eq('voter_code_id', code.id)
+          .in('election_id', electionIds);
+
+        return {
+          ...code,
+          vote_count: voteData?.length || 0
+        };
+      })
+    );
+
+    setVoterCodes(codesWithVoteCount);
+  }, [group, elections]);
+
+  // 임원 투표용 코드 생성
+  const handleGenerateCodes = async () => {
+    if (!group || group.group_type !== 'officer') return;
+    if (codeQuantity < 1 || codeQuantity > 100) {
+      alert('코드는 1-100개까지 생성 가능합니다.');
+      return;
+    }
+
+    if (elections.length === 0) {
+      alert('투표를 먼저 생성해주세요.');
+      return;
+    }
+
+    setGeneratingCodes(true);
+
+    try {
+      const supabase = createClient();
+      const electionIds = elections.map(e => e.id);
+      const newCodes = [];
+
+      for (let i = 0; i < codeQuantity; i++) {
+        newCodes.push({
+          code: nanoid(10).toUpperCase(),
+          code_type: 'officer' as const,
+          accessible_elections: electionIds,
+          is_used: false,
+        });
+      }
+
+      const { error } = await supabase
+        .from('voter_codes')
+        .insert(newCodes);
+
+      if (error) {
+        console.error('코드 생성 오류:', error);
+        alert('코드 생성에 실패했습니다.');
+        return;
+      }
+
+      alert(`${codeQuantity}개의 코드가 생성되었습니다.`);
+      setShowCreateCodeModal(false);
+      setCodeQuantity(10);
+      loadVoterCodes();
+    } catch (error) {
+      console.error('코드 생성 오류:', error);
+      alert('코드 생성 중 오류가 발생했습니다.');
+    } finally {
+      setGeneratingCodes(false);
+    }
+  };
+
+  // 코드 삭제
+  const handleDeleteCode = async (codeId: string) => {
+    if (!confirm('정말 이 코드를 삭제하시겠습니까?')) {
+      return;
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('voter_codes')
+      .delete()
+      .eq('id', codeId);
+
+    if (error) {
+      console.error('코드 삭제 오류:', error);
+      alert('코드 삭제에 실패했습니다.');
+      return;
+    }
+
+    loadVoterCodes();
+  };
 
   const handleBatchCreate = async () => {
     if (!group) return;
@@ -353,6 +489,13 @@ export default function ElectionGroupDetailPage({
     initialize();
   }, [checkAuth, loadGroup, loadElections, loadVillages]);
 
+  // 임원 투표인 경우 코드 로드
+  useEffect(() => {
+    if (group && group.group_type === 'officer' && elections.length > 0) {
+      loadVoterCodes();
+    }
+  }, [group, elections, loadVoterCodes]);
+
   if (loading || !group) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -506,40 +649,211 @@ export default function ElectionGroupDetailPage({
         </div>
 
         {/* 참여코드 관리 */}
-        <div className="card-apple p-8 mb-6">
-          <div className="flex gap-4">
-            <div className="text-5xl">🎟️</div>
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                참여코드 관리
-              </h3>
-              <p className="text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
-                {elections.length > 0 
-                  ? '이 그룹의 모든 투표에 접근 가능한 참여코드를 생성하고 관리합니다.'
-                  : '투표를 생성한 후 참여코드를 생성할 수 있습니다.'}
-              </p>
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => router.push(`/admin/codes?group_id=${group.id}`)}
-                  disabled={elections.length === 0}
-                  className="btn-apple-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
+        {group.group_type === 'officer' ? (
+          // 임원 투표 - 이 페이지에서 직접 관리
+          <div className="card-apple p-8 mb-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-2" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.02em'
+                }}>
+                  🎟️ 참여코드 관리
+                </h3>
+                <p className="text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
+                  {elections.length > 0 
+                    ? '하나의 코드로 모든 임원 투표에 참여할 수 있습니다.'
+                    : '투표를 생성한 후 참여코드를 생성할 수 있습니다.'}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateCodeModal(true)}
+                disabled={elections.length === 0}
+                className="btn-apple-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                코드 생성
+              </button>
+            </div>
+
+            {/* 필터 버튼 */}
+            {voterCodes.length > 0 && (
+              <div className="flex gap-3 mb-4">
+                <button
+                  onClick={() => setCodeFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                    codeFilter === 'all' ? 'text-white' : 'text-gray-700'
+                  }`}
+                  style={{ 
+                    background: codeFilter === 'all' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    letterSpacing: '-0.01em'
+                  }}
                 >
-                  참여코드 생성
+                  전체
                 </button>
-                <button 
-                  onClick={() => router.push(`/admin/codes?group_id=${group.id}`)}
-                  className="btn-apple-secondary"
+                <button
+                  onClick={() => setCodeFilter('voted')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                    codeFilter === 'voted' ? 'text-white' : 'text-gray-700'
+                  }`}
+                  style={{ 
+                    background: codeFilter === 'voted' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    letterSpacing: '-0.01em'
+                  }}
                 >
-                  생성된 코드 보기
+                  투표 완료
                 </button>
+                <button
+                  onClick={() => setCodeFilter('attended')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                    codeFilter === 'attended' ? 'text-white' : 'text-gray-700'
+                  }`}
+                  style={{ 
+                    background: codeFilter === 'attended' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  참석 확인
+                </button>
+                <button
+                  onClick={() => setCodeFilter('not_attended')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                    codeFilter === 'not_attended' ? 'text-white' : 'text-gray-700'
+                  }`}
+                  style={{ 
+                    background: codeFilter === 'not_attended' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  미참석
+                </button>
+              </div>
+            )}
+
+            {/* 코드 목록 */}
+            {voterCodes.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
+                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                  생성된 코드가 없습니다
+                </h3>
+                <p className="text-gray-500" style={{ letterSpacing: '-0.01em' }}>
+                  &ldquo;코드 생성&rdquo; 버튼을 눌러 참여 코드를 만드세요
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 mb-3">
+                  총 {voterCodes.length}개의 코드
+                  {codeFilter !== 'all' && ` (${
+                    voterCodes.filter(code => {
+                      if (codeFilter === 'voted') return code.vote_count > 0;
+                      if (codeFilter === 'attended') return code.first_login_at && code.vote_count === 0;
+                      if (codeFilter === 'not_attended') return !code.first_login_at;
+                      return true;
+                    }).length
+                  }개 표시)`}
+                </p>
+                
+                <div className="grid gap-3">
+                  {voterCodes
+                    .filter(code => {
+                      if (codeFilter === 'all') return true;
+                      if (codeFilter === 'voted') return code.vote_count > 0;
+                      if (codeFilter === 'attended') return code.first_login_at && code.vote_count === 0;
+                      if (codeFilter === 'not_attended') return !code.first_login_at;
+                      return true;
+                    })
+                    .map((code) => (
+                    <div 
+                      key={code.id}
+                      className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
+                      style={{ background: 'white' }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <code className="px-3 py-1.5 rounded-lg text-lg font-mono font-semibold" style={{ 
+                          background: 'rgba(0, 0, 0, 0.04)',
+                          color: '#1d1d1f',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {code.code}
+                        </code>
+                        <div className="flex gap-2">
+                          {code.vote_count > 0 ? (
+                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                              투표 완료 ({code.vote_count}/{elections.length})
+                            </span>
+                          ) : code.first_login_at ? (
+                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                              참석 확인
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                              미참석
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(code.code);
+                            alert('코드가 복사되었습니다.');
+                          }}
+                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                          style={{ 
+                            background: 'rgba(0, 0, 0, 0.04)',
+                            color: '#1d1d1f'
+                          }}
+                        >
+                          복사
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCode(code.id)}
+                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                          style={{ 
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#dc2626'
+                          }}
+                        >
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          // 총대 투표 - 기존 방식 (각 투표별 코드 관리)
+          <div className="card-apple p-8 mb-6">
+            <div className="flex gap-4">
+              <div className="text-5xl">🎟️</div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold mb-2" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.02em'
+                }}>
+                  참여코드 관리
+                </h3>
+                <p className="text-gray-600 mb-4" style={{ letterSpacing: '-0.01em' }}>
+                  총대 투표는 마을별로 다른 코드를 사용합니다. 각 투표 페이지에서 코드를 관리하세요.
+                </p>
+                <p className="text-sm text-blue-600" style={{ letterSpacing: '-0.01em' }}>
+                  💡 하위 투표 목록에서 각 마을의 투표를 클릭하여 코드를 생성하고 관리할 수 있습니다.
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 하위 투표 목록 */}
         <div className="card-apple p-8">
@@ -661,6 +975,64 @@ export default function ElectionGroupDetailPage({
           )}
         </div>
       </main>
+
+      {/* 코드 생성 모달 (임원 투표용) */}
+      {showCreateCodeModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+          <div className="card-apple max-w-md w-full p-8 animate-[scale-in_0.2s_ease-out]">
+            <h2 className="text-2xl font-semibold mb-6" style={{ 
+              color: '#1d1d1f',
+              letterSpacing: '-0.02em'
+            }}>
+              참여 코드 생성
+            </h2>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                생성 개수
+              </label>
+              <input
+                type="number"
+                value={codeQuantity}
+                onChange={(e) => setCodeQuantity(parseInt(e.target.value) || 1)}
+                min="1"
+                max="100"
+                className="input-apple"
+                placeholder="생성할 코드 개수"
+              />
+              <p className="mt-2 text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                1-100개까지 생성 가능합니다. 생성된 코드는 이 그룹의 모든 투표에 접근할 수 있습니다.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreateCodeModal(false);
+                  setCodeQuantity(10);
+                }}
+                className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.04)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
+                disabled={generatingCodes}
+              >
+                취소
+              </button>
+              <button
+                onClick={handleGenerateCodes}
+                className="btn-apple-primary flex-1"
+                disabled={generatingCodes}
+              >
+                {generatingCodes ? '생성 중...' : '생성'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 일괄 생성 모달 */}
       {showBatchModal && (

@@ -526,18 +526,21 @@ export default function ElectionDetailPage({
               >
                 📋 개요
               </button>
-              <button
-                onClick={() => setActiveTab('codes')}
-                className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                  activeTab === 'codes' ? 'text-white' : 'text-gray-700'
-                }`}
-                style={{
-                  background: activeTab === 'codes' ? 'var(--color-secondary)' : 'transparent',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                🎫 코드 관리
-              </button>
+              {/* 총대 투표만 코드 관리 탭 표시 */}
+              {election.election_type === 'delegate' && (
+                <button
+                  onClick={() => setActiveTab('codes')}
+                  className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                    activeTab === 'codes' ? 'text-white' : 'text-gray-700'
+                  }`}
+                  style={{
+                    background: activeTab === 'codes' ? 'var(--color-secondary)' : 'transparent',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  🎫 코드 관리
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('results')}
                 className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
@@ -691,6 +694,31 @@ export default function ElectionDetailPage({
                 electionId={election.id}
                 title={election.title}
               />
+
+              {/* 임원 투표 코드 관리 안내 */}
+              {election.election_type === 'officer' && (
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                  <div className="flex gap-3">
+                    <div className="text-2xl">ℹ️</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-blue-900 mb-2">참여 코드 관리</h3>
+                      <p className="text-sm text-blue-800 mb-3">
+                        임원 투표는 하나의 코드로 모든 임원 투표에 참여할 수 있도록 설계되었습니다.
+                      </p>
+                      <p className="text-sm text-blue-800 mb-3">
+                        참여 코드는 <strong>투표 그룹 페이지</strong>에서 생성하고 관리하세요.
+                      </p>
+                      <Link
+                        href={`/admin/election-groups`}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        <span>→</span>
+                        <span>투표 그룹으로 이동</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-bold mb-4">상태 관리</h2>
