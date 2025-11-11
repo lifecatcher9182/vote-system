@@ -59,6 +59,17 @@ export default function ElectionDetailPage({
     has_voted: boolean;
   }>>([]);
 
+  // 모니터링 상태
+  const [monitorStats, setMonitorStats] = useState({
+    totalCodes: 0,
+    usedCodes: 0,
+    unusedCodes: 0,
+    participationRate: 0,
+    totalVotes: 0,
+  });
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -141,7 +152,7 @@ export default function ElectionDetailPage({
           .select('id')
           .eq('voter_code_id', code.id)
           .eq('election_id', election.id)
-          .single();
+          .maybeSingle();
 
         return {
           ...code,
@@ -296,6 +307,59 @@ export default function ElectionDetailPage({
 
     loadVoterCodes();
   };
+
+  const loadMonitorStats = useCallback(async () => {
+    if (!election) return;
+    
+    const supabase = createClient();
+    
+    // 이 투표에 접근 가능한 코드 통계
+    const { data: codes } = await supabase
+      .from('voter_codes')
+      .select('*')
+      .contains('accessible_elections', [election.id]);
+
+    const totalCodes = codes?.length || 0;
+    const usedCodes = codes?.filter(c => c.is_used).length || 0;
+    const unusedCodes = totalCodes - usedCodes;
+    const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
+
+    // 총 투표 수
+    const { data: votes } = await supabase
+      .from('votes')
+      .select('id')
+      .eq('election_id', election.id);
+
+    setMonitorStats({
+      totalCodes,
+      usedCodes,
+      unusedCodes,
+      participationRate,
+      totalVotes: votes?.length || 0,
+    });
+
+    setLastUpdate(new Date());
+  }, [election]);
+
+  // 모니터링 탭 활성화 시 데이터 로드
+  useEffect(() => {
+    if (activeTab === 'monitor' && election) {
+      loadMonitorStats();
+      loadElection(); // 후보자 득표수 새로고침
+    }
+  }, [activeTab, election, loadMonitorStats, loadElection]);
+
+  // 모니터링 탭에서 자동 새로고침 (10초마다)
+  useEffect(() => {
+    if (activeTab !== 'monitor' || !autoRefresh) return;
+
+    const interval = setInterval(() => {
+      loadMonitorStats();
+      loadElection();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [activeTab, autoRefresh, loadMonitorStats, loadElection]);
 
   const getStatusBadge = (status: Election['status']) => {
     const badges = {
@@ -852,21 +916,198 @@ export default function ElectionDetailPage({
 
           {/* 모니터링 탭 */}
           {activeTab === 'monitor' && (
-            <div className="card-apple p-8">
-              <h2 className="text-2xl font-semibold mb-6" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.02em'
-              }}>
-                실시간 모니터링
-              </h2>
-              <div className="text-center py-12">
-                <Link 
-                  href={`/admin/elections/${election.id}/monitor`}
-                  className="btn-apple-primary inline-flex items-center gap-2 text-lg"
-                >
-                  📊 모니터링 페이지로 이동
-                </Link>
+            <div className="space-y-6">
+              {/* 자동 새로고침 컨트롤 */}
+              <div className="card-apple p-6 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setAutoRefresh(!autoRefresh)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      autoRefresh ? 'bg-[var(--color-secondary)]' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        autoRefresh ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-sm font-medium" style={{ color: '#1d1d1f' }}>
+                    자동 새로고침 {autoRefresh ? 'ON' : 'OFF'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      loadMonitorStats();
+                      loadElection();
+                    }}
+                    className="px-4 py-2 rounded-xl text-sm font-medium transition-all"
+                    style={{
+                      background: 'var(--color-secondary)',
+                      color: 'white'
+                    }}
+                  >
+                    🔄 지금 새로고침
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  마지막 업데이트: {lastUpdate.toLocaleTimeString('ko-KR')}
+                </p>
               </div>
+
+              {/* 통계 카드 */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="card-apple p-6">
+                  <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>전체 코드</div>
+                  <div className="text-3xl font-bold" style={{ color: '#1d1d1f' }}>{monitorStats.totalCodes}</div>
+                </div>
+
+                <div className="card-apple p-6">
+                  <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표 완료</div>
+                  <div className="text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>{monitorStats.usedCodes}</div>
+                </div>
+
+                <div className="card-apple p-6">
+                  <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미투표</div>
+                  <div className="text-3xl font-bold text-gray-500">{monitorStats.unusedCodes}</div>
+                </div>
+
+                <div className="card-apple p-6">
+                  <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표율</div>
+                  <div className="text-3xl font-bold" style={{ color: 'var(--color-secondary)' }}>
+                    {monitorStats.participationRate.toFixed(1)}%
+                  </div>
+                </div>
+
+                <div className="card-apple p-6">
+                  <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>총 투표 수</div>
+                  <div className="text-3xl font-bold" style={{ color: 'var(--color-secondary)' }}>{monitorStats.totalVotes}</div>
+                </div>
+              </div>
+
+              {/* 현재 당선권 */}
+              {candidates.length > 0 && candidates.some(c => c.vote_count > 0) && (
+                <div className="card-apple p-6" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' }}>
+                  <div className="mb-4">
+                    <div className="text-sm font-semibold mb-1" style={{ color: '#92400e' }}>
+                      {election.max_selections === 1 ? '🏆 현재 1위' : `🏆 현재 당선권 (상위 ${election.max_selections}명)`}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {candidates
+                      .filter(c => c.vote_count > 0)
+                      .slice(0, election.max_selections)
+                      .map((winner, index) => {
+                        let actualRank = 1;
+                        for (let i = 0; i < index; i++) {
+                          if (candidates[i].vote_count > winner.vote_count) {
+                            actualRank++;
+                          }
+                        }
+                        
+                        return (
+                          <div key={winner.id} className="p-4 rounded-xl" style={{ background: 'white', boxShadow: 'var(--shadow-sm)' }}>
+                            <div className="flex items-center gap-3">
+                              <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
+                                actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                                actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                                actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                                'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                              }`}>
+                                {actualRank}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-bold" style={{ color: '#1d1d1f' }}>{winner.name}</div>
+                                <div className="text-sm text-gray-600">{winner.vote_count}표</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* 득표 현황 */}
+              <div className="card-apple p-8">
+                <h2 className="text-xl font-bold mb-6" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                  후보자별 득표 현황
+                </h2>
+                
+                {candidates.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    후보자가 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {candidates.map((candidate, index) => {
+                      const maxVotes = Math.max(...candidates.map(c => c.vote_count), 1);
+                      const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
+                      const votePercentage = monitorStats.totalVotes > 0 ? (candidate.vote_count / monitorStats.totalVotes) * 100 : 0;
+                      
+                      let actualRank = 1;
+                      for (let i = 0; i < index; i++) {
+                        if (candidates[i].vote_count > candidate.vote_count) {
+                          actualRank++;
+                        }
+                      }
+
+                      return (
+                        <div key={candidate.id} className="border border-gray-200 rounded-xl p-4" style={{ background: 'white' }}>
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                                actualRank === 1 ? 'bg-yellow-100 text-yellow-700' :
+                                actualRank === 2 ? 'bg-gray-200 text-gray-700' :
+                                actualRank === 3 ? 'bg-orange-100 text-orange-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {actualRank}
+                              </div>
+                              <div>
+                                <div className="font-semibold" style={{ color: '#1d1d1f' }}>{candidate.name}</div>
+                                <div className="text-xs text-gray-500">
+                                  득표율: {votePercentage.toFixed(1)}%
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold" style={{ color: '#1d1d1f' }}>
+                                {candidate.vote_count}
+                              </div>
+                              <div className="text-xs text-gray-500">표</div>
+                            </div>
+                          </div>
+                          
+                          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 ${
+                                actualRank === 1 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
+                                actualRank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                                actualRank === 3 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                                'bg-blue-500'
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 안내 메시지 */}
+              {election.status !== 'active' && (
+                <div className="card-apple p-4" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                  <p className="text-sm" style={{ color: '#92400e' }}>
+                    ⚠️ 이 투표는 현재 <strong>{
+                      election.status === 'waiting' ? '대기' :
+                      election.status === 'registering' ? '등록중' :
+                      election.status === 'closed' ? '종료' : '알 수 없음'
+                    }</strong> 상태입니다.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
