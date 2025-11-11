@@ -9,7 +9,7 @@ import SystemLogo from '@/components/SystemLogo';
 
 interface Stats {
   totalElections: number;
-  totalVillages: number;
+  activeVillages: number;
   activeElections: number;
   totalGroups: number;
 }
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats>({
     totalElections: 0,
-    totalVillages: 0,
+    activeVillages: 0,
     activeElections: 0,
     totalGroups: 0,
   });
@@ -78,14 +78,15 @@ export default function AdminDashboard() {
       .from('election_groups')
       .select('*', { count: 'exact', head: true });
 
-    // 마을 수
-    const { count: villagesCount } = await supabase
+    // 활성화된 마을 수 (is_active가 true인 마을)
+    const { count: activeVillagesCount } = await supabase
       .from('villages')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true);
 
     setStats({
       totalElections: electionsCount || 0,
-      totalVillages: villagesCount || 0,
+      activeVillages: activeVillagesCount || 0,
       activeElections: activeCount || 0,
       totalGroups: groupsCount || 0,
     });
@@ -220,6 +221,32 @@ export default function AdminDashboard() {
 
         {/* Stats Grid - Modern Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* 투표 그룹 */}
+          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+            background: '#ffffff',
+            border: '2px solid rgba(168, 85, 247, 0.3)'
+          }}>
+            <div className="absolute -right-4 -top-4 text-6xl opacity-5">📦</div>
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(168, 85, 247, 0.15)' }}>
+                  <span className="text-2xl">📦</span>
+                </div>
+                <p className="text-sm font-bold" style={{ 
+                  color: 'rgb(147, 51, 234)',
+                  letterSpacing: '-0.01em' 
+                }}>투표 그룹</p>
+              </div>
+              <p className="text-5xl font-bold mb-2" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.03em'
+              }}>
+                {stats.totalGroups || 0}
+              </p>
+              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>총대/임원 투표 그룹</p>
+            </div>
+          </div>
+
           {/* 전체 투표 */}
           <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
             background: '#ffffff',
@@ -272,33 +299,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* 투표 그룹 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
-            background: '#ffffff',
-            border: '2px solid rgba(168, 85, 247, 0.3)'
-          }}>
-            <div className="absolute -right-4 -top-4 text-6xl opacity-5">📁</div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(168, 85, 247, 0.15)' }}>
-                  <span className="text-2xl">📁</span>
-                </div>
-                <p className="text-sm font-bold" style={{ 
-                  color: 'rgb(147, 51, 234)',
-                  letterSpacing: '-0.01em' 
-                }}>투표 그룹</p>
-              </div>
-              <p className="text-5xl font-bold mb-2" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.03em'
-              }}>
-                {stats.totalGroups || 0}
-              </p>
-              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>총대/임원 투표 그룹</p>
-            </div>
-          </div>
-
-          {/* 마을 */}
+          {/* 활성화된 마을 */}
           <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
             background: '#ffffff',
             border: '2px solid rgba(249, 115, 22, 0.3)'
@@ -312,15 +313,15 @@ export default function AdminDashboard() {
                 <p className="text-sm font-bold" style={{ 
                   color: 'rgb(234, 88, 12)',
                   letterSpacing: '-0.01em' 
-                }}>마을</p>
+                }}>활성화된 마을</p>
               </div>
               <p className="text-5xl font-bold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.03em'
               }}>
-                {stats.totalVillages}
+                {stats.activeVillages}
               </p>
-              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>등록된 마을 수</p>
+              <p className="text-xs font-medium" style={{ color: '#6b7280' }}>현재 활성 중인 마을</p>
             </div>
           </div>
         </div>
