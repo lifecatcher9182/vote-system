@@ -30,22 +30,6 @@ interface Candidate {
   vote_count: number;
 }
 
-interface VoterCode {
-  id: string;
-  code: string;
-  code_type: 'delegate' | 'officer';
-  accessible_elections: string[];
-  village_id: string | null;
-  is_used: boolean;
-  voter_name: string | null;
-  first_login_at: string | null;
-  last_login_at: string | null;
-  created_at: string;
-  villages?: {
-    name: string;
-  };
-}
-
 export default function ElectionDetailPage({ 
   params 
 }: { 
@@ -61,7 +45,6 @@ export default function ElectionDetailPage({
   const [newCandidateName, setNewCandidateName] = useState('');
   
   // 코드 관리 상태
-  const [codes, setCodes] = useState<VoterCode[]>([]);
   const [codeFilter, setCodeFilter] = useState<'all' | 'voted' | 'attended' | 'not_attended'>('all');
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
   const [codeQuantity, setCodeQuantity] = useState(10);

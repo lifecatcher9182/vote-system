@@ -45,6 +45,22 @@ export default function ElectionGroupDetailPage({
   const [loading, setLoading] = useState(true);
   const [group, setGroup] = useState<ElectionGroup | null>(null);
   const [elections, setElections] = useState<Election[]>([]);
+  
+  // 일괄 생성 모달 관련 state
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchCreating, setBatchCreating] = useState(false);
+  
+  // 총대 일괄 생성 (마을 기반)
+  const [villages, setVillages] = useState<Array<{ id: string; name: string; selections: number }>>([]);
+  
+  // 임원 일괄 생성 (직책 기반)
+  const [positions, setPositions] = useState<Array<{ name: string; selections: number }>>([
+    { name: '회장', selections: 1 },
+    { name: '총무', selections: 1 },
+    { name: '회계', selections: 1 },
+    { name: '서기', selections: 1 },
+    { name: '감사', selections: 2 }
+  ]);
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -153,6 +169,123 @@ export default function ElectionGroupDetailPage({
     loadElections(); // 목록 새로고침
   };
 
+  const loadVillages = useCallback(async () => {
+    const supabase = createClient();
+    
+    // is_active 컬럼이 있으면 활성화된 마을만, 없으면 모든 마을 가져오기
+    const { data, error } = await supabase
+      .from('villages')
+      .select('id, name, is_active')
+      .order('name');
+
+    if (error) {
+      console.error('마을 로딩 오류:', error);
+      // is_active 컬럼이 없는 경우 모든 마을 가져오기
+      const { data: allData } = await supabase
+        .from('villages')
+        .select('id, name')
+        .order('name');
+      
+      if (allData) {
+        setVillages(allData.map(v => ({ ...v, selections: 1 })));
+      }
+      return;
+    }
+
+    // is_active가 true인 마을만 필터링
+    const activeVillages = (data || []).filter(v => v.is_active !== false);
+    setVillages(activeVillages.map(v => ({ ...v, selections: 1 })));
+  }, []);
+
+  const handleBatchCreate = async () => {
+    if (!group) return;
+
+    if (group.group_type === 'delegate') {
+      // 총대 일괄 생성 - 마을별
+      const selectedVillages = villages.filter(v => v.selections > 0);
+      if (selectedVillages.length === 0) {
+        alert('생성할 마을을 선택하세요.');
+        return;
+      }
+
+      if (!confirm(`${selectedVillages.length}개 마을에 대한 투표를 생성하시겠습니까?`)) {
+        return;
+      }
+
+      setBatchCreating(true);
+      const supabase = createClient();
+
+      try {
+        for (const village of selectedVillages) {
+          const { error } = await supabase
+            .from('elections')
+            .insert({
+              title: `${village.name} 총대 선출`,
+              election_type: 'delegate',
+              village_id: village.id,
+              max_selections: village.selections,
+              round: 1,
+              status: 'waiting',
+              group_id: group.id
+            });
+
+          if (error) throw error;
+        }
+
+        alert(`${selectedVillages.length}개의 투표가 생성되었습니다.`);
+        setShowBatchModal(false);
+        loadElections();
+      } catch (error) {
+        console.error('일괄 생성 오류:', error);
+        alert('일괄 생성 중 오류가 발생했습니다.');
+      } finally {
+        setBatchCreating(false);
+      }
+
+    } else {
+      // 임원 일괄 생성 - 직책별
+      const selectedPositions = positions.filter(p => p.selections > 0);
+      if (selectedPositions.length === 0) {
+        alert('생성할 직책을 선택하세요.');
+        return;
+      }
+
+      if (!confirm(`${selectedPositions.length}개 직책에 대한 투표를 생성하시겠습니까?`)) {
+        return;
+      }
+
+      setBatchCreating(true);
+      const supabase = createClient();
+
+      try {
+        for (const position of selectedPositions) {
+          const { error } = await supabase
+            .from('elections')
+            .insert({
+              title: `${position.name} 선출`,
+              election_type: 'officer',
+              position: position.name,
+              max_selections: position.selections,
+              round: 1,
+              status: 'waiting',
+              group_id: group.id
+            });
+
+          if (error) throw error;
+        }
+
+        alert(`${selectedPositions.length}개의 투표가 생성되었습니다.`);
+        setShowBatchModal(false);
+        loadElections();
+      } catch (error) {
+        console.error('일괄 생성 오류:', error);
+        alert('일괄 생성 중 오류가 발생했습니다.');
+      } finally {
+        setBatchCreating(false);
+      }
+    }
+  };
+
   const handleStatusChange = async (newStatus: 'waiting' | 'active' | 'closed') => {
     if (!group) return;
 
@@ -214,11 +347,12 @@ export default function ElectionGroupDetailPage({
 
       await loadGroup();
       await loadElections();
+      await loadVillages(); // 마을 목록 로드 (총대용)
       setLoading(false);
     };
 
     initialize();
-  }, [checkAuth, loadGroup, loadElections]);
+  }, [checkAuth, loadGroup, loadElections, loadVillages]);
 
   if (loading || !group) {
     return (
@@ -392,7 +526,10 @@ export default function ElectionGroupDetailPage({
                     ? '활성화된 모든 마을에 대해 총대 투표를 자동으로 생성할 수 있습니다.'
                     : '선택한 직책들에 대해 임원 투표를 자동으로 생성할 수 있습니다.'}
                 </p>
-                <button className="btn-apple-primary">
+                <button 
+                  onClick={() => setShowBatchModal(true)}
+                  className="btn-apple-primary"
+                >
                   {group.group_type === 'delegate' ? '총대 투표 일괄 생성' : '임원 투표 일괄 생성'}
                 </button>
               </div>
@@ -445,19 +582,27 @@ export default function ElectionGroupDetailPage({
             }}>
               하위 투표 목록 ({elections.length})
             </h2>
-            <Link
-              href={`/admin/elections/create?group_id=${group.id}`}
-              className="btn-apple-secondary text-sm"
-            >
-              + 투표 추가
-            </Link>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowBatchModal(true)}
+                className="btn-apple-primary text-sm"
+              >
+                ⚡ 일괄 생성
+              </button>
+              <Link
+                href={`/admin/elections/create?group_id=${group.id}`}
+                className="btn-apple-secondary text-sm"
+              >
+                + 개별 추가
+              </Link>
+            </div>
           </div>
 
           {elections.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12">
               <div className="text-6xl mb-4">📋</div>
-              <p>아직 투표가 없습니다.</p>
-              <p className="text-sm mt-2">일괄 생성 기능을 사용하거나 개별적으로 추가하세요.</p>
+              <p className="text-gray-500">아직 투표가 없습니다.</p>
+              <p className="text-sm text-gray-400 mt-2">상단의 일괄 생성 버튼을 사용하거나 개별 추가 버튼을 눌러보세요.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -537,6 +682,128 @@ export default function ElectionGroupDetailPage({
           )}
         </div>
       </main>
+
+      {/* 일괄 생성 모달 */}
+      {showBatchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                {group.group_type === 'delegate' ? '총대 투표 일괄 생성' : '임원 투표 일괄 생성'}
+              </h2>
+              <p className="text-sm text-gray-600 mt-2">
+                {group.group_type === 'delegate' 
+                  ? '활성화된 마을별로 투표를 생성합니다. 선발 인원을 조정할 수 있습니다.'
+                  : '직책별로 투표를 생성합니다. 각 직책의 선발 인원을 설정하세요.'}
+              </p>
+            </div>
+
+            <div className="p-6">
+              {group.group_type === 'delegate' ? (
+                // 총대 - 마을 목록
+                <div className="space-y-3">
+                  {villages.length === 0 ? (
+                    <p className="text-center py-8 text-gray-500">활성화된 마을이 없습니다.</p>
+                  ) : (
+                    villages.map((village, index) => (
+                      <div key={village.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">{village.name}</p>
+                          <p className="text-xs text-gray-500">총대 선출 투표가 생성됩니다</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-gray-600">선발 인원:</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            value={village.selections}
+                            onChange={(e) => {
+                              const newVillages = [...villages];
+                              newVillages[index].selections = parseInt(e.target.value) || 0;
+                              setVillages(newVillages);
+                            }}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center"
+                          />
+                          <span className="text-sm text-gray-600">명</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                // 임원 - 직책 목록
+                <div className="space-y-3">
+                  {positions.map((position, index) => (
+                    <div key={index} className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">{position.name}</p>
+                        <p className="text-xs text-gray-500">{position.name} 선출 투표가 생성됩니다</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600">선발 인원:</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          value={position.selections}
+                          onChange={(e) => {
+                            const newPositions = [...positions];
+                            newPositions[index].selections = parseInt(e.target.value) || 0;
+                            setPositions(newPositions);
+                          }}
+                          className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-center"
+                        />
+                        <span className="text-sm text-gray-600">명</span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* 직책 추가 버튼 */}
+                  <button
+                    onClick={() => {
+                      const newPosition = prompt('새로운 직책명을 입력하세요:');
+                      if (newPosition && newPosition.trim()) {
+                        setPositions([...positions, { name: newPosition.trim(), selections: 1 }]);
+                      }
+                    }}
+                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors text-sm font-medium"
+                  >
+                    + 직책 추가
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowBatchModal(false)}
+                disabled={batchCreating}
+                className="px-6 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleBatchCreate}
+                disabled={batchCreating || (group.group_type === 'delegate' ? villages.filter(v => v.selections > 0).length === 0 : positions.filter(p => p.selections > 0).length === 0)}
+                className="btn-apple-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {batchCreating ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    생성 중...
+                  </span>
+                ) : (
+                  `${group.group_type === 'delegate' ? villages.filter(v => v.selections > 0).length : positions.filter(p => p.selections > 0).length}개 투표 생성`
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
