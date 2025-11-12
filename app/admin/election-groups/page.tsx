@@ -187,16 +187,33 @@ export default function ElectionGroupsPage() {
             <div className="flex gap-3">
               <Link 
                 href="/admin/election-groups/create"
-                className="btn-apple-primary text-sm"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'var(--color-secondary)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: '0 4px 12px rgba(0, 102, 204, 0.25)'
+                }}
               >
-                + 새 그룹 만들기
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>새 그룹 만들기</span>
               </Link>
-              <Link 
-                href="/admin/dashboard"
-                className="btn-apple-secondary text-sm"
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.06)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
               >
-                🏠 대시보드
-              </Link>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                <span>뒤로가기</span>
+              </button>
             </div>
           </div>
         </div>
@@ -311,9 +328,18 @@ export default function ElectionGroupsPage() {
               </p>
               <Link 
                 href="/admin/election-groups/create"
-                className="btn-apple-primary inline-block"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'var(--color-secondary)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: '0 4px 12px rgba(0, 102, 204, 0.25)'
+                }}
               >
-                + 새 그룹 만들기
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>새 그룹 만들기</span>
               </Link>
             </div>
           ) : (
