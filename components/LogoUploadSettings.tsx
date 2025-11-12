@@ -8,7 +8,6 @@ export default function LogoUploadSettings() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,26 +46,22 @@ export default function LogoUploadSettings() {
       return;
     }
 
-    setSelectedFile(file);
-
-    // 미리보기 생성
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // 파일 선택하자마자 바로 업로드
+    handleUpload(file);
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      alert('파일을 선택해주세요.');
-      return;
-    }
-
+  const handleUpload = async (file: File) => {
     setUploading(true);
     const supabase = createClient();
 
     try {
+      // 미리보기 생성
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
       // 1. 기존 모든 로고 파일 삭제 (용량 관리)
       // logo.png, logo.jpg, logo.jpeg, logo.svg 모두 삭제 시도
       const possibleFiles = ['logo.png', 'logo.jpg', 'logo.jpeg', 'logo.svg'];
@@ -76,13 +71,13 @@ export default function LogoUploadSettings() {
       // 에러 무시 - 파일이 없어도 상관없음
 
       // 2. 파일명을 logo.[확장자]로 고정
-      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase();
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
       const fileName = `logo.${fileExt}`;
 
       // 3. Storage에 업로드 (upsert: true로 덮어쓰기)
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, selectedFile, {
+        .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true // 같은 이름이면 덮어쓰기
         });
@@ -126,7 +121,6 @@ export default function LogoUploadSettings() {
 
       setLogoUrl(publicUrl);
       setPreview(publicUrl);
-      setSelectedFile(null);
       setUploading(false);
       alert('로고가 업로드되었습니다!');
 
@@ -176,7 +170,6 @@ export default function LogoUploadSettings() {
 
       setLogoUrl(null);
       setPreview(null);
-      setSelectedFile(null);
       alert('로고가 삭제되었습니다.');
     } catch (error) {
       console.error('삭제 오류:', error);
@@ -198,10 +191,10 @@ export default function LogoUploadSettings() {
       <div className="space-y-6">
         {/* 로고 미리보기 */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-gray-900 mb-3" style={{ letterSpacing: '-0.01em' }}>
             현재 로고
           </label>
-          <div className="flex items-center justify-center w-full h-48 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed rounded-3xl overflow-hidden" style={{ borderColor: 'rgba(0,0,0,0.1)' }}>
+          <div className="flex items-center justify-center w-full h-48 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.05) 100%)', border: '2px dashed rgba(0, 0, 0, 0.1)' }}>
             {preview ? (
               <div className="relative w-full h-full p-6">
                 <Image
@@ -222,75 +215,64 @@ export default function LogoUploadSettings() {
           </div>
         </div>
 
-        {/* 파일 선택 */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
-            새 로고 업로드
-          </label>
+        {/* 버튼 */}
+        <div className="flex gap-3">
           <input
             ref={fileInputRef}
             type="file"
             accept="image/png,image/jpeg,image/jpg,image/svg+xml"
             onChange={handleFileSelect}
-            className="block w-full text-sm text-gray-600
-              file:mr-4 file:py-3 file:px-6
-              file:rounded-xl file:border-0
-              file:text-sm file:font-semibold
-              file:bg-gray-100 file:text-gray-700
-              hover:file:bg-gray-200
-              file:transition-all file:duration-200
-              cursor-pointer rounded-xl border-2 border-gray-200"
+            disabled={uploading}
+            className="hidden"
+            id="logo-upload-input"
           />
-          <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
-            <span className="inline-block w-1 h-1 rounded-full bg-gray-400"></span>
-            PNG, JPG, SVG 파일 (최대 2MB)
-          </p>
-          {selectedFile && (
-            <p className="mt-1 text-xs font-medium" style={{ color: 'var(--color-secondary)' }}>
-              선택된 파일: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
-            </p>
-          )}
-        </div>
-
-        {/* 버튼 */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleUpload}
-            disabled={uploading || !selectedFile}
-            className="flex-1 btn-apple-primary disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          <label
+            htmlFor="logo-upload-input"
+            className={`flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+            style={{
+              background: 'var(--color-secondary)',
+              color: 'white',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              letterSpacing: '-0.01em',
+              pointerEvents: uploading ? 'none' : 'auto'
+            }}
           >
             {uploading ? (
               <>
-                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 업로드 중...
               </>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                업로드
+                {logoUrl ? '새 로고 업로드' : '로고 업로드'}
               </>
             )}
-          </button>
+          </label>
           {logoUrl && (
             <button
               onClick={handleDelete}
-              className="px-6 py-3 rounded-2xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2"
-              style={{ background: 'rgb(239, 68, 68)' }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgb(220, 38, 38)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgb(239, 68, 68)'}
+              disabled={uploading}
+              className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              style={{ 
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                letterSpacing: '-0.01em'
+              }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               삭제
             </button>
           )}
         </div>
+
+        <p className="text-xs text-gray-500" style={{ letterSpacing: '-0.01em' }}>
+          PNG, JPG, SVG 파일 (최대 2MB) • 파일 선택 시 즉시 업로드됩니다
+        </p>
 
         <div className="mt-6 p-5 rounded-2xl" style={{ background: 'rgba(59, 130, 246, 0.05)' }}>
           <p className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'rgb(59, 130, 246)' }}>

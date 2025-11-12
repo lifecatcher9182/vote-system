@@ -1,7 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
+import { useSystemConfig } from '@/lib/hooks/useSystemConfig';
 
 export default function Home() {
+  const { systemName } = useSystemConfig();
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
       {/* Subtle background pattern */}
@@ -23,7 +28,7 @@ export default function Home() {
             letterSpacing: '-0.04em',
             lineHeight: '1.05'
           }}>
-            청년국 전자투표
+            {systemName}
           </h1>
           <p className="text-2xl md:text-3xl font-normal text-gray-600" style={{ letterSpacing: '-0.01em' }}>
             투명하고 안전한 온라인 투표 시스템
