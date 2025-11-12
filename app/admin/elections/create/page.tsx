@@ -239,6 +239,41 @@ export default function CreateElectionPage() {
         return;
       }
 
+      // 3. 임원 투표이고 그룹에 속한 경우, 기존 코드의 accessible_elections 업데이트
+      if (groupId && electionType === 'officer') {
+        // 그룹의 모든 투표 ID 가져오기
+        const { data: groupElections } = await supabase
+          .from('elections')
+          .select('id')
+          .eq('group_id', groupId);
+
+        if (groupElections) {
+          const allElectionIds = groupElections.map(e => e.id);
+
+          // 이 그룹의 기존 코드 가져오기 (하나라도 그룹의 투표 ID를 포함한 코드)
+          const { data: existingCodes } = await supabase
+            .from('voter_codes')
+            .select('id, accessible_elections')
+            .eq('code_type', 'officer');
+
+          if (existingCodes) {
+            // 이 그룹에 속한 코드만 필터링
+            const groupCodes = existingCodes.filter(code => {
+              const accessible = (code.accessible_elections as string[]) || [];
+              return allElectionIds.some(id => accessible.includes(id));
+            });
+
+            // 각 코드의 accessible_elections 업데이트
+            for (const code of groupCodes) {
+              await supabase
+                .from('voter_codes')
+                .update({ accessible_elections: allElectionIds })
+                .eq('id', code.id);
+            }
+          }
+        }
+      }
+
       alert('투표가 성공적으로 생성되었습니다!');
       
       // 그룹에서 들어왔으면 그룹 페이지로, 아니면 대시보드로

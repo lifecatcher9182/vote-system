@@ -25,7 +25,7 @@ interface Election {
   position: string | null;
   village_id: string | null;
   max_selections: number;
-  status: 'waiting' | 'registering' | 'active' | 'closed';
+  status: 'waiting' | 'active' | 'closed';
   created_at: string;
   villages?: {
     name: string;
@@ -397,8 +397,10 @@ export default function ElectionGroupDetailPage({
       const supabase = createClient();
 
       try {
+        const newElectionIds: string[] = [];
+        
         for (const position of selectedPositions) {
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from('elections')
             .insert({
               title: `${position.name} 선출`,
@@ -408,9 +410,35 @@ export default function ElectionGroupDetailPage({
               round: 1,
               status: 'waiting',
               group_id: group.id
-            });
+            })
+            .select('id')
+            .single();
 
           if (error) throw error;
+          if (data) newElectionIds.push(data.id);
+        }
+
+        // 기존 임원 코드들의 accessible_elections 업데이트
+        if (newElectionIds.length > 0) {
+          const currentElectionIds = elections.map(e => e.id);
+          const allElectionIds = [...currentElectionIds, ...newElectionIds];
+
+          // 이 그룹의 기존 코드 가져오기
+          const { data: existingCodes } = await supabase
+            .from('voter_codes')
+            .select('id, accessible_elections')
+            .eq('code_type', 'officer')
+            .contains('accessible_elections', currentElectionIds);
+
+          // 각 코드의 accessible_elections 업데이트
+          if (existingCodes && existingCodes.length > 0) {
+            for (const code of existingCodes) {
+              await supabase
+                .from('voter_codes')
+                .update({ accessible_elections: allElectionIds })
+                .eq('id', code.id);
+            }
+          }
         }
 
         alert(`${selectedPositions.length}개의 투표가 생성되었습니다.`);
@@ -1042,12 +1070,10 @@ export default function ElectionGroupDetailPage({
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                           election.status === 'active' ? 'bg-green-100 text-green-700' :
                           election.status === 'closed' ? 'bg-gray-100 text-gray-600' :
-                          election.status === 'registering' ? 'bg-blue-100 text-blue-700' :
                           'bg-yellow-100 text-yellow-700'
                         }`}>
                           {election.status === 'active' ? '진행중' :
-                           election.status === 'closed' ? '종료' :
-                           election.status === 'registering' ? '등록중' : '대기'}
+                           election.status === 'closed' ? '종료' : '대기'}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">

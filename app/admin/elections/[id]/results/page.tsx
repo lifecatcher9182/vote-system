@@ -399,8 +399,7 @@ export default function ResultsPage({
                   'text-[var(--color-secondary)]'
                 }`} style={{ letterSpacing: '-0.01em' }}>
                   {election.status === 'closed' ? '종료' :
-                   election.status === 'active' ? '진행중' :
-                   election.status === 'registering' ? '등록중' : '대기'}
+                   election.status === 'active' ? '진행중' : '대기'}
                 </div>
               </div>
             </div>

@@ -71,7 +71,7 @@ export default function AdminDashboard() {
     const { count: activeCount } = await supabase
       .from('elections')
       .select('*', { count: 'exact', head: true })
-      .in('status', ['active', 'registering']);
+      .eq('status', 'active');
 
     // 투표 그룹 수
     const { count: groupsCount } = await supabase

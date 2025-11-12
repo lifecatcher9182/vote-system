@@ -420,7 +420,6 @@ export default function MonitorPage({
               <p className="text-sm text-amber-800">
                 ⚠️ 이 투표는 현재 <strong>{
                   election.status === 'waiting' ? '대기' :
-                  election.status === 'registering' ? '등록중' :
                   election.status === 'closed' ? '종료' : '알 수 없음'
                 }</strong> 상태입니다.
               </p>

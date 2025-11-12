@@ -17,8 +17,9 @@ interface Election {
   village_id: string | null;
   max_selections: number;
   round: number;
-  status: 'waiting' | 'registering' | 'active' | 'closed';
+  status: 'waiting' | 'active' | 'closed';
   created_at: string;
+  group_id: string | null;
   winning_criteria: {
     type: 'plurality' | 'absolute_majority' | 'percentage';
     percentage?: number;
@@ -458,14 +459,14 @@ export default function ElectionDetailPage({
   }, [election, candidates, resultStats]);
 
   const getStatusBadge = (status: Election['status']) => {
-    const badges = {
+    const badges: Record<string, { text: string; bg: string; color: string; border: string }> = {
       waiting: { text: '대기', bg: '#f3f4f6', color: '#374151', border: '#d1d5db' },
-      registering: { text: '등록중', bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
-      active: { text: '등록중', bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' }, // active를 registering으로 매핑
+      active: { text: '진행중', bg: '#dcfce7', color: '#166534', border: '#86efac' },
       closed: { text: '종료', bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+      registering: { text: '진행중', bg: '#dcfce7', color: '#166534', border: '#86efac' }, // 레거시 데이터 대응
     };
 
-    const badge = badges[status];
+    const badge = badges[status] || badges.active; // 알 수 없는 상태는 진행중으로 처리
     return (
       <span 
         className="px-3 py-1.5 text-sm font-semibold rounded-lg"
@@ -507,10 +508,10 @@ export default function ElectionDetailPage({
               투표 관리
             </h1>
             <Link 
-              href="/admin/dashboard"
+              href={election.group_id ? `/admin/election-groups/${election.group_id}` : '/admin/dashboard'}
               className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
             >
-              ← 대시보드
+              ← {election.group_id ? '투표 그룹' : '대시보드'}
             </Link>
           </div>
         </div>
@@ -752,17 +753,17 @@ export default function ElectionDetailPage({
                     {election.status === 'waiting' && '✓ '}대기
                   </button>
                   <button
-                    onClick={() => handleStatusChange('registering')}
-                    disabled={election.status === 'registering'}
+                    onClick={() => handleStatusChange('active')}
+                    disabled={election.status === 'active'}
                     className="w-full px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 disabled:cursor-not-allowed"
                     style={{
-                      background: election.status === 'registering' ? '#dbeafe' : 'white',
-                      border: election.status === 'registering' ? '2px solid #3b82f6' : '2px solid #e5e7eb',
-                      color: election.status === 'registering' ? '#1e40af' : '#6b7280',
-                      opacity: election.status === 'registering' ? 0.7 : 1
+                      background: election.status === 'active' ? '#dcfce7' : 'white',
+                      border: election.status === 'active' ? '2px solid #22c55e' : '2px solid #e5e7eb',
+                      color: election.status === 'active' ? '#166534' : '#6b7280',
+                      opacity: election.status === 'active' ? 0.7 : 1
                     }}
                   >
-                    {election.status === 'registering' && '✓ '}등록중
+                    {election.status === 'active' && '✓ '}진행중
                   </button>
                   <button
                     onClick={() => handleStatusChange('closed')}
