@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
-import Link from 'next/link';
 import LogoUploadSettings from '@/components/LogoUploadSettings';
 import ColorThemeSettings from '@/components/ColorThemeSettings';
 import SystemLogo from '@/components/SystemLogo';
@@ -208,13 +207,8 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-6">
-            <svg className="animate-spin h-16 w-16" style={{ color: 'var(--color-secondary)' }} fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-          </div>
-          <p className="text-lg text-gray-600" style={{ letterSpacing: '-0.01em' }}>설정을 불러오는 중...</p>
+          <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin mx-auto mb-6" style={{ borderTopColor: 'var(--color-secondary)' }} />
+          <p className="text-lg font-medium text-gray-600 mt-6" style={{ letterSpacing: '-0.01em' }}>설정을 불러오는 중...</p>
         </div>
       </div>
     );
@@ -246,19 +240,20 @@ export default function SettingsPage() {
                 관리자 및 시스템 환경을 설정합니다
               </p>
             </div>
-            <Link 
-              href="/admin/dashboard"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
               style={{ 
-                background: 'rgba(0, 0, 0, 0.04)',
-                color: '#1d1d1f'
+                background: 'rgba(0, 0, 0, 0.06)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em'
               }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              대시보드
-            </Link>
+              뒤로가기
+            </button>
           </div>
         </div>
       </header>
@@ -302,14 +297,17 @@ export default function SettingsPage() {
                 <button
                   onClick={handleSaveSystemName}
                   disabled={saving}
-                  className="btn-apple-primary w-full"
+                  className="w-full px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  style={{
+                    background: 'var(--color-secondary)',
+                    color: 'white',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    letterSpacing: '-0.01em'
+                  }}
                 >
                   {saving ? (
                     <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       저장 중
                     </span>
                   ) : '저장'}
@@ -354,7 +352,13 @@ export default function SettingsPage() {
                   />
                   <button
                     onClick={handleAddAdmin}
-                    className="btn-apple-primary px-8 whitespace-nowrap"
+                    className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 whitespace-nowrap"
+                    style={{
+                      background: 'var(--color-secondary)',
+                      color: 'white',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      letterSpacing: '-0.01em'
+                    }}
                   >
                     추가
                   </button>
@@ -421,10 +425,11 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleDeleteAdmin(admin.id, admin.email)}
                         disabled={admin.email === currentUserEmail}
-                        className="px-4 py-2 rounded-full text-sm font-medium transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
                         style={{ 
                           background: admin.email === currentUserEmail ? 'transparent' : 'rgba(239, 68, 68, 0.1)',
-                          color: '#ef4444'
+                          color: '#ef4444',
+                          letterSpacing: '-0.01em'
                         }}
                       >
                         삭제

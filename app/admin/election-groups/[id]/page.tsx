@@ -588,12 +588,20 @@ export default function ElectionGroupDetailPage({
               </div>
             </div>
             <div className="flex gap-3">
-              <Link 
-                href="/admin/election-groups"
-                className="btn-apple-secondary text-sm"
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.06)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
               >
-                ← 목록으로
-              </Link>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                <span>뒤로가기</span>
+              </button>
             </div>
           </div>
         </div>
@@ -628,11 +636,17 @@ export default function ElectionGroupDetailPage({
             </div>
 
             {/* 상태 변경 버튼 */}
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               {group.status === 'waiting' && (
                 <button
                   onClick={() => handleStatusChange('active')}
-                  className="btn-apple-primary text-sm"
+                  className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                  style={{
+                    background: 'var(--color-secondary)',
+                    color: 'white',
+                    letterSpacing: '-0.01em',
+                    boxShadow: '0 2px 8px rgba(0, 102, 204, 0.25)'
+                  }}
                 >
                   활성화
                 </button>
@@ -641,13 +655,23 @@ export default function ElectionGroupDetailPage({
                 <>
                   <button
                     onClick={() => handleStatusChange('waiting')}
-                    className="btn-apple-secondary text-sm"
+                    className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                    style={{ 
+                      background: 'rgba(0, 0, 0, 0.06)',
+                      color: '#1d1d1f',
+                      letterSpacing: '-0.01em'
+                    }}
                   >
                     대기로 변경
                   </button>
                   <button
                     onClick={() => handleStatusChange('closed')}
-                    className="btn-apple-secondary text-sm"
+                    className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                    style={{ 
+                      background: 'rgba(0, 0, 0, 0.06)',
+                      color: '#1d1d1f',
+                      letterSpacing: '-0.01em'
+                    }}
                   >
                     종료
                   </button>
@@ -655,7 +679,13 @@ export default function ElectionGroupDetailPage({
               )}
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+                className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: '0 2px 8px rgba(239, 68, 68, 0.25)'
+                }}
               >
                 그룹 삭제
               </button>
@@ -712,7 +742,13 @@ export default function ElectionGroupDetailPage({
               <button
                 onClick={() => setShowCreateCodeModal(true)}
                 disabled={elections.length === 0}
-                className="btn-apple-primary inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background: elections.length === 0 ? 'rgba(0, 0, 0, 0.1)' : 'var(--color-secondary)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: elections.length === 0 ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                }}
                 title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1064,16 +1100,31 @@ export default function ElectionGroupDetailPage({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBatchModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all text-sm font-medium shadow-sm hover:shadow-md flex items-center gap-2"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                }}
               >
-                <span>⚡</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
                 <span>일괄 생성</span>
               </button>
               <Link
                 href={`/admin/elections/create?group_id=${group.id}`}
-                className="px-4 py-2 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all text-sm font-medium flex items-center gap-2"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.06)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
               >
-                <span>+</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
                 <span>개별 추가</span>
               </Link>
             </div>
@@ -1202,9 +1253,9 @@ export default function ElectionGroupDetailPage({
                   setShowCreateCodeModal(false);
                   setCodeQuantity(10);
                 }}
-                className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                className="flex-1 px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ 
-                  background: 'rgba(0, 0, 0, 0.04)',
+                  background: 'rgba(0, 0, 0, 0.06)',
                   color: '#1d1d1f',
                   letterSpacing: '-0.01em'
                 }}
@@ -1214,10 +1265,23 @@ export default function ElectionGroupDetailPage({
               </button>
               <button
                 onClick={handleGenerateCodes}
-                className="btn-apple-primary flex-1"
+                className="flex-1 px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background: generatingCodes ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: generatingCodes ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                }}
                 disabled={generatingCodes}
               >
-                {generatingCodes ? '생성 중...' : '생성'}
+                {generatingCodes ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    <span>생성 중...</span>
+                  </span>
+                ) : (
+                  '생성'
+                )}
               </button>
             </div>
           </div>
@@ -1332,22 +1396,30 @@ export default function ElectionGroupDetailPage({
               <button
                 onClick={() => setShowBatchModal(false)}
                 disabled={batchCreating}
-                className="px-6 py-2.5 rounded-xl font-medium text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.06)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
               >
                 취소
               </button>
               <button
                 onClick={handleBatchCreate}
                 disabled={batchCreating || (group.group_type === 'delegate' ? villages.filter(v => v.selections > 0).length === 0 : positions.filter(p => p.selections > 0).length === 0)}
-                className="btn-apple-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                style={{
+                  background: batchCreating ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
+                  color: 'white',
+                  letterSpacing: '-0.01em',
+                  boxShadow: batchCreating ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                }}
               >
                 {batchCreating ? (
                   <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    생성 중...
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    <span>생성 중...</span>
                   </span>
                 ) : (
                   `${group.group_type === 'delegate' ? villages.filter(v => v.selections > 0).length : positions.filter(p => p.selections > 0).length}개 투표 생성`

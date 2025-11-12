@@ -336,19 +336,20 @@ export default function CreateElectionPage() {
                 투표 정보와 후보자를 입력하세요
               </p>
             </div>
-            <Link 
-              href={groupId ? `/admin/election-groups/${groupId}` : '/admin/election-groups'}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
               style={{ 
-                background: 'rgba(0, 0, 0, 0.04)',
-                color: '#1d1d1f'
+                background: 'rgba(0, 0, 0, 0.06)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em'
               }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
               </svg>
-              {groupId ? '그룹으로' : '투표 그룹'}
-            </Link>
+              <span>뒤로가기</span>
+            </button>
           </div>
         </div>
       </header>
@@ -746,10 +747,16 @@ export default function CreateElectionPage() {
               <button
                 type="button"
                 onClick={addCandidate}
-                className="btn-apple-secondary inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{
+                  background: 'var(--color-secondary)',
+                  color: 'white',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  letterSpacing: '-0.01em'
+                }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
                 후보자 추가
               </button>
@@ -771,10 +778,11 @@ export default function CreateElectionPage() {
                   <button
                     type="button"
                     onClick={() => removeCandidate(candidate.id)}
-                    className="flex-shrink-0 px-5 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-30"
+                    className="flex-shrink-0 px-5 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-30 hover:scale-105"
                     style={{ 
-                      background: candidates.length <= 2 ? 'rgba(0, 0, 0, 0.03)' : 'rgba(239, 68, 68, 0.1)',
-                      color: candidates.length <= 2 ? '#9ca3af' : '#ef4444'
+                      background: candidates.length <= 2 ? 'rgba(0, 0, 0, 0.06)' : 'rgba(239, 68, 68, 0.1)',
+                      color: candidates.length <= 2 ? '#9ca3af' : '#ef4444',
+                      letterSpacing: '-0.01em'
                     }}
                     disabled={candidates.length <= 2}
                   >
@@ -790,29 +798,33 @@ export default function CreateElectionPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="btn-apple-primary flex-1 text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{
+                background: 'var(--color-secondary)',
+                color: 'white',
+                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)',
+                letterSpacing: '-0.01em'
+              }}
             >
               {submitting ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   생성 중
                 </span>
               ) : '투표 생성'}
             </button>
-            <Link
-              href="/admin/dashboard"
-              className="px-8 py-4 rounded-2xl font-semibold text-lg text-center transition-all duration-200"
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-200 hover:scale-105"
               style={{ 
-                background: 'rgba(0, 0, 0, 0.04)',
+                background: 'rgba(0, 0, 0, 0.06)',
                 color: '#1d1d1f',
                 letterSpacing: '-0.01em'
               }}
             >
               취소
-            </Link>
+            </button>
           </div>
         </form>
 
