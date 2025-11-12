@@ -20,8 +20,12 @@ export default function VillagesPage() {
   const [loading, setLoading] = useState(true);
   const [villages, setVillages] = useState<Village[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('active');
+  const [sortBy, setSortBy] = useState<'name' | 'code' | 'created_at'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newVillage, setNewVillage] = useState({ name: '', code: '' });
+  const [editingVillage, setEditingVillage] = useState<Village | null>(null);
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -91,6 +95,34 @@ export default function VillagesPage() {
     loadVillages();
   };
 
+  const handleEditVillage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingVillage || !editingVillage.name || !editingVillage.code) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('villages')
+      .update({ 
+        name: editingVillage.name, 
+        code: editingVillage.code 
+      })
+      .eq('id', editingVillage.id);
+
+    if (error) {
+      console.error('마을 수정 오류:', error);
+      alert('마을 수정에 실패했습니다. 코드가 중복되었을 수 있습니다.');
+      return;
+    }
+
+    setEditingVillage(null);
+    setShowEditModal(false);
+    loadVillages();
+  };
+
   const handleDeleteVillage = async (id: string) => {
     if (!confirm('정말 이 마을을 삭제하시겠습니까?')) {
       return;
@@ -132,6 +164,30 @@ export default function VillagesPage() {
     if (filter === 'inactive') return !v.is_active;
     return true;
   });
+
+  // 정렬 적용
+  const sortedVillages = [...filteredVillages].sort((a, b) => {
+    let compareValue = 0;
+    
+    if (sortBy === 'name') {
+      compareValue = a.name.localeCompare(b.name, 'ko');
+    } else if (sortBy === 'code') {
+      compareValue = a.code.localeCompare(b.code);
+    } else if (sortBy === 'created_at') {
+      compareValue = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+    
+    return sortOrder === 'asc' ? compareValue : -compareValue;
+  });
+
+  const handleSort = (column: 'name' | 'code' | 'created_at') => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+  };
 
   if (loading) {
     return (
@@ -247,7 +303,7 @@ export default function VillagesPage() {
           </button>
         </div>
 
-        {filteredVillages.length === 0 ? (
+        {sortedVillages.length === 0 ? (
           <div className="card-apple p-16 text-center">
             <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,17 +331,62 @@ export default function VillagesPage() {
             <table className="w-full">
               <thead style={{ background: 'rgba(0, 0, 0, 0.02)', borderBottom: '1px solid rgba(0, 0, 0, 0.06)' }}>
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    마을 이름
+                  <th className="px-6 py-4 text-left">
+                    <button
+                      onClick={() => handleSort('name')}
+                      className="flex items-center gap-2 text-sm font-semibold hover:text-gray-900 transition-colors"
+                      style={{ color: sortBy === 'name' ? '#1d1d1f' : '#6b7280', letterSpacing: '-0.01em' }}
+                    >
+                      마을 이름
+                      {sortBy === 'name' && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {sortOrder === 'asc' ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          )}
+                        </svg>
+                      )}
+                    </button>
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    마을 코드
+                  <th className="px-6 py-4 text-left">
+                    <button
+                      onClick={() => handleSort('code')}
+                      className="flex items-center gap-2 text-sm font-semibold hover:text-gray-900 transition-colors"
+                      style={{ color: sortBy === 'code' ? '#1d1d1f' : '#6b7280', letterSpacing: '-0.01em' }}
+                    >
+                      마을 코드
+                      {sortBy === 'code' && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {sortOrder === 'asc' ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          )}
+                        </svg>
+                      )}
+                    </button>
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                     상태
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    생성일
+                  <th className="px-6 py-4 text-left">
+                    <button
+                      onClick={() => handleSort('created_at')}
+                      className="flex items-center gap-2 text-sm font-semibold hover:text-gray-900 transition-colors"
+                      style={{ color: sortBy === 'created_at' ? '#1d1d1f' : '#6b7280', letterSpacing: '-0.01em' }}
+                    >
+                      생성일
+                      {sortBy === 'created_at' && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {sortOrder === 'asc' ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          )}
+                        </svg>
+                      )}
+                    </button>
                   </th>
                   <th className="px-6 py-4 text-right text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                     관리
@@ -293,11 +394,11 @@ export default function VillagesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredVillages.map((village, index) => (
+                {sortedVillages.map((village, index) => (
                   <tr 
                     key={village.id}
                     style={{ 
-                      borderBottom: index < filteredVillages.length - 1 ? '1px solid rgba(0, 0, 0, 0.04)' : 'none'
+                      borderBottom: index < sortedVillages.length - 1 ? '1px solid rgba(0, 0, 0, 0.04)' : 'none'
                     }}
                     className="hover:bg-gray-50 transition-colors"
                   >
@@ -337,17 +438,33 @@ export default function VillagesPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleDeleteVillage(village.id)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
-                        style={{ 
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          color: '#ef4444',
-                          letterSpacing: '-0.01em'
-                        }}
-                      >
-                        삭제
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingVillage(village);
+                            setShowEditModal(true);
+                          }}
+                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
+                          style={{ 
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            color: '#3b82f6',
+                            letterSpacing: '-0.01em'
+                          }}
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVillage(village.id)}
+                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
+                          style={{ 
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#ef4444',
+                            letterSpacing: '-0.01em'
+                          }}
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -421,6 +538,77 @@ export default function VillagesPage() {
                   className="btn-apple-primary flex-1"
                 >
                   추가
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 수정 모달 */}
+      {showEditModal && editingVillage && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+          <div className="card-apple max-w-md w-full p-8 animate-[scale-in_0.2s_ease-out]">
+            <h2 className="text-2xl font-semibold mb-6" style={{ 
+              color: '#1d1d1f',
+              letterSpacing: '-0.02em'
+            }}>
+              마을 수정
+            </h2>
+            
+            <form onSubmit={handleEditVillage}>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    마을 이름
+                  </label>
+                  <input
+                    type="text"
+                    value={editingVillage.name}
+                    onChange={(e) => setEditingVillage({ ...editingVillage, name: e.target.value })}
+                    className="input-apple"
+                    placeholder="예: 갈보리"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    마을 코드
+                  </label>
+                  <input
+                    type="text"
+                    value={editingVillage.code}
+                    onChange={(e) => setEditingVillage({ ...editingVillage, code: e.target.value.toUpperCase() })}
+                    className="input-apple font-mono"
+                    placeholder="예: GAL"
+                  />
+                  <p className="mt-2 text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    영문 대문자로 입력하세요
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-8 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingVillage(null);
+                  }}
+                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                  style={{ 
+                    background: 'rgba(0, 0, 0, 0.04)',
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="btn-apple-primary flex-1"
+                >
+                  저장
                 </button>
               </div>
             </form>
