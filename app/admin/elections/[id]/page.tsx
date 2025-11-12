@@ -333,17 +333,20 @@ export default function ElectionDetailPage({
 
     const totalCodes = codes?.length || 0;
     const attendedCodes = codes?.filter(c => c.first_login_at !== null).length || 0;
-    const usedCodes = codes?.filter(c => c.is_used).length || 0;
-    const unusedCodes = totalCodes - usedCodes;
-    const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
 
-    // 총 투표 수
+    // 실제로 이 투표에 투표한 사람 수 (접근 가능이 아니라 실제 투표 기준)
     const { data: votes } = await supabase
       .from('votes')
       .select('voter_code_id')
       .eq('election_id', election.id);
 
     const uniqueVoterIds = new Set(votes?.map(v => v.voter_code_id) || []);
+    const actualVoterCount = uniqueVoterIds.size;
+
+    // usedCodes는 실제로 이 투표에 투표한 사람 수로 계산
+    const usedCodes = actualVoterCount;
+    const unusedCodes = totalCodes - usedCodes;
+    const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
 
     setResultStats({
       totalCodes,
@@ -352,7 +355,7 @@ export default function ElectionDetailPage({
       unusedCodes,
       participationRate,
       totalVotes: votes?.length || 0,
-      uniqueVoters: uniqueVoterIds.size,
+      uniqueVoters: actualVoterCount,
     });
   }, [election]);
 

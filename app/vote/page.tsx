@@ -39,9 +39,20 @@ export default function VotePage() {
         return;
       }
 
-      // 이미 사용된 코드인지 확인
-      if (voterCode.is_used) {
-        setError('이미 사용된 참여코드입니다.');
+      // 모든 투표가 완료되었는지 확인
+      // accessible_elections의 모든 투표에 대해 이미 투표했는지 체크
+      const { data: votedElections } = await supabase
+        .from('votes')
+        .select('election_id')
+        .eq('voter_code_id', voterCode.id);
+
+      const votedElectionIds = new Set(votedElections?.map(v => v.election_id) || []);
+      const allElectionsCompleted = voterCode.accessible_elections.every((electionId: string) => 
+        votedElectionIds.has(electionId)
+      );
+
+      if (allElectionsCompleted && voterCode.accessible_elections.length > 0) {
+        setError('이미 모든 투표를 완료한 참여코드입니다.');
         setLoading(false);
         return;
       }

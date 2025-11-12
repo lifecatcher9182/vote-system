@@ -63,7 +63,7 @@ export default function ElectionGroupDetailPage({
   ]);
 
   // 코드 관리 상태 (임원 투표용)
-  const [codeFilter, setCodeFilter] = useState<'all' | 'voted' | 'attended' | 'not_attended'>('all');
+  const [codeFilter, setCodeFilter] = useState<'all' | 'not_attended' | 'attended' | 'voting' | 'completed'>('all');
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
   const [codeQuantity, setCodeQuantity] = useState(10);
   const [generatingCodes, setGeneratingCodes] = useState(false);
@@ -245,21 +245,28 @@ export default function ElectionGroupDetailPage({
       return electionIds.some(id => accessibleElections.includes(id));
     });
 
-    // 각 코드에 대해 투표 수 계산
-    const codesWithVoteCount = await Promise.all(
-      filteredCodes.map(async (code) => {
-        const { data: voteData } = await supabase
-          .from('votes')
-          .select('id')
-          .eq('voter_code_id', code.id)
-          .in('election_id', electionIds);
+    // 각 코드가 실제로 투표한 선거 개수 계산
+    const codeIds = filteredCodes.map(c => c.id);
+    const { data: votesData } = await supabase
+      .from('votes')
+      .select('voter_code_id, election_id')
+      .in('voter_code_id', codeIds)
+      .in('election_id', electionIds);
 
-        return {
-          ...code,
-          vote_count: voteData?.length || 0
-        };
-      })
-    );
+    // 코드별로 투표한 선거 ID를 Set으로 집계
+    const voteCountMap = new Map<string, Set<string>>();
+    votesData?.forEach(vote => {
+      if (!voteCountMap.has(vote.voter_code_id)) {
+        voteCountMap.set(vote.voter_code_id, new Set());
+      }
+      voteCountMap.get(vote.voter_code_id)!.add(vote.election_id);
+    });
+
+    // 각 코드에 completed_election_count 추가
+    const codesWithVoteCount = filteredCodes.map(code => ({
+      ...code,
+      vote_count: voteCountMap.get(code.id)?.size || 0 // 투표한 선거 개수
+    }));
 
     setVoterCodes(codesWithVoteCount);
   }, [group, elections]);
@@ -731,18 +738,18 @@ export default function ElectionGroupDetailPage({
                 </button>
                 <button
                   onClick={() => {
-                    setCodeFilter('voted');
+                    setCodeFilter('not_attended');
                     setCurrentPage(1);
                   }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
-                    codeFilter === 'voted' ? 'text-white' : 'text-gray-700'
+                    codeFilter === 'not_attended' ? 'text-white' : 'text-gray-700'
                   }`}
                   style={{ 
-                    background: codeFilter === 'voted' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    background: codeFilter === 'not_attended' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
                     letterSpacing: '-0.01em'
                   }}
                 >
-                  투표 완료
+                  미참석
                 </button>
                 <button
                   onClick={() => {
@@ -761,18 +768,33 @@ export default function ElectionGroupDetailPage({
                 </button>
                 <button
                   onClick={() => {
-                    setCodeFilter('not_attended');
+                    setCodeFilter('voting');
                     setCurrentPage(1);
                   }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
-                    codeFilter === 'not_attended' ? 'text-white' : 'text-gray-700'
+                    codeFilter === 'voting' ? 'text-white' : 'text-gray-700'
                   }`}
                   style={{ 
-                    background: codeFilter === 'not_attended' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    background: codeFilter === 'voting' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
                     letterSpacing: '-0.01em'
                   }}
                 >
-                  미참석
+                  투표 중
+                </button>
+                <button
+                  onClick={() => {
+                    setCodeFilter('completed');
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
+                    codeFilter === 'completed' ? 'text-white' : 'text-gray-700'
+                  }`}
+                  style={{ 
+                    background: codeFilter === 'completed' ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  투표 완료
                 </button>
               </div>
             )}
@@ -793,12 +815,33 @@ export default function ElectionGroupDetailPage({
                 </p>
               </div>
             ) : (() => {
+              // 상태 판단 함수
+              const getVoteStatus = (code: typeof voterCodes[0]): '미참석' | '참석 확인' | '투표 중' | '투표 완료' => {
+                const totalElections = elections.length;
+                
+                // 로그인 안함
+                if (!code.first_login_at) return '미참석';
+                
+                // 로그인했지만 투표 안함
+                if (code.vote_count === 0) return '참석 확인';
+                
+                // 일부만 투표
+                if (code.vote_count < totalElections) return '투표 중';
+                
+                // 모두 투표
+                return '투표 완료';
+              };
+
               // 필터링된 코드 목록
               const filteredCodes = voterCodes.filter(code => {
                 if (codeFilter === 'all') return true;
-                if (codeFilter === 'voted') return code.vote_count > 0;
-                if (codeFilter === 'attended') return code.first_login_at && code.vote_count === 0;
-                if (codeFilter === 'not_attended') return !code.first_login_at;
+                
+                const status = getVoteStatus(code);
+                if (codeFilter === 'not_attended') return status === '미참석';
+                if (codeFilter === 'attended') return status === '참석 확인';
+                if (codeFilter === 'voting') return status === '투표 중';
+                if (codeFilter === 'completed') return status === '투표 완료';
+                
                 return true;
               });
 
@@ -855,19 +898,36 @@ export default function ElectionGroupDetailPage({
                           {code.code}
                         </code>
                         <div className="flex gap-2">
-                          {code.vote_count > 0 ? (
-                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
-                              투표 완료 ({code.vote_count}/{elections.length})
-                            </span>
-                          ) : code.first_login_at ? (
-                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                              참석 확인
-                            </span>
-                          ) : (
-                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
-                              미참석
-                            </span>
-                          )}
+                          {(() => {
+                            const status = getVoteStatus(code);
+                            const totalElections = elections.length;
+                            
+                            if (status === '미참석') {
+                              return (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                  미참석
+                                </span>
+                              );
+                            } else if (status === '참석 확인') {
+                              return (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                  참석 확인
+                                </span>
+                              );
+                            } else if (status === '투표 중') {
+                              return (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
+                                  투표 중 ({code.vote_count}/{totalElections})
+                                </span>
+                              );
+                            } else {
+                              return (
+                                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                  투표 완료 ({code.vote_count}/{totalElections})
+                                </span>
+                              );
+                            }
+                          })()}
                         </div>
                       </div>
                       <div className="flex gap-2">

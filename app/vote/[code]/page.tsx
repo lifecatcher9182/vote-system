@@ -43,6 +43,7 @@ export default function VoteWithCodePage({
   const [loading, setLoading] = useState(true);
   const [voterCode, setVoterCode] = useState<VoterCode | null>(null);
   const [elections, setElections] = useState<Election[]>([]);
+  const [votedElectionIds, setVotedElectionIds] = useState<Set<string>>(new Set());
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
@@ -60,12 +61,6 @@ export default function VoteWithCodePage({
 
     if (codeError || !codeData) {
       alert('올바르지 않은 참여코드입니다.');
-      router.push('/vote');
-      return;
-    }
-
-    if (codeData.is_used) {
-      alert('이미 사용된 참여코드입니다.');
       router.push('/vote');
       return;
     }
@@ -97,7 +92,16 @@ export default function VoteWithCodePage({
 
     setVoterCode(codeData);
 
-    // 2. 접근 가능한 투표 목록 조회
+    // 2. 이미 투표한 선거 목록 조회
+    const { data: votesData } = await supabase
+      .from('votes')
+      .select('election_id')
+      .eq('voter_code_id', codeData.id);
+
+    const voted = new Set(votesData?.map(v => v.election_id) || []);
+    setVotedElectionIds(voted);
+
+    // 3. 접근 가능한 투표 목록 조회
     const { data: electionsData, error: electionsError } = await supabase
       .from('elections')
       .select(`
@@ -151,6 +155,12 @@ export default function VoteWithCodePage({
   }, [loadData]);
 
   const handleElectionSelect = (election: Election) => {
+    // 이미 투표한 선거는 선택 불가
+    if (votedElectionIds.has(election.id)) {
+      alert('이미 투표를 완료한 선거입니다.');
+      return;
+    }
+
     setSelectedElection(election);
     setSelectedCandidates([]);
     loadCandidates(election.id);
@@ -221,21 +231,40 @@ export default function VoteWithCodePage({
         }
       }
 
-      // 3. 참여코드를 사용됨으로 표시
-      const { error: codeUpdateError } = await supabase
-        .from('voter_codes')
-        .update({ 
-          is_used: true, 
-          used_at: new Date().toISOString() 
-        })
-        .eq('id', voterCode.id);
+      // 3. 투표 완료된 선거 목록 업데이트
+      const updatedVotedIds = new Set(votedElectionIds);
+      updatedVotedIds.add(selectedElection.id);
+      setVotedElectionIds(updatedVotedIds);
 
-      if (codeUpdateError) {
-        console.error('코드 업데이트 오류:', codeUpdateError);
+      // 4. 모든 투표가 완료되었는지 확인
+      const allCompleted = voterCode.accessible_elections.every(electionId => 
+        updatedVotedIds.has(electionId)
+      );
+
+      // 5. 모든 투표가 완료되었을 때만 is_used를 true로 설정
+      if (allCompleted) {
+        const { error: codeUpdateError } = await supabase
+          .from('voter_codes')
+          .update({ 
+            is_used: true, 
+            used_at: new Date().toISOString() 
+          })
+          .eq('id', voterCode.id);
+
+        if (codeUpdateError) {
+          console.error('코드 업데이트 오류:', codeUpdateError);
+        }
       }
 
-      // 완료 페이지로 이동
-      router.push(`/vote/complete?election=${selectedElection.title}`);
+      // 6. 남은 투표가 있으면 목록으로, 모두 완료했으면 완료 페이지로
+      if (allCompleted) {
+        router.push(`/vote/complete?election=${selectedElection.title}`);
+      } else {
+        // 목록으로 돌아가서 다음 투표 진행 가능
+        setSelectedElection(null);
+        setSelectedCandidates([]);
+        alert(`투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`);
+      }
     } catch (error) {
       console.error('투표 제출 중 오류:', error);
       alert('투표 제출 중 오류가 발생했습니다.');
@@ -311,46 +340,60 @@ export default function VoteWithCodePage({
                 투표를 선택하세요
               </h2>
               <div className="space-y-4">
-                {elections.map((election) => (
-                  <button
-                    key={election.id}
-                    onClick={() => handleElectionSelect(election)}
-                    className="group w-full p-6 rounded-2xl transition-all duration-200 text-left"
-                    style={{ 
-                      background: 'rgba(0, 0, 0, 0.02)',
-                      border: '1px solid rgba(0, 0, 0, 0.06)'
-                    }}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-2" style={{ 
-                          color: '#1d1d1f',
-                          letterSpacing: '-0.02em'
-                        }}>
-                          {election.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>
-                          {election.election_type === 'delegate' 
-                            ? `총대 선출 · ${election.villages?.name}`
-                            : `임원 선출 · ${election.position}`
-                          }
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          <span className="px-2 py-1 rounded-md bg-white/50">{election.round}차</span>
-                          <span>최대 {election.max_selections}명 선택</span>
+                {elections.map((election) => {
+                  const isVoted = votedElectionIds.has(election.id);
+                  
+                  return (
+                    <button
+                      key={election.id}
+                      onClick={() => handleElectionSelect(election)}
+                      disabled={isVoted}
+                      className="group w-full p-6 rounded-2xl transition-all duration-200 text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{ 
+                        background: isVoted ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                        border: isVoted ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(0, 0, 0, 0.06)'
+                      }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold" style={{ 
+                              color: '#1d1d1f',
+                              letterSpacing: '-0.02em'
+                            }}>
+                              {election.title}
+                            </h3>
+                            {isVoted && (
+                              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                                투표 완료
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>
+                            {election.election_type === 'delegate' 
+                              ? `총대 선출 · ${election.villages?.name}`
+                              : `임원 선출 · ${election.position}`
+                            }
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span className="px-2 py-1 rounded-md bg-white/50">{election.round}차</span>
+                            <span>최대 {election.max_selections}명 선택</span>
+                          </div>
                         </div>
+                        {!isVoted && (
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1" style={{ 
+                            background: 'var(--color-secondary)',
+                            color: 'white'
+                          }}>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1" style={{ 
-                        background: 'var(--color-secondary)',
-                        color: 'white'
-                      }}>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
