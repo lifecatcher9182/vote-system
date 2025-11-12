@@ -202,12 +202,28 @@ export default function VoteWithCodePage({
     try {
       const supabase = createClient();
 
-      // 1. 투표 기록 생성
+      // 1. 중복 투표 체크
+      const { data: existingVote } = await supabase
+        .from('votes')
+        .select('id')
+        .eq('voter_code_id', voterCode.id)
+        .eq('election_id', selectedElection.id)
+        .maybeSingle();
+
+      if (existingVote) {
+        alert('이미 이 투표에 참여하셨습니다.');
+        setSubmitting(false);
+        return;
+      }
+
+      // 2. 투표 기록 생성
       const votes = selectedCandidates.map(candidateId => ({
         election_id: selectedElection.id,
         candidate_id: candidateId,
         voter_code_id: voterCode.id,
       }));
+
+      console.log('투표 데이터:', votes);
 
       const { error: votesError } = await supabase
         .from('votes')
@@ -215,12 +231,12 @@ export default function VoteWithCodePage({
 
       if (votesError) {
         console.error('투표 제출 오류:', votesError);
-        alert('투표 제출에 실패했습니다.');
+        alert(`투표 제출에 실패했습니다.\n오류: ${votesError.message}`);
         setSubmitting(false);
         return;
       }
 
-      // 2. 후보자 득표수 업데이트
+      // 3. 후보자 득표수 업데이트
       for (const candidateId of selectedCandidates) {
         const { error: updateError } = await supabase.rpc('increment_vote_count', {
           candidate_id: candidateId
@@ -228,6 +244,7 @@ export default function VoteWithCodePage({
 
         if (updateError) {
           console.error('득표수 업데이트 오류:', updateError);
+          // 득표수 업데이트 실패해도 투표는 기록되었으므로 계속 진행
         }
       }
 
