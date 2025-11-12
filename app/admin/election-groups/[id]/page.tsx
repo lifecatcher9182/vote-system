@@ -76,6 +76,10 @@ export default function ElectionGroupDetailPage({
     first_login_at: string | null;
     vote_count: number; // 이 코드로 투표한 투표 수
   }>>([]);
+  
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -225,7 +229,7 @@ export default function ElectionGroupDetailPage({
     // voter_codes에서 이 그룹의 투표에 접근 가능한 코드 조회
     const { data: codesData, error } = await supabase
       .from('voter_codes')
-      .select('id, code, is_used, village_id, created_at, first_login_at')
+      .select('id, code, is_used, village_id, created_at, first_login_at, accessible_elections')
       .eq('code_type', 'officer')
       .order('created_at', { ascending: false });
 
@@ -683,7 +687,10 @@ export default function ElectionGroupDetailPage({
             {voterCodes.length > 0 && (
               <div className="flex gap-3 mb-4">
                 <button
-                  onClick={() => setCodeFilter('all')}
+                  onClick={() => {
+                    setCodeFilter('all');
+                    setCurrentPage(1);
+                  }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
                     codeFilter === 'all' ? 'text-white' : 'text-gray-700'
                   }`}
@@ -695,7 +702,10 @@ export default function ElectionGroupDetailPage({
                   전체
                 </button>
                 <button
-                  onClick={() => setCodeFilter('voted')}
+                  onClick={() => {
+                    setCodeFilter('voted');
+                    setCurrentPage(1);
+                  }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
                     codeFilter === 'voted' ? 'text-white' : 'text-gray-700'
                   }`}
@@ -707,7 +717,10 @@ export default function ElectionGroupDetailPage({
                   투표 완료
                 </button>
                 <button
-                  onClick={() => setCodeFilter('attended')}
+                  onClick={() => {
+                    setCodeFilter('attended');
+                    setCurrentPage(1);
+                  }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
                     codeFilter === 'attended' ? 'text-white' : 'text-gray-700'
                   }`}
@@ -719,7 +732,10 @@ export default function ElectionGroupDetailPage({
                   참석 확인
                 </button>
                 <button
-                  onClick={() => setCodeFilter('not_attended')}
+                  onClick={() => {
+                    setCodeFilter('not_attended');
+                    setCurrentPage(1);
+                  }}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm ${
                     codeFilter === 'not_attended' ? 'text-white' : 'text-gray-700'
                   }`}
@@ -748,30 +764,55 @@ export default function ElectionGroupDetailPage({
                   &ldquo;코드 생성&rdquo; 버튼을 눌러 참여 코드를 만드세요
                 </p>
               </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600 mb-3">
-                  총 {voterCodes.length}개의 코드
-                  {codeFilter !== 'all' && ` (${
-                    voterCodes.filter(code => {
-                      if (codeFilter === 'voted') return code.vote_count > 0;
-                      if (codeFilter === 'attended') return code.first_login_at && code.vote_count === 0;
-                      if (codeFilter === 'not_attended') return !code.first_login_at;
-                      return true;
-                    }).length
-                  }개 표시)`}
-                </p>
-                
-                <div className="grid gap-3">
-                  {voterCodes
-                    .filter(code => {
-                      if (codeFilter === 'all') return true;
-                      if (codeFilter === 'voted') return code.vote_count > 0;
-                      if (codeFilter === 'attended') return code.first_login_at && code.vote_count === 0;
-                      if (codeFilter === 'not_attended') return !code.first_login_at;
-                      return true;
-                    })
-                    .map((code) => (
+            ) : (() => {
+              // 필터링된 코드 목록
+              const filteredCodes = voterCodes.filter(code => {
+                if (codeFilter === 'all') return true;
+                if (codeFilter === 'voted') return code.vote_count > 0;
+                if (codeFilter === 'attended') return code.first_login_at && code.vote_count === 0;
+                if (codeFilter === 'not_attended') return !code.first_login_at;
+                return true;
+              });
+
+              // 페이지네이션 계산
+              const totalPages = Math.ceil(filteredCodes.length / itemsPerPage);
+              const startIndex = (currentPage - 1) * itemsPerPage;
+              const endIndex = startIndex + itemsPerPage;
+              const paginatedCodes = filteredCodes.slice(startIndex, endIndex);
+
+              return (
+                <div className="space-y-4">
+                  {/* 상단: 개수 표시 + 페이지당 개수 선택 */}
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm text-gray-600">
+                      총 {voterCodes.length}개의 코드
+                      {codeFilter !== 'all' && ` (${filteredCodes.length}개 표시)`}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">페이지당:</span>
+                      {[5, 10, 30, 50].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => {
+                            setItemsPerPage(size);
+                            setCurrentPage(1);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                            itemsPerPage === size ? 'text-white' : 'text-gray-700'
+                          }`}
+                          style={{ 
+                            background: itemsPerPage === size ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)'
+                          }}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* 코드 목록 */}
+                  <div className="grid gap-3">
+                    {paginatedCodes.map((code) => (
                     <div 
                       key={code.id}
                       className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
@@ -828,9 +869,68 @@ export default function ElectionGroupDetailPage({
                       </div>
                     </div>
                   ))}
+                  </div>
+
+                  {/* 페이지네이션 */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ 
+                          background: 'rgba(0, 0, 0, 0.04)',
+                          color: '#1d1d1f'
+                        }}
+                      >
+                        ← 이전
+                      </button>
+                      
+                      <div className="flex gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                          // 현재 페이지 주변만 표시
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+                                  currentPage === page ? 'text-white' : 'text-gray-700'
+                                }`}
+                                style={{ 
+                                  background: currentPage === page ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)'
+                                }}
+                              >
+                                {page}
+                              </button>
+                            );
+                          } else if (page === currentPage - 2 || page === currentPage + 2) {
+                            return <span key={page} className="w-10 h-10 flex items-center justify-center text-gray-400">...</span>;
+                          }
+                          return null;
+                        })}
+                      </div>
+                      
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ 
+                          background: 'rgba(0, 0, 0, 0.04)',
+                          color: '#1d1d1f'
+                        }}
+                      >
+                        다음 →
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         ) : (
           // 총대 투표 - 기존 방식 (각 투표별 코드 관리)
