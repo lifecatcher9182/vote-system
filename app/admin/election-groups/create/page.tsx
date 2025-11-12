@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
-import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
 
 export default function CreateElectionGroupPage() {
@@ -130,19 +129,20 @@ export default function CreateElectionGroupPage() {
                 </p>
               </div>
             </div>
-            <Link 
-              href="/admin/election-groups"
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200 hover:scale-105"
+            <button
+              onClick={() => router.back()}
+              className="hidden sm:flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
               style={{ 
-                background: 'rgba(0, 0, 0, 0.05)',
+                background: 'rgba(0, 0, 0, 0.06)',
                 color: '#1d1d1f',
-                letterSpacing: '-0.01em',
-                fontSize: '0.9rem'
+                letterSpacing: '-0.01em'
               }}
             >
-              <span>←</span>
-              <span>목록으로</span>
-            </Link>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              <span>뒤로가기</span>
+            </button>
           </div>
         </div>
       </header>
@@ -324,8 +324,9 @@ export default function CreateElectionGroupPage() {
 
           {/* 버튼 영역 */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4">
-            <Link
-              href="/admin/election-groups"
+            <button
+              type="button"
+              onClick={() => router.back()}
               className="sm:w-36 px-8 py-4 rounded-2xl font-semibold text-center transition-all duration-200 hover:scale-105"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.05)',
@@ -334,7 +335,7 @@ export default function CreateElectionGroupPage() {
               }}
             >
               취소
-            </Link>
+            </button>
             <button
               type="submit"
               disabled={submitting}
@@ -365,18 +366,20 @@ export default function CreateElectionGroupPage() {
 
         {/* 하단 모바일 네비게이션 */}
         <div className="sm:hidden mt-6">
-          <Link 
-            href="/admin/election-groups"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-medium transition-all duration-200"
+          <button 
+            onClick={() => router.back()}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-semibold transition-all duration-200"
             style={{ 
-              background: 'rgba(0, 0, 0, 0.04)',
+              background: 'rgba(0, 0, 0, 0.06)',
               color: '#1d1d1f',
               letterSpacing: '-0.01em'
             }}
           >
-            <span>←</span>
-            <span>목록으로 돌아가기</span>
-          </Link>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span>뒤로가기</span>
+          </button>
         </div>
       </main>
     </div>
