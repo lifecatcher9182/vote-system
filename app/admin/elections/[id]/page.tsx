@@ -571,20 +571,20 @@ export default function ElectionDetailPage({
               <div className="bg-white shadow rounded-lg p-6">
                 <h2 className="text-xl font-bold mb-4">투표 정보</h2>
                 
-                <div className="space-y-4">
-                  <div className="flex justify-between border-b pb-3">
+                <div className="space-y-3">
+                  <div className="flex justify-between py-3 border-b border-gray-200">
                     <span className="font-medium text-gray-700">제목</span>
                     <span className="text-gray-900">{election.title}</span>
                   </div>
                   
-                  <div className="flex justify-between border-b pb-3">
+                  <div className="flex justify-between py-3 border-b border-gray-200">
                     <span className="font-medium text-gray-700">유형</span>
                     <span className="text-gray-900">
                       {election.election_type === 'delegate' ? '총대 선출' : '임원 선출'}
                     </span>
                   </div>
                   
-                  <div className="flex justify-between border-b pb-3">
+                  <div className="flex justify-between py-3 border-b border-gray-200">
                     <span className="font-medium text-gray-700">대상</span>
                     <span className="text-gray-900">
                       {election.election_type === 'delegate' 
@@ -594,17 +594,17 @@ export default function ElectionDetailPage({
                     </span>
                   </div>
                   
-                  <div className="flex justify-between border-b pb-3">
+                  <div className="flex justify-between py-3 border-b border-gray-200">
                     <span className="font-medium text-gray-700">라운드</span>
                     <span className="text-gray-900">{election.round}차</span>
                   </div>
                   
-                  <div className="flex justify-between border-b pb-3">
+                  <div className="flex justify-between py-3 border-b border-gray-200">
                     <span className="font-medium text-gray-700">최대 선택 수</span>
                     <span className="text-gray-900">{election.max_selections}명</span>
                   </div>
                   
-                  <div className="flex justify-between">
+                  <div className="flex justify-between py-3">
                     <span className="font-medium text-gray-700">생성일</span>
                     <span className="text-gray-900">
                       {new Date(election.created_at).toLocaleString('ko-KR')}
