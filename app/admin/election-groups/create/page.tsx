@@ -90,98 +90,174 @@ export default function CreateElectionGroupPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ 
+        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+      }}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--color-secondary)] mx-auto"></div>
-          <p className="mt-4 text-gray-600">로딩 중...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
+          <p className="mt-6 text-gray-600 font-medium" style={{ letterSpacing: '-0.01em' }}>
+            로딩 중...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 50%, #ffffff 100%)' }}>
+      {/* 헤더 */}
       <header style={{ 
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+        background: 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10
       }}>
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-6 py-5 sm:px-8 lg:px-12">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <SystemLogo size="md" linkToHome />
               <div>
-                <h1 className="text-3xl font-semibold" style={{ 
+                <h1 className="text-2xl sm:text-3xl font-semibold" style={{ 
                   color: '#1d1d1f',
                   letterSpacing: '-0.03em'
                 }}>
                   새 투표 그룹 만들기
                 </h1>
-                <p className="text-sm text-gray-600 mt-1" style={{ letterSpacing: '-0.01em' }}>
+                <p className="text-sm text-gray-600 mt-0.5" style={{ letterSpacing: '-0.01em' }}>
                   총대 투표 또는 임원 투표 그룹을 생성합니다
                 </p>
               </div>
             </div>
             <Link 
               href="/admin/election-groups"
-              className="btn-apple-secondary text-sm"
+              className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200 hover:scale-105"
+              style={{ 
+                background: 'rgba(0, 0, 0, 0.05)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em',
+                fontSize: '0.9rem'
+              }}
             >
-              ← 목록으로
+              <span>←</span>
+              <span>목록으로</span>
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto py-12 px-6">
-        <form onSubmit={handleSubmit} className="card-apple p-8">
+      <main className="max-w-4xl mx-auto py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+        {/* 상단 설명 카드 */}
+        <div className="mb-8 rounded-3xl p-6 sm:p-8" style={{ 
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%)',
+          border: '1px solid rgba(59, 130, 246, 0.15)'
+        }}>
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">✨</div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-2" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.02em'
+              }}>
+                투표 그룹이란?
+              </h3>
+              <p className="text-sm leading-relaxed text-gray-700" style={{ letterSpacing: '-0.01em' }}>
+                여러 개의 관련된 투표를 하나의 그룹으로 묶어서 관리할 수 있습니다. 
+                참여자는 하나의 코드로 그룹 내 모든 투표에 순차적으로 참여할 수 있어요.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 메인 폼 카드 */}
+        <form onSubmit={handleSubmit} className="card-apple p-8 sm:p-12">
           {/* 그룹 타입 선택 */}
-          <div className="mb-8">
-            <label className="block text-sm font-semibold mb-3" style={{ 
+          <div className="mb-12">
+            <label className="block text-lg font-semibold mb-5" style={{ 
               color: '#1d1d1f',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.02em'
             }}>
-              그룹 타입 <span className="text-red-500">*</span>
+              그룹 타입 <span className="text-red-500 text-base">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, group_type: 'delegate' })}
-                className={`p-6 rounded-xl border-2 transition-all ${
+                className={`group p-8 rounded-3xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
                   formData.group_type === 'delegate'
-                    ? 'border-[var(--color-secondary)] bg-[var(--color-primary)] bg-opacity-5'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-[var(--color-secondary)] shadow-lg'
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                 }`}
+                style={{
+                  background: formData.group_type === 'delegate' 
+                    ? 'var(--color-primary)'
+                    : 'white'
+                }}
               >
-                <div className="text-4xl mb-2">📋</div>
-                <div className="font-semibold text-lg mb-1">총대 투표</div>
-                <div className="text-sm text-gray-600">
-                  마을별 총대 선출 투표를 그룹으로 관리
+                <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">📋</div>
+                <div className="font-bold text-xl mb-2.5" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.02em'
+                }}>
+                  총대 투표
                 </div>
+                <div className="text-sm leading-relaxed text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                  마을별 총대 선출 투표를<br />그룹으로 관리
+                </div>
+                {formData.group_type === 'delegate' && (
+                  <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: '#1e40af'
+                  }}>
+                    <span>✓</span>
+                    <span>선택됨</span>
+                  </div>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, group_type: 'officer' })}
-                className={`p-6 rounded-xl border-2 transition-all ${
+                className={`group p-8 rounded-3xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
                   formData.group_type === 'officer'
-                    ? 'border-[var(--color-secondary)] bg-[var(--color-primary)] bg-opacity-5'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-[var(--color-secondary)] shadow-lg'
+                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                 }`}
+                style={{
+                  background: formData.group_type === 'officer' 
+                    ? 'var(--color-primary)'
+                    : 'white'
+                }}
               >
-                <div className="text-4xl mb-2">👔</div>
-                <div className="font-semibold text-lg mb-1">임원 투표</div>
-                <div className="text-sm text-gray-600">
-                  직책별 임원 선출 투표를 그룹으로 관리
+                <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">👔</div>
+                <div className="font-bold text-xl mb-2.5" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.02em'
+                }}>
+                  임원 투표
                 </div>
+                <div className="text-sm leading-relaxed text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                  직책별 임원 선출 투표를<br />그룹으로 관리
+                </div>
+                {formData.group_type === 'officer' && (
+                  <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold" style={{
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    color: '#1e40af'
+                  }}>
+                    <span>✓</span>
+                    <span>선택됨</span>
+                  </div>
+                )}
               </button>
             </div>
           </div>
 
           {/* 그룹 제목 */}
-          <div className="mb-6">
-            <label htmlFor="title" className="block text-sm font-semibold mb-2" style={{ 
+          <div className="mb-10">
+            <label htmlFor="title" className="block text-base font-semibold mb-3" style={{ 
               color: '#1d1d1f',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.02em'
             }}>
               그룹 제목 <span className="text-red-500">*</span>
             </label>
@@ -191,40 +267,53 @@ export default function CreateElectionGroupPage() {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="예: 2025년 상반기 총대 투표"
-              className="input-apple"
+              className="input-apple text-lg"
               required
+              style={{ padding: '16px 20px' }}
             />
-            <p className="text-xs text-gray-500 mt-2">
-              그룹 전체를 대표하는 제목을 입력하세요
+            <p className="text-xs text-gray-500 mt-2.5" style={{ letterSpacing: '-0.01em' }}>
+              💡 그룹 전체를 대표하는 명확한 제목을 입력하세요
             </p>
           </div>
 
           {/* 그룹 설명 */}
-          <div className="mb-8">
-            <label htmlFor="description" className="block text-sm font-semibold mb-2" style={{ 
+          <div className="mb-12">
+            <label htmlFor="description" className="block text-base font-semibold mb-3" style={{ 
               color: '#1d1d1f',
-              letterSpacing: '-0.01em'
+              letterSpacing: '-0.02em'
             }}>
-              그룹 설명 (선택)
+              그룹 설명 <span className="text-gray-400 text-sm font-normal ml-1">(선택사항)</span>
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="그룹에 대한 간단한 설명을 입력하세요"
-              className="input-apple"
-              rows={3}
+              placeholder="이 그룹에 대한 간단한 설명을 입력하세요"
+              className="input-apple resize-none text-base leading-relaxed"
+              rows={5}
+              style={{ padding: '16px 20px' }}
             />
           </div>
 
-          {/* 안내 메시지 */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
-            <div className="flex gap-3">
-              <div className="text-2xl">💡</div>
+          {/* 다음 단계 안내 */}
+          <div className="rounded-2xl p-6 mb-10" style={{ 
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.05) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.2)'
+          }}>
+            <div className="flex gap-4">
+              <div className="text-3xl">🔔</div>
               <div className="flex-1">
-                <h4 className="font-semibold text-sm text-blue-900 mb-1">다음 단계</h4>
-                <p className="text-sm text-blue-700">
-                  그룹을 생성한 후, 일괄 투표 생성 기능을 사용하여 
+                <h4 className="font-semibold text-base mb-2" style={{ 
+                  color: '#065f46',
+                  letterSpacing: '-0.01em'
+                }}>
+                  그룹 생성 후 다음 작업
+                </h4>
+                <p className="text-sm leading-relaxed" style={{ 
+                  color: '#047857',
+                  letterSpacing: '-0.01em'
+                }}>
+                  그룹을 생성한 후, <strong>일괄 투표 생성 기능</strong>을 사용하여 
                   {formData.group_type === 'delegate' 
                     ? ' 마을별 총대 투표를 자동으로 생성할 수 있습니다.' 
                     : ' 직책별 임원 투표를 자동으로 생성할 수 있습니다.'}
@@ -233,23 +322,62 @@ export default function CreateElectionGroupPage() {
             </div>
           </div>
 
-          {/* 버튼 */}
-          <div className="flex gap-3">
+          {/* 버튼 영역 */}
+          <div className="flex flex-col-reverse sm:flex-row gap-4 pt-4">
             <Link
               href="/admin/election-groups"
-              className="btn-apple-secondary flex-1"
+              className="sm:w-36 px-8 py-4 rounded-2xl font-semibold text-center transition-all duration-200 hover:scale-105"
+              style={{ 
+                background: 'rgba(0, 0, 0, 0.05)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em'
+              }}
             >
               취소
             </Link>
             <button
               type="submit"
               disabled={submitting}
-              className="btn-apple-primary flex-1"
+              className="flex-1 py-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{
+                background: submitting 
+                  ? 'rgba(0, 0, 0, 0.4)'
+                  : 'var(--color-secondary)',
+                color: 'white',
+                letterSpacing: '-0.01em',
+                boxShadow: submitting ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+              }}
             >
-              {submitting ? '생성 중...' : '그룹 생성'}
+              {submitting ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  <span>생성 중...</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <span>✓</span>
+                  <span>그룹 생성</span>
+                </span>
+              )}
             </button>
           </div>
         </form>
+
+        {/* 하단 모바일 네비게이션 */}
+        <div className="sm:hidden mt-6">
+          <Link 
+            href="/admin/election-groups"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-medium transition-all duration-200"
+            style={{ 
+              background: 'rgba(0, 0, 0, 0.04)',
+              color: '#1d1d1f',
+              letterSpacing: '-0.01em'
+            }}
+          >
+            <span>←</span>
+            <span>목록으로 돌아가기</span>
+          </Link>
+        </div>
       </main>
     </div>
   );
