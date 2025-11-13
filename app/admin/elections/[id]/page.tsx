@@ -669,18 +669,34 @@ export default function ElectionDetailPage({
             }}>
               투표 관리
             </h1>
-            <Link 
-              href={election.group_id ? `/admin/election-groups/${election.group_id}` : '/admin/dashboard'}
-              className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
-              style={{
-                background: 'rgba(0, 0, 0, 0.04)',
-                color: '#1d1d1f',
-                letterSpacing: '-0.01em',
-                display: 'inline-block'
-              }}
-            >
-              ← {election.group_id ? '투표 그룹' : '대시보드'}
-            </Link>
+            <div className="flex gap-3">
+              <Link 
+                href="/admin/dashboard"
+                className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.04)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em',
+                  display: 'inline-block'
+                }}
+              >
+                🏠 대시보드
+              </Link>
+              {election.group_id && (
+                <Link 
+                  href={`/admin/election-groups/${election.group_id}`}
+                  className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                  style={{
+                    background: 'rgba(0, 0, 0, 0.06)',
+                    color: '#1d1d1f',
+                    letterSpacing: '-0.01em',
+                    display: 'inline-block'
+                  }}
+                >
+                  ← 투표 그룹
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </header>

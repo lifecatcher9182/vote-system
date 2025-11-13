@@ -588,6 +588,21 @@ export default function ElectionGroupDetailPage({
               </div>
             </div>
             <div className="flex gap-3">
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.04)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                대시보드
+              </Link>
               <button
                 onClick={() => router.back()}
                 className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
