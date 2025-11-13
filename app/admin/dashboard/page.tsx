@@ -148,32 +148,31 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
-      {/* Logo - 좌측 상단 고정 */}
-      <div className="fixed top-6 left-6 z-50">
-        <SystemLogo size="sm" linkToHome />
-      </div>
-
       {/* Header - Glass Effect */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
         backdropFilter: 'blur(20px)',
         borderColor: 'rgba(0, 0, 0, 0.05)'
       }}>
-        <div className="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-semibold mb-1" style={{ 
-              color: '#1d1d1f',
-              letterSpacing: '-0.03em'
-            }}>
-              대시보드
-            </h1>
-            <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-              {user?.email}
-            </p>
+        <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            {/* Logo - 대시보드 텍스트 옆으로 이동 */}
+            <SystemLogo size="md" linkToHome />
+            <div className="border-l pl-3" style={{ borderColor: 'rgba(0, 0, 0, 0.1)' }}>
+              <h1 className="text-2xl font-semibold" style={{ 
+                color: '#1d1d1f',
+                letterSpacing: '-0.03em'
+              }}>
+                대시보드
+              </h1>
+              <p className="text-xs text-gray-500 mt-0.5" style={{ letterSpacing: '-0.01em' }}>
+                {user?.email}
+              </p>
+            </div>
           </div>
           <button
             onClick={handleSignOut}
-            className="px-6 py-2.5 rounded-full font-medium transition-all duration-200"
+            className="px-6 py-2.5 rounded-full font-medium transition-all duration-200 hover:scale-105"
             style={{ 
               background: 'rgba(0, 0, 0, 0.04)',
               color: '#1d1d1f'
