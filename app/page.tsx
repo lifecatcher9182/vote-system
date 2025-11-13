@@ -5,7 +5,7 @@ import SystemLogo from '@/components/SystemLogo';
 import { useSystemConfig } from '@/lib/hooks/useSystemConfig';
 
 export default function Home() {
-  const { systemName } = useSystemConfig();
+  const { systemName, systemDescription, loading } = useSystemConfig();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
@@ -26,12 +26,30 @@ export default function Home() {
           <h1 className="text-6xl md:text-7xl font-semibold tracking-tight" style={{ 
             color: '#1d1d1f',
             letterSpacing: '-0.04em',
-            lineHeight: '1.05'
+            lineHeight: '1.05',
+            minHeight: '5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            {systemName}
+            {loading ? (
+              <span className="inline-block w-64 h-16 bg-gray-200 rounded-2xl animate-pulse"></span>
+            ) : (
+              systemName
+            )}
           </h1>
-          <p className="text-2xl md:text-3xl font-normal text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-            투명하고 안전한 온라인 투표 시스템
+          <p className="text-2xl md:text-3xl font-normal text-gray-600" style={{ 
+            letterSpacing: '-0.01em',
+            minHeight: '2.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {loading ? (
+              <span className="inline-block w-96 h-8 bg-gray-200 rounded-xl animate-pulse"></span>
+            ) : (
+              systemDescription
+            )}
           </p>
         </div>
 

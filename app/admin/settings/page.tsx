@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const [adminEmails, setAdminEmails] = useState<AdminEmail[]>([]);
   const [newEmail, setNewEmail] = useState('');
   const [systemName, setSystemName] = useState('청년국 투표 시스템');
+  const [systemDescription, setSystemDescription] = useState('투명하고 안전한 온라인 투표 시스템');
   const [saving, setSaving] = useState(false);
 
   // Alert and Confirm modal states
@@ -91,7 +92,7 @@ export default function SettingsPage() {
     
     const { data, error } = await supabase
       .from('system_config')
-      .select('system_name')
+      .select('system_name, system_description')
       .limit(1)
       .single();
 
@@ -100,8 +101,13 @@ export default function SettingsPage() {
       return;
     }
 
-    if (data && data.system_name) {
-      setSystemName(data.system_name);
+    if (data) {
+      if (data.system_name) {
+        setSystemName(data.system_name);
+      }
+      if (data.system_description) {
+        setSystemDescription(data.system_description);
+      }
     }
   }, []);
 
@@ -239,6 +245,15 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!systemDescription.trim()) {
+      setAlertModal({
+        isOpen: true,
+        message: '시스템 설명을 입력하세요.',
+        title: '입력 오류'
+      });
+      return;
+    }
+
     setSaving(true);
     const supabase = createClient();
 
@@ -256,6 +271,7 @@ export default function SettingsPage() {
         .from('system_config')
         .update({ 
           system_name: systemName.trim(),
+          system_description: systemDescription.trim(),
           updated_at: new Date().toISOString()
         })
         .eq('id', existing.id);
@@ -265,7 +281,8 @@ export default function SettingsPage() {
       const result = await supabase
         .from('system_config')
         .insert([{
-          system_name: systemName.trim()
+          system_name: systemName.trim(),
+          system_description: systemDescription.trim()
         }]);
       error = result.error;
     }
@@ -273,10 +290,10 @@ export default function SettingsPage() {
     setSaving(false);
 
     if (error) {
-      console.error('시스템 이름 저장 오류:', error);
+      console.error('시스템 설정 저장 오류:', error);
       setAlertModal({
         isOpen: true,
-        message: '시스템 이름 저장에 실패했습니다.',
+        message: '시스템 설정 저장에 실패했습니다.',
         title: '오류'
       });
       return;
@@ -284,7 +301,7 @@ export default function SettingsPage() {
 
     setAlertModal({
       isOpen: true,
-      message: '시스템 이름이 저장되었습니다.',
+      message: '시스템 설정이 저장되었습니다.',
       title: '저장 완료'
     });
   };
@@ -360,13 +377,13 @@ export default function SettingsPage() {
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
-                시스템 이름
+                시스템 정보
               </h2>
               
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-3" style={{ letterSpacing: '-0.01em' }}>
-                    시스템 표시 이름
+                    시스템 이름
                   </label>
                   <input
                     type="text"
@@ -377,6 +394,22 @@ export default function SettingsPage() {
                   />
                   <p className="mt-2 text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
                     투표 페이지 상단에 표시되는 시스템 이름입니다
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-3" style={{ letterSpacing: '-0.01em' }}>
+                    시스템 설명
+                  </label>
+                  <input
+                    type="text"
+                    value={systemDescription}
+                    onChange={(e) => setSystemDescription(e.target.value)}
+                    className="input-apple"
+                    placeholder="투명하고 안전한 온라인 투표 시스템"
+                  />
+                  <p className="mt-2 text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
+                    시스템 이름 하단에 표시되는 짧은 설명입니다
                   </p>
                 </div>
 
@@ -610,10 +643,10 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    시스템 이름
+                    시스템 정보
                   </p>
                   <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>
-                    투표자 페이지 상단에 표시될 시스템 이름을 설정하세요
+                    투표자 페이지에 표시될 시스템 이름과 설명을 설정하세요
                   </p>
                 </div>
                 <div>

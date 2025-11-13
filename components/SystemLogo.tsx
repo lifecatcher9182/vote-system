@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSystemConfig } from '@/lib/hooks/useSystemConfig';
@@ -22,21 +23,15 @@ export default function SystemLogo({
   size = 'md',
   linkToHome = false
 }: SystemLogoProps) {
-  const { systemName, logoUrl, loading } = useSystemConfig();
+  const { systemName, logoUrl } = useSystemConfig();
+  const [mounted, setMounted] = useState(false);
 
-  if (loading) {
-    return (
-      <div 
-        className={`${className} animate-pulse bg-gray-200 rounded-lg`} 
-        style={{ 
-          width: `${sizeMap[size].width}px`, 
-          height: `${sizeMap[size].height}px` 
-        }}
-      />
-    );
-  }
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  if (!logoUrl) {
+  // 마운트 전이거나 로고가 없으면 null 반환
+  if (!mounted || !logoUrl) {
     return null;
   }
 
