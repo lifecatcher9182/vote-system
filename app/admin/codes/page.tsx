@@ -7,6 +7,8 @@ import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import { nanoid } from 'nanoid';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface VoterCode {
   id: string;
@@ -58,6 +60,26 @@ export default function CodesPage() {
   const [selectedVillage, setSelectedVillage] = useState('');
   const [generating, setGenerating] = useState(false);
 
+  // Alert and Confirm modal states
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; 
+    message: string; 
+    title?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'primary';
+  }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '확인',
+    onConfirm: () => {},
+    variant: 'primary'
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -69,7 +91,11 @@ export default function CodesPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '관리자 권한이 없습니다.',
+        title: '접근 권한 없음'
+      });
       await signOut();
       router.push('/admin');
       return;
@@ -211,17 +237,29 @@ export default function CodesPage() {
       : selectedElections;
     
     if (electionsToAccess.length === 0) {
-      alert('접근 가능한 투표를 최소 1개 선택하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '접근 가능한 투표를 최소 1개 선택하세요.',
+        title: '입력 오류'
+      });
       return;
     }
 
     if (codeType === 'delegate' && !selectedVillage) {
-      alert('총대 코드는 마을을 선택해야 합니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '총대 코드는 마을을 선택해야 합니다.',
+        title: '입력 오류'
+      });
       return;
     }
 
     if (quantity < 1 || quantity > 1000) {
-      alert('생성 개수는 1~1000개 사이여야 합니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '생성 개수는 1~1000개 사이여야 합니다.',
+        title: '입력 오류'
+      });
       return;
     }
 
@@ -258,12 +296,20 @@ export default function CodesPage() {
 
       if (error) {
         console.error('코드 생성 오류:', error);
-        alert('코드 생성에 실패했습니다.');
+        setAlertModal({
+          isOpen: true,
+          message: '코드 생성에 실패했습니다.',
+          title: '오류'
+        });
         setGenerating(false);
         return;
       }
 
-      alert(`${quantity}개의 참여코드가 생성되었습니다!`);
+      setAlertModal({
+        isOpen: true,
+        message: `${quantity}개의 참여코드가 생성되었습니다!`,
+        title: '생성 완료'
+      });
       setShowCreateModal(false);
       setSelectedElections([]);
       setSelectedVillage('');
@@ -271,30 +317,42 @@ export default function CodesPage() {
       loadCodes();
     } catch (error) {
       console.error('코드 생성 중 오류:', error);
-      alert('코드 생성 중 오류가 발생했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '코드 생성 중 오류가 발생했습니다.',
+        title: '오류'
+      });
     } finally {
       setGenerating(false);
     }
   };
 
   const handleDeleteCode = async (id: string) => {
-    if (!confirm('정말 이 참여코드를 삭제하시겠습니까?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 참여코드를 삭제하시겠습니까?',
+      title: '코드 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('voter_codes')
+          .delete()
+          .eq('id', id);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('voter_codes')
-      .delete()
-      .eq('id', id);
+        if (error) {
+          console.error('코드 삭제 오류:', error);
+          setAlertModal({
+            isOpen: true,
+            message: '코드 삭제에 실패했습니다.',
+            title: '오류'
+          });
+          return;
+        }
 
-    if (error) {
-      console.error('코드 삭제 오류:', error);
-      alert('코드 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadCodes();
+        loadCodes();
+      }
+    });
   };
 
   const toggleElectionSelection = (electionId: string) => {
@@ -889,6 +947,24 @@ export default function CodesPage() {
           </div>
         </div>
       )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 }

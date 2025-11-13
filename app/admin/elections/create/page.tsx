@@ -7,6 +7,7 @@ import { checkAdminAccess, signOut } from '@/lib/auth';
 import { WinningCriteria } from '@/lib/database.types';
 import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
 
 interface Village {
   id: string;
@@ -46,6 +47,13 @@ export default function CreateElectionPage() {
   const [percentage, setPercentage] = useState(66.67);
   const [base, setBase] = useState<'attended' | 'issued'>('attended');
 
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -57,7 +65,11 @@ export default function CreateElectionPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '관리자 권한이 없습니다.',
+        title: '접근 권한 없음'
+      });
       await signOut();
       router.push('/admin');
       return;
@@ -113,7 +125,11 @@ export default function CreateElectionPage() {
 
   const removeCandidate = (id: string) => {
     if (candidates.length <= 2) {
-      alert('최소 2명의 후보자가 필요합니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '최소 2명의 후보자가 필요합니다.',
+        title: '입력 오류'
+      });
       return;
     }
     setCandidates(candidates.filter(c => c.id !== id));
@@ -127,33 +143,57 @@ export default function CreateElectionPage() {
 
   const validateForm = () => {
     if (!title.trim()) {
-      alert('투표 제목을 입력하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '투표 제목을 입력하세요.',
+        title: '입력 오류'
+      });
       return false;
     }
 
     if (electionType === 'delegate' && !villageId) {
-      alert('마을을 선택하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '마을을 선택하세요.',
+        title: '입력 오류'
+      });
       return false;
     }
 
     if (electionType === 'officer' && !position.trim()) {
-      alert('직책을 입력하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '직책을 입력하세요.',
+        title: '입력 오류'
+      });
       return false;
     }
 
     const validCandidates = candidates.filter(c => c.name.trim());
     if (validCandidates.length < 2) {
-      alert('최소 2명의 후보자를 입력하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '최소 2명의 후보자를 입력하세요.',
+        title: '입력 오류'
+      });
       return false;
     }
 
     if (maxSelections < 1) {
-      alert('최대 선택 수는 1 이상이어야 합니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '최대 선택 수는 1 이상이어야 합니다.',
+        title: '입력 오류'
+      });
       return false;
     }
 
     if (maxSelections > validCandidates.length) {
-      alert('최대 선택 수는 후보자 수보다 클 수 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '최대 선택 수는 후보자 수보다 클 수 없습니다.',
+        title: '입력 오류'
+      });
       return false;
     }
 
@@ -214,7 +254,11 @@ export default function CreateElectionPage() {
 
       if (electionError) {
         console.error('투표 생성 오류:', electionError);
-        alert('투표 생성에 실패했습니다.');
+        setAlertModal({
+          isOpen: true,
+          message: '투표 생성에 실패했습니다.',
+          title: '오류'
+        });
         setSubmitting(false);
         return;
       }
@@ -234,7 +278,11 @@ export default function CreateElectionPage() {
 
       if (candidatesError) {
         console.error('후보자 생성 오류:', candidatesError);
-        alert('후보자 생성에 실패했습니다.');
+        setAlertModal({
+          isOpen: true,
+          message: '후보자 생성에 실패했습니다.',
+          title: '오류'
+        });
         setSubmitting(false);
         return;
       }
@@ -274,7 +322,11 @@ export default function CreateElectionPage() {
         }
       }
 
-      alert('투표가 성공적으로 생성되었습니다!');
+      setAlertModal({
+        isOpen: true,
+        message: '투표가 성공적으로 생성되었습니다!',
+        title: '생성 완료'
+      });
       
       // 그룹에서 들어왔으면 그룹 페이지로, 아니면 대시보드로
       if (groupId) {
@@ -284,7 +336,11 @@ export default function CreateElectionPage() {
       }
     } catch (error) {
       console.error('투표 생성 중 오류:', error);
-      alert('투표 생성 중 오류가 발생했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '투표 생성 중 오류가 발생했습니다.',
+        title: '오류'
+      });
       setSubmitting(false);
     }
   };
@@ -865,6 +921,14 @@ export default function CreateElectionPage() {
           </div>
         </div>
       </main>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }

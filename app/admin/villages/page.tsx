@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Village {
   id: string;
@@ -25,6 +27,26 @@ export default function VillagesPage() {
   const [newVillage, setNewVillage] = useState({ name: '' });
   const [editingVillage, setEditingVillage] = useState<Village | null>(null);
 
+  // Alert and Confirm modal states
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; 
+    message: string; 
+    title?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'primary';
+  }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '확인',
+    onConfirm: () => {},
+    variant: 'primary'
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -36,7 +58,11 @@ export default function VillagesPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '관리자 권한이 없습니다.',
+        title: '접근 권한 없음'
+      });
       await signOut();
       router.push('/admin');
       return;
@@ -73,7 +99,11 @@ export default function VillagesPage() {
     e.preventDefault();
     
     if (!newVillage.name) {
-      alert('마을 이름을 입력해주세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '마을 이름을 입력해주세요.',
+        title: '입력 오류'
+      });
       return;
     }
 
@@ -84,7 +114,11 @@ export default function VillagesPage() {
 
     if (error) {
       console.error('마을 추가 오류:', error);
-      alert('마을 추가에 실패했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '마을 추가에 실패했습니다.',
+        title: '오류'
+      });
       return;
     }
 
@@ -97,7 +131,11 @@ export default function VillagesPage() {
     e.preventDefault();
     
     if (!editingVillage || !editingVillage.name) {
-      alert('마을 이름을 입력해주세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '마을 이름을 입력해주세요.',
+        title: '입력 오류'
+      });
       return;
     }
 
@@ -111,7 +149,11 @@ export default function VillagesPage() {
 
     if (error) {
       console.error('마을 수정 오류:', error);
-      alert('마을 수정에 실패했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '마을 수정에 실패했습니다.',
+        title: '오류'
+      });
       return;
     }
 
@@ -121,23 +163,31 @@ export default function VillagesPage() {
   };
 
   const handleDeleteVillage = async (id: string) => {
-    if (!confirm('정말 이 마을을 삭제하시겠습니까?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 마을을 삭제하시겠습니까?',
+      title: '마을 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('villages')
+          .delete()
+          .eq('id', id);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('villages')
-      .delete()
-      .eq('id', id);
+        if (error) {
+          console.error('마을 삭제 오류:', error);
+          setAlertModal({
+            isOpen: true,
+            message: '마을 삭제에 실패했습니다.',
+            title: '오류'
+          });
+          return;
+        }
 
-    if (error) {
-      console.error('마을 삭제 오류:', error);
-      alert('마을 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadVillages();
+        loadVillages();
+      }
+    });
   };
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -149,7 +199,11 @@ export default function VillagesPage() {
 
     if (error) {
       console.error('상태 변경 오류:', error);
-      alert('상태 변경에 실패했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '상태 변경에 실패했습니다.',
+        title: '오류'
+      });
       return;
     }
 
@@ -577,6 +631,24 @@ export default function VillagesPage() {
           </div>
         </div>
       )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 }

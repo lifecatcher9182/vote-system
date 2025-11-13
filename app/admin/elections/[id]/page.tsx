@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { use } from 'react';
 import QRCodeSection from '@/components/QRCodeSection';
 import { nanoid } from 'nanoid';
+import AlertModal from '@/components/AlertModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Election {
   id: string;
@@ -103,6 +105,14 @@ export default function ElectionDetailPage({
     { id: '2', percentage: 66.67, label: '2/3' }
   ]);
 
+  // 모달 상태
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, message: '', title: '알림' 
+  });
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; message: string; title?: string; onConfirm: () => void; variant?: 'danger' | 'primary';
+  }>({ isOpen: false, message: '', title: '확인', onConfirm: () => {}, variant: 'primary' });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -114,7 +124,7 @@ export default function ElectionDetailPage({
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({ isOpen: true, message: '관리자 권한이 없습니다.', title: '접근 권한 없음' });
       await signOut();
       router.push('/admin');
       return;
@@ -139,7 +149,7 @@ export default function ElectionDetailPage({
 
     if (electionError) {
       console.error('투표 로딩 오류:', electionError);
-      alert('투표를 불러오지 못했습니다.');
+      setAlertModal({ isOpen: true, message: '투표를 불러오지 못했습니다.', title: '오류' });
       router.push('/admin/dashboard');
       return;
     }
@@ -223,7 +233,7 @@ export default function ElectionDetailPage({
 
     if (error) {
       console.error('상태 변경 오류:', error);
-      alert('상태 변경에 실패했습니다.');
+      setAlertModal({ isOpen: true, message: '상태 변경에 실패했습니다.', title: '오류' });
       return;
     }
 
@@ -232,7 +242,7 @@ export default function ElectionDetailPage({
 
   const handleAddCandidate = async () => {
     if (!newCandidateName.trim()) {
-      alert('후보자 이름을 입력하세요.');
+      setAlertModal({ isOpen: true, message: '후보자 이름을 입력하세요.', title: '입력 오류' });
       return;
     }
 
@@ -247,7 +257,7 @@ export default function ElectionDetailPage({
 
     if (error) {
       console.error('후보자 추가 오류:', error);
-      alert('후보자 추가에 실패했습니다.');
+      setAlertModal({ isOpen: true, message: '후보자 추가에 실패했습니다.', title: '오류' });
       return;
     }
 
@@ -257,29 +267,33 @@ export default function ElectionDetailPage({
   };
 
   const handleDeleteCandidate = async (candidateId: string) => {
-    if (!confirm('정말 이 후보자를 삭제하시겠습니까?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 후보자를 삭제하시겠습니까?',
+      title: '후보자 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('candidates')
+          .delete()
+          .eq('id', candidateId);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('candidates')
-      .delete()
-      .eq('id', candidateId);
+        if (error) {
+          console.error('후보자 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '후보자 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('후보자 삭제 오류:', error);
-      alert('후보자 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadElection();
+        loadElection();
+      }
+    });
   };
 
   const handleGenerateCodes = async () => {
     if (!election) return;
     if (codeQuantity < 1 || codeQuantity > 100) {
-      alert('코드는 1-100개까지 생성 가능합니다.');
+      setAlertModal({ isOpen: true, message: '코드는 1-100개까지 생성 가능합니다.', title: '입력 오류' });
       return;
     }
 
@@ -305,40 +319,44 @@ export default function ElectionDetailPage({
 
       if (error) {
         console.error('코드 생성 오류:', error);
-        alert('코드 생성에 실패했습니다.');
+        setAlertModal({ isOpen: true, message: '코드 생성에 실패했습니다.', title: '오류' });
         return;
       }
 
-      alert(`${codeQuantity}개의 코드가 생성되었습니다.`);
+      setAlertModal({ isOpen: true, message: `${codeQuantity}개의 코드가 생성되었습니다.`, title: '생성 완료' });
       setShowCreateCodeModal(false);
       setCodeQuantity(10);
       loadVoterCodes();
     } catch (error) {
       console.error('코드 생성 오류:', error);
-      alert('코드 생성 중 오류가 발생했습니다.');
+      setAlertModal({ isOpen: true, message: '코드 생성 중 오류가 발생했습니다.', title: '오류' });
     } finally {
       setGeneratingCodes(false);
     }
   };
 
   const handleDeleteCode = async (codeId: string) => {
-    if (!confirm('정말 이 코드를 삭제하시겠습니까?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 코드를 삭제하시겠습니까?',
+      title: '코드 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('voter_codes')
+          .delete()
+          .eq('id', codeId);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('voter_codes')
-      .delete()
-      .eq('id', codeId);
+        if (error) {
+          console.error('코드 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '코드 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('코드 삭제 오류:', error);
-      alert('코드 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadVoterCodes();
+        loadVoterCodes();
+      }
+    });
   };
 
   const loadResultStats = useCallback(async () => {
@@ -467,7 +485,7 @@ export default function ElectionDetailPage({
 
     if (error) {
       console.error('비고 추가 오류:', error);
-      alert('비고 추가에 실패했습니다.');
+      setAlertModal({ isOpen: true, message: '비고 추가에 실패했습니다.', title: '오류' });
       return;
     }
 
@@ -490,7 +508,7 @@ export default function ElectionDetailPage({
 
     if (error) {
       console.error('비고 수정 오류:', error);
-      alert('비고 수정에 실패했습니다.');
+      setAlertModal({ isOpen: true, message: '비고 수정에 실패했습니다.', title: '오류' });
       return;
     }
 
@@ -501,21 +519,27 @@ export default function ElectionDetailPage({
 
   // 비고 삭제
   const handleDeleteNote = async (noteId: string) => {
-    if (!confirm('정말 이 비고를 삭제하시겠습니까?')) return;
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 비고를 삭제하시겠습니까?',
+      title: '비고 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('election_notes')
+          .delete()
+          .eq('id', noteId);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('election_notes')
-      .delete()
-      .eq('id', noteId);
+        if (error) {
+          console.error('비고 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '비고 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('비고 삭제 오류:', error);
-      alert('비고 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadNotes();
+        loadNotes();
+      }
+    });
   };
 
   const calculateWinners = useCallback(() => {
@@ -1159,7 +1183,7 @@ export default function ElectionDetailPage({
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText(code.code);
-                                alert('코드가 복사되었습니다.');
+                                setAlertModal({ isOpen: true, message: '코드가 복사되었습니다.', title: '복사 완료' });
                               }}
                               className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                               style={{ 
@@ -1305,7 +1329,7 @@ export default function ElectionDetailPage({
                               { id: Date.now().toString(), percentage: value, label }
                             ]);
                           } else {
-                            alert('0보다 크고 100 이하의 값을 입력하세요.');
+                            setAlertModal({ isOpen: true, message: '0보다 크고 100 이하의 값을 입력하세요.', title: '입력 오류' });
                           }
                         }
                       }}
@@ -1328,9 +1352,15 @@ export default function ElectionDetailPage({
                         <div key={threshold.id} className="relative group bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
                           <button
                             onClick={() => {
-                              if (confirm(`"${threshold.label}" 비율을 삭제하시겠습니까?`)) {
-                                setVoteThresholds(voteThresholds.filter(t => t.id !== threshold.id));
-                              }
+                              setConfirmModal({
+                                isOpen: true,
+                                message: `"${threshold.label}" 비율을 삭제하시겠습니까?`,
+                                title: '비율 삭제',
+                                variant: 'danger',
+                                onConfirm: () => {
+                                  setVoteThresholds(voteThresholds.filter(t => t.id !== threshold.id));
+                                }
+                              });
                             }}
                             className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold hover:bg-red-200"
                             title="삭제"
@@ -1797,6 +1827,24 @@ export default function ElectionDetailPage({
           )}
         </div>
       </main>
+
+      {/* AlertModal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
+
+      {/* ConfirmModal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 }

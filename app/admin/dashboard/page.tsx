@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { signOut, checkAdminAccess } from '@/lib/auth';
 import type { User } from '@supabase/supabase-js';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
 
 interface Stats {
   totalElections: number;
@@ -37,6 +38,13 @@ export default function AdminDashboard() {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [activitySort, setActivitySort] = useState<'created_at' | 'updated_at'>('updated_at'); // 최근 활동순이 기본
 
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -49,7 +57,11 @@ export default function AdminDashboard() {
     // 관리자 권한 확인
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '관리자 권한이 없습니다.',
+        title: '접근 권한 없음'
+      });
       await signOut();
       router.push('/admin');
       return;
@@ -544,6 +556,14 @@ export default function AdminDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
+import AlertModal from '@/components/AlertModal';
 
 interface Election {
   id: string;
@@ -55,6 +56,13 @@ export default function MonitorPage({
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -66,7 +74,11 @@ export default function MonitorPage({
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '관리자 권한이 없습니다.',
+        title: '접근 권한 없음'
+      });
       await signOut();
       router.push('/admin');
       return false;
@@ -91,7 +103,11 @@ export default function MonitorPage({
 
     if (electionError || !electionData) {
       console.error('투표 로딩 오류:', electionError);
-      alert('투표를 불러오지 못했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '투표를 불러오지 못했습니다.',
+        title: '오류'
+      });
       router.push('/admin/dashboard');
       return;
     }
@@ -431,6 +447,14 @@ export default function MonitorPage({
           )}
         </div>
       </main>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }

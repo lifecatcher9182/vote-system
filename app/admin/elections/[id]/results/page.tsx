@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import { WinningCriteria } from '@/lib/database.types';
 import Link from 'next/link';
+import AlertModal from '@/components/AlertModal';
 
 interface Election {
   id: string;
@@ -69,6 +70,11 @@ export default function ResultsPage({
   });
   const [villageStats, setVillageStats] = useState<VillageStats[]>([]);
 
+  // 모달 상태
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, message: '', title: '알림' 
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -80,7 +86,7 @@ export default function ResultsPage({
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({ isOpen: true, message: '관리자 권한이 없습니다.', title: '접근 권한 없음' });
       await signOut();
       router.push('/admin');
       return false;
@@ -105,7 +111,7 @@ export default function ResultsPage({
 
     if (electionError || !electionData) {
       console.error('투표 로딩 오류:', electionError);
-      alert('투표를 불러오지 못했습니다.');
+      setAlertModal({ isOpen: true, message: '투표를 불러오지 못했습니다.', title: '오류' });
       router.push('/admin/dashboard');
       return;
     }
@@ -745,6 +751,14 @@ export default function ResultsPage({
             </div>
           )}
       </main>
+
+      {/* AlertModal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }

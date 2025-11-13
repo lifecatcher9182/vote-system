@@ -5,11 +5,22 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
 
 export default function CreateElectionGroupPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const [alertModal, setAlertModal] = useState<{ 
+    isOpen: boolean; 
+    message: string; 
+    title?: string;
+  }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -28,7 +39,7 @@ export default function CreateElectionGroupPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({ isOpen: true, message: '관리자 권한이 없습니다.', title: '접근 권한 없음' });
       await signOut();
       router.push('/admin');
       return false;
@@ -51,7 +62,7 @@ export default function CreateElectionGroupPage() {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      alert('그룹 제목을 입력해주세요.');
+      setAlertModal({ isOpen: true, message: '그룹 제목을 입력해주세요.', title: '입력 오류' });
       return;
     }
 
@@ -73,15 +84,15 @@ export default function CreateElectionGroupPage() {
 
       if (error) {
         console.error('그룹 생성 오류:', error);
-        alert('그룹 생성에 실패했습니다.');
+        setAlertModal({ isOpen: true, message: '그룹 생성에 실패했습니다.', title: '오류' });
         return;
       }
 
-      alert('그룹이 생성되었습니다!');
+      setAlertModal({ isOpen: true, message: '그룹이 생성되었습니다!', title: '생성 완료' });
       router.push(`/admin/election-groups/${data.id}`);
     } catch (error) {
       console.error('그룹 생성 오류:', error);
-      alert('그룹 생성에 실패했습니다.');
+      setAlertModal({ isOpen: true, message: '그룹 생성에 실패했습니다.', title: '오류' });
     } finally {
       setSubmitting(false);
     }
@@ -382,6 +393,13 @@ export default function CreateElectionGroupPage() {
           </button>
         </div>
       </main>
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }

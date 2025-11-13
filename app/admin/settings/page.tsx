@@ -7,6 +7,8 @@ import { checkAdminAccess, signOut } from '@/lib/auth';
 import LogoUploadSettings from '@/components/LogoUploadSettings';
 import ColorThemeSettings from '@/components/ColorThemeSettings';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface AdminEmail {
   id: string;
@@ -23,6 +25,26 @@ export default function SettingsPage() {
   const [systemName, setSystemName] = useState('청년국 투표 시스템');
   const [saving, setSaving] = useState(false);
 
+  // Alert and Confirm modal states
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '알림' 
+  });
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; 
+    message: string; 
+    title?: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'primary';
+  }>({ 
+    isOpen: false, 
+    message: '', 
+    title: '확인',
+    onConfirm: () => {},
+    variant: 'primary'
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -34,7 +56,11 @@ export default function SettingsPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '관리자 권한이 없습니다.',
+        title: '접근 권한 없음'
+      });
       await signOut();
       router.push('/admin');
       return;
@@ -91,20 +117,32 @@ export default function SettingsPage() {
 
   const handleAddAdmin = async () => {
     if (!newEmail.trim()) {
-      alert('이메일을 입력하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '이메일을 입력하세요.',
+        title: '입력 오류'
+      });
       return;
     }
 
     // 이메일 형식 검증
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail.trim())) {
-      alert('올바른 이메일 형식이 아닙니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '올바른 이메일 형식이 아닙니다.',
+        title: '입력 오류'
+      });
       return;
     }
 
     // 중복 확인
     if (adminEmails.some(admin => admin.email === newEmail.trim())) {
-      alert('이미 등록된 관리자입니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '이미 등록된 관리자입니다.',
+        title: '등록 불가'
+      });
       return;
     }
 
@@ -116,11 +154,19 @@ export default function SettingsPage() {
 
     if (error) {
       console.error('관리자 추가 오류:', error);
-      alert(`관리자 추가에 실패했습니다.\n오류: ${error.message}`);
+      setAlertModal({
+        isOpen: true,
+        message: `관리자 추가에 실패했습니다.\n오류: ${error.message}`,
+        title: '오류'
+      });
       return;
     }
 
-    alert(`${newEmail.trim()}이(가) 관리자로 추가되었습니다.\n해당 이메일로 Google 로그인하면 관리자 페이지에 접근할 수 있습니다.`);
+    setAlertModal({
+      isOpen: true,
+      message: `${newEmail.trim()}이(가) 관리자로 추가되었습니다.\n해당 이메일로 Google 로그인하면 관리자 페이지에 접근할 수 있습니다.`,
+      title: '추가 완료'
+    });
     setNewEmail('');
     loadAdminEmails();
   };
@@ -128,44 +174,68 @@ export default function SettingsPage() {
   const handleDeleteAdmin = async (id: string, email: string) => {
     // 시스템 관리자 보호
     if (email === 'lifecatcher9182@gmail.com') {
-      alert('시스템 관리자 계정은 삭제할 수 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '시스템 관리자 계정은 삭제할 수 없습니다.',
+        title: '삭제 불가'
+      });
       return;
     }
 
     // 본인은 삭제 불가
     if (email === currentUserEmail) {
-      alert('본인 계정은 삭제할 수 없습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '본인 계정은 삭제할 수 없습니다.',
+        title: '삭제 불가'
+      });
       return;
     }
 
     // 마지막 관리자 삭제 방지
     if (adminEmails.length <= 1) {
-      alert('최소 한 명의 관리자가 필요합니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '최소 한 명의 관리자가 필요합니다.',
+        title: '삭제 불가'
+      });
       return;
     }
 
-    if (!confirm(`정말 ${email}을(를) 관리자에서 제거하시겠습니까?`)) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: `정말 ${email}을(를) 관리자에서 제거하시겠습니까?`,
+      title: '관리자 제거',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('admin_emails')
+          .delete()
+          .eq('id', id);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('admin_emails')
-      .delete()
-      .eq('id', id);
+        if (error) {
+          console.error('관리자 삭제 오류:', error);
+          setAlertModal({
+            isOpen: true,
+            message: '관리자 삭제에 실패했습니다.',
+            title: '오류'
+          });
+          return;
+        }
 
-    if (error) {
-      console.error('관리자 삭제 오류:', error);
-      alert('관리자 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadAdminEmails();
+        loadAdminEmails();
+      }
+    });
   };
 
   const handleSaveSystemName = async () => {
     if (!systemName.trim()) {
-      alert('시스템 이름을 입력하세요.');
+      setAlertModal({
+        isOpen: true,
+        message: '시스템 이름을 입력하세요.',
+        title: '입력 오류'
+      });
       return;
     }
 
@@ -204,11 +274,19 @@ export default function SettingsPage() {
 
     if (error) {
       console.error('시스템 이름 저장 오류:', error);
-      alert('시스템 이름 저장에 실패했습니다.');
+      setAlertModal({
+        isOpen: true,
+        message: '시스템 이름 저장에 실패했습니다.',
+        title: '오류'
+      });
       return;
     }
 
-    alert('시스템 이름이 저장되었습니다.');
+    setAlertModal({
+      isOpen: true,
+      message: '시스템 이름이 저장되었습니다.',
+      title: '저장 완료'
+    });
   };
 
   if (loading) {
@@ -551,6 +629,24 @@ export default function SettingsPage() {
           </div>
         </div>
       </main>
+
+      {/* Alert Modal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 }

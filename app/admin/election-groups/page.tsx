@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
 
 interface ElectionGroup {
   id: string;
@@ -34,6 +35,11 @@ export default function ElectionGroupsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 30;
 
+  // 모달 상태
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, message: '', title: '알림' 
+  });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -45,7 +51,7 @@ export default function ElectionGroupsPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({ isOpen: true, message: '관리자 권한이 없습니다.', title: '접근 권한 없음' });
       await signOut();
       router.push('/admin');
       return false;
@@ -564,6 +570,13 @@ export default function ElectionGroupsPage() {
           )}
         </div>
       </main>
+
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }

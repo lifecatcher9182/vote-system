@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
+import AlertModal from '@/components/AlertModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Election {
   id: string;
@@ -28,6 +30,14 @@ export default function ElectionsPage() {
   const [elections, setElections] = useState<Election[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'closed'>('all');
 
+  // 모달 상태
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, message: '', title: '알림' 
+  });
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; message: string; title?: string; onConfirm: () => void; variant?: 'danger' | 'primary';
+  }>({ isOpen: false, message: '', title: '확인', onConfirm: () => {}, variant: 'primary' });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -39,7 +49,7 @@ export default function ElectionsPage() {
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({ isOpen: true, message: '관리자 권한이 없습니다.', title: '접근 권한 없음' });
       await signOut();
       router.push('/admin');
       return;
@@ -87,23 +97,27 @@ export default function ElectionsPage() {
   }, [checkAuth, loadElections]);
 
   const handleDeleteElection = async (id: string) => {
-    if (!confirm('정말 이 투표를 삭제하시겠습니까? 관련된 모든 데이터가 삭제됩니다.')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 투표를 삭제하시겠습니까? 관련된 모든 데이터가 삭제됩니다.',
+      title: '투표 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('elections')
+          .delete()
+          .eq('id', id);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('elections')
-      .delete()
-      .eq('id', id);
+        if (error) {
+          console.error('투표 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '투표 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('투표 삭제 오류:', error);
-      alert('투표 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadElections();
+        loadElections();
+      }
+    });
   };
 
   const getStatusBadge = (status: Election['status']) => {
@@ -373,6 +387,24 @@ export default function ElectionsPage() {
           </div>
         )}
       </main>
+
+      {/* AlertModal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
+
+      {/* ConfirmModal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 }

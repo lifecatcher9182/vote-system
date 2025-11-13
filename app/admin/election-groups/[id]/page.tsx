@@ -7,6 +7,8 @@ import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import SystemLogo from '@/components/SystemLogo';
 import { nanoid } from 'nanoid';
+import AlertModal from '@/components/AlertModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface ElectionGroup {
   id: string;
@@ -82,6 +84,14 @@ export default function ElectionGroupDetailPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // 모달 상태
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
+    isOpen: false, message: '', title: '알림' 
+  });
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; message: string; title?: string; onConfirm: () => void; variant?: 'danger' | 'primary';
+  }>({ isOpen: false, message: '', title: '확인', onConfirm: () => {}, variant: 'primary' });
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -93,7 +103,7 @@ export default function ElectionGroupDetailPage({
 
     const { isAdmin } = await checkAdminAccess(user.email!);
     if (!isAdmin) {
-      alert('관리자 권한이 없습니다.');
+      setAlertModal({ isOpen: true, message: '관리자 권한이 없습니다.', title: '접근 권한 없음' });
       await signOut();
       router.push('/admin');
       return false;
@@ -113,7 +123,7 @@ export default function ElectionGroupDetailPage({
 
     if (error || !data) {
       console.error('그룹 로딩 오류:', error);
-      alert('그룹을 찾을 수 없습니다.');
+      setAlertModal({ isOpen: true, message: '그룹을 찾을 수 없습니다.', title: '오류' });
       router.push('/admin/election-groups');
       return;
     }
@@ -167,26 +177,30 @@ export default function ElectionGroupDetailPage({
   }, [resolvedParams.id]);
 
   const handleDeleteElection = async (electionId: string, electionTitle: string) => {
-    if (!confirm(`"${electionTitle}" 투표를 삭제하시겠습니까?\n\n관련된 후보자, 투표 데이터도 모두 삭제됩니다.`)) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: `"${electionTitle}" 투표를 삭제하시겠습니까?\n\n관련된 후보자, 투표 데이터도 모두 삭제됩니다.`,
+      title: '투표 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
 
-    const supabase = createClient();
+        // 투표 삭제 (cascade로 후보자, 투표 데이터도 자동 삭제됨)
+        const { error } = await supabase
+          .from('elections')
+          .delete()
+          .eq('id', electionId);
 
-    // 투표 삭제 (cascade로 후보자, 투표 데이터도 자동 삭제됨)
-    const { error } = await supabase
-      .from('elections')
-      .delete()
-      .eq('id', electionId);
+        if (error) {
+          console.error('투표 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '투표 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('투표 삭제 오류:', error);
-      alert('투표 삭제에 실패했습니다.');
-      return;
-    }
-
-    alert('투표가 삭제되었습니다.');
-    loadElections(); // 목록 새로고침
+        setAlertModal({ isOpen: true, message: '투표가 삭제되었습니다.', title: '삭제 완료' });
+        loadElections(); // 목록 새로고침
+      }
+    });
   };
 
   const loadVillages = useCallback(async () => {
@@ -276,12 +290,12 @@ export default function ElectionGroupDetailPage({
   const handleGenerateCodes = async () => {
     if (!group || group.group_type !== 'officer') return;
     if (codeQuantity < 1 || codeQuantity > 100) {
-      alert('코드는 1-100개까지 생성 가능합니다.');
+      setAlertModal({ isOpen: true, message: '코드는 1-100개까지 생성 가능합니다.', title: '입력 오류' });
       return;
     }
 
     if (elections.length === 0) {
-      alert('투표를 먼저 생성해주세요.');
+      setAlertModal({ isOpen: true, message: '투표를 먼저 생성해주세요.', title: '입력 오류' });
       return;
     }
 
@@ -307,17 +321,17 @@ export default function ElectionGroupDetailPage({
 
       if (error) {
         console.error('코드 생성 오류:', error);
-        alert('코드 생성에 실패했습니다.');
+        setAlertModal({ isOpen: true, message: '코드 생성에 실패했습니다.', title: '오류' });
         return;
       }
 
-      alert(`${codeQuantity}개의 코드가 생성되었습니다.`);
+      setAlertModal({ isOpen: true, message: `${codeQuantity}개의 코드가 생성되었습니다.`, title: '생성 완료' });
       setShowCreateCodeModal(false);
       setCodeQuantity(10);
       loadVoterCodes();
     } catch (error) {
       console.error('코드 생성 오류:', error);
-      alert('코드 생성 중 오류가 발생했습니다.');
+      setAlertModal({ isOpen: true, message: '코드 생성 중 오류가 발생했습니다.', title: '오류' });
     } finally {
       setGeneratingCodes(false);
     }
@@ -325,23 +339,27 @@ export default function ElectionGroupDetailPage({
 
   // 코드 삭제
   const handleDeleteCode = async (codeId: string) => {
-    if (!confirm('정말 이 코드를 삭제하시겠습니까?')) {
-      return;
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: '정말 이 코드를 삭제하시겠습니까?',
+      title: '코드 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('voter_codes')
+          .delete()
+          .eq('id', codeId);
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('voter_codes')
-      .delete()
-      .eq('id', codeId);
+        if (error) {
+          console.error('코드 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '코드 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('코드 삭제 오류:', error);
-      alert('코드 삭제에 실패했습니다.');
-      return;
-    }
-
-    loadVoterCodes();
+        loadVoterCodes();
+      }
+    });
   };
 
   const handleBatchCreate = async () => {
@@ -351,113 +369,121 @@ export default function ElectionGroupDetailPage({
       // 총대 일괄 생성 - 마을별
       const selectedVillages = villages.filter(v => v.selections > 0);
       if (selectedVillages.length === 0) {
-        alert('생성할 마을을 선택하세요.');
+        setAlertModal({ isOpen: true, message: '생성할 마을을 선택하세요.', title: '입력 오류' });
         return;
       }
 
-      if (!confirm(`${selectedVillages.length}개 마을에 대한 투표를 생성하시겠습니까?`)) {
-        return;
-      }
+      setConfirmModal({
+        isOpen: true,
+        message: `${selectedVillages.length}개 마을에 대한 투표를 생성하시겠습니까?`,
+        title: '일괄 생성 확인',
+        variant: 'primary',
+        onConfirm: async () => {
+          setBatchCreating(true);
+          const supabase = createClient();
 
-      setBatchCreating(true);
-      const supabase = createClient();
+          try {
+            for (const village of selectedVillages) {
+              const { error } = await supabase
+                .from('elections')
+                .insert({
+                  title: `${village.name} 총대 선출`,
+                  election_type: 'delegate',
+                  village_id: village.id,
+                  max_selections: village.selections,
+                  round: 1,
+                  status: 'waiting',
+                  group_id: group.id
+                });
 
-      try {
-        for (const village of selectedVillages) {
-          const { error } = await supabase
-            .from('elections')
-            .insert({
-              title: `${village.name} 총대 선출`,
-              election_type: 'delegate',
-              village_id: village.id,
-              max_selections: village.selections,
-              round: 1,
-              status: 'waiting',
-              group_id: group.id
-            });
+              if (error) throw error;
+            }
 
-          if (error) throw error;
+            setAlertModal({ isOpen: true, message: `${selectedVillages.length}개의 투표가 생성되었습니다.`, title: '생성 완료' });
+            setShowBatchModal(false);
+            loadElections();
+          } catch (error) {
+            console.error('일괄 생성 오류:', error);
+            setAlertModal({ isOpen: true, message: '일괄 생성 중 오류가 발생했습니다.', title: '오류' });
+          } finally {
+            setBatchCreating(false);
+          }
         }
-
-        alert(`${selectedVillages.length}개의 투표가 생성되었습니다.`);
-        setShowBatchModal(false);
-        loadElections();
-      } catch (error) {
-        console.error('일괄 생성 오류:', error);
-        alert('일괄 생성 중 오류가 발생했습니다.');
-      } finally {
-        setBatchCreating(false);
-      }
+      });
 
     } else {
       // 임원 일괄 생성 - 직책별
       const selectedPositions = positions.filter(p => p.selections > 0);
       if (selectedPositions.length === 0) {
-        alert('생성할 직책을 선택하세요.');
+        setAlertModal({ isOpen: true, message: '생성할 직책을 선택하세요.', title: '입력 오류' });
         return;
       }
 
-      if (!confirm(`${selectedPositions.length}개 직책에 대한 투표를 생성하시겠습니까?`)) {
-        return;
-      }
+      setConfirmModal({
+        isOpen: true,
+        message: `${selectedPositions.length}개 직책에 대한 투표를 생성하시겠습니까?`,
+        title: '일괄 생성 확인',
+        variant: 'primary',
+        onConfirm: async () => {
+          setBatchCreating(true);
+          const supabase = createClient();
 
-      setBatchCreating(true);
-      const supabase = createClient();
+          try {
+            const newElectionIds: string[] = [];
+            
+            for (const position of selectedPositions) {
+              const { data, error } = await supabase
+                .from('elections')
+                .insert({
+                  title: `${position.name} 선출`,
+                  election_type: 'officer',
+                  position: position.name,
+                  max_selections: position.selections,
+                  round: 1,
+                  status: 'waiting',
+                  group_id: group.id
+                })
+                .select('id')
+                .single();
 
-      try {
-        const newElectionIds: string[] = [];
-        
-        for (const position of selectedPositions) {
-          const { data, error } = await supabase
-            .from('elections')
-            .insert({
-              title: `${position.name} 선출`,
-              election_type: 'officer',
-              position: position.name,
-              max_selections: position.selections,
-              round: 1,
-              status: 'waiting',
-              group_id: group.id
-            })
-            .select('id')
-            .single();
-
-          if (error) throw error;
-          if (data) newElectionIds.push(data.id);
-        }
-
-        // 기존 임원 코드들의 accessible_elections 업데이트
-        if (newElectionIds.length > 0) {
-          const currentElectionIds = elections.map(e => e.id);
-          const allElectionIds = [...currentElectionIds, ...newElectionIds];
-
-          // 이 그룹의 기존 코드 가져오기
-          const { data: existingCodes } = await supabase
-            .from('voter_codes')
-            .select('id, accessible_elections')
-            .eq('code_type', 'officer')
-            .contains('accessible_elections', currentElectionIds);
-
-          // 각 코드의 accessible_elections 업데이트
-          if (existingCodes && existingCodes.length > 0) {
-            for (const code of existingCodes) {
-              await supabase
-                .from('voter_codes')
-                .update({ accessible_elections: allElectionIds })
-                .eq('id', code.id);
+              if (error) throw error;
+              if (data) newElectionIds.push(data.id);
             }
+
+            // 기존 임원 코드들의 accessible_elections 업데이트
+            if (newElectionIds.length > 0) {
+              const currentElectionIds = elections.map(e => e.id);
+              const allElectionIds = [...currentElectionIds, ...newElectionIds];
+
+              // 이 그룹의 기존 코드 가져오기
+              const { data: existingCodes } = await supabase
+                .from('voter_codes')
+                .select('id, accessible_elections')
+                .eq('code_type', 'officer')
+                .contains('accessible_elections', currentElectionIds);
+
+              // 각 코드의 accessible_elections 업데이트
+              if (existingCodes && existingCodes.length > 0) {
+                for (const code of existingCodes) {
+                  await supabase
+                    .from('voter_codes')
+                    .update({ accessible_elections: allElectionIds })
+                    .eq('id', code.id);
+                }
+              }
+            }
+
+            setAlertModal({ isOpen: true, message: `${selectedPositions.length}개의 투표가 생성되었습니다.`, title: '생성 완료' });
+            setShowBatchModal(false);
+            loadElections();
+          } catch (error) {
+            console.error('일괄 생성 오류:', error);
+            setAlertModal({ isOpen: true, message: '일괄 생성 중 오류가 발생했습니다.', title: '오류' });
+          } finally {
+            setBatchCreating(false);
           }
         }
-
-        alert(`${selectedPositions.length}개의 투표가 생성되었습니다.`);
-        setShowBatchModal(false);
-        loadElections();
-      } catch (error) {
-        console.error('일괄 생성 오류:', error);
-        alert('일괄 생성 중 오류가 발생했습니다.');
-      } finally {
-        setBatchCreating(false);
-      }
+      });
     }
   };
 
@@ -469,50 +495,62 @@ export default function ElectionGroupDetailPage({
       newStatus === 'closed' ? '이 그룹을 종료하시겠습니까? (되돌릴 수 없습니다)' :
       '이 그룹을 대기 상태로 변경하시겠습니까?';
 
-    if (!confirm(confirmMessage)) return;
+    setConfirmModal({
+      isOpen: true,
+      message: confirmMessage,
+      title: '상태 변경',
+      variant: 'primary',
+      onConfirm: async () => {
+        const supabase = createClient();
 
-    const supabase = createClient();
+        const { error } = await supabase
+          .from('election_groups')
+          .update({ status: newStatus })
+          .eq('id', group.id);
 
-    const { error } = await supabase
-      .from('election_groups')
-      .update({ status: newStatus })
-      .eq('id', group.id);
+        if (error) {
+          console.error('상태 변경 오류:', error);
+          setAlertModal({ isOpen: true, message: '상태 변경에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('상태 변경 오류:', error);
-      alert('상태 변경에 실패했습니다.');
-      return;
-    }
-
-    alert('상태가 변경되었습니다.');
-    await loadGroup();
+        setAlertModal({ isOpen: true, message: '상태가 변경되었습니다.', title: '변경 완료' });
+        await loadGroup();
+      }
+    });
   };
 
   const handleDelete = async () => {
     if (!group) return;
 
     if (elections.length > 0) {
-      alert('하위 투표가 있는 그룹은 삭제할 수 없습니다. 먼저 투표들을 삭제해주세요.');
+      setAlertModal({ isOpen: true, message: '하위 투표가 있는 그룹은 삭제할 수 없습니다. 먼저 투표들을 삭제해주세요.', title: '삭제 불가' });
       return;
     }
 
-    if (!confirm('정말로 이 그룹을 삭제하시겠습니까?')) return;
+    setConfirmModal({
+      isOpen: true,
+      message: '정말로 이 그룹을 삭제하시겠습니까?',
+      title: '그룹 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
 
-    const supabase = createClient();
+        const { error } = await supabase
+          .from('election_groups')
+          .delete()
+          .eq('id', group.id);
 
-    const { error } = await supabase
-      .from('election_groups')
-      .delete()
-      .eq('id', group.id);
+        if (error) {
+          console.error('그룹 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '그룹 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
 
-    if (error) {
-      console.error('그룹 삭제 오류:', error);
-      alert('그룹 삭제에 실패했습니다.');
-      return;
-    }
-
-    alert('그룹이 삭제되었습니다.');
-    router.push('/admin/election-groups');
+        setAlertModal({ isOpen: true, message: '그룹이 삭제되었습니다.', title: '삭제 완료' });
+        router.push('/admin/election-groups');
+      }
+    });
   };
 
   useEffect(() => {
@@ -983,7 +1021,7 @@ export default function ElectionGroupDetailPage({
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(code.code);
-                            alert('코드가 복사되었습니다.');
+                            setAlertModal({ isOpen: true, message: '코드가 복사되었습니다.', title: '복사 완료' });
                           }}
                           className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                           style={{ 
@@ -1444,6 +1482,24 @@ export default function ElectionGroupDetailPage({
           </div>
         </div>
       )}
+
+      {/* AlertModal */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
+
+      {/* ConfirmModal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        message={confirmModal.message}
+        title={confirmModal.title}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 }
