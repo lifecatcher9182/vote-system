@@ -43,8 +43,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 Supabase SQL Editor에서 다음 파일을 순서대로 실행하세요:
 
 1. `supabase-schema.sql` - 기본 테이블 생성
-2. `supabase-migration-v5-election-groups.sql` - 투표 그룹 기능
-3. `supabase-migration-election-notes.sql` - 투표 비고 기능
+2. `migrations/supabase-migration-v5-election-groups.sql` - 투표 그룹 기능
+3. `migrations/supabase-migration-election-notes.sql` - 투표 비고 기능
 
 ### 3. 개발 서버 실행
 
@@ -85,6 +85,8 @@ npm run dev
 │   ├── SystemLogo.tsx             # 시스템 로고 컴포넌트
 │   ├── ThemeProvider.tsx          # 테마 프로바이더
 │   ├── ColorThemeSettings.tsx     # 색상 테마 설정
+│   ├── AlertModal.tsx             # 알림 모달
+│   ├── ConfirmModal.tsx           # 확인 모달
 │   └── QRCodeSection.tsx          # QR 코드 생성
 ├── lib/
 │   ├── supabase/
@@ -95,8 +97,22 @@ npm run dev
 │   ├── database.types.ts          # DB 타입 정의
 │   └── hooks/
 │       └── useSystemConfig.ts     # 시스템 설정 훅
-├── docs/                          # 상세 문서
-└── archive/                       # 구버전 migration 파일
+├── docs/                          # 📚 모든 문서 파일
+│   ├── GOOGLE_LOGIN_SETUP.md      # Google OAuth 설정
+│   ├── MIGRATION_GUIDE.md         # DB 마이그레이션 가이드
+│   ├── MODAL_CONVERSION_GUIDE.md  # 모달 변환 가이드
+│   ├── SETUP.md                   # 초기 설정 가이드
+│   ├── TODO.md                    # 개발 할 일 목록
+│   ├── UPDATE_SUMMARY.md          # 업데이트 내역
+│   └── CLEANUP_SUMMARY.md         # 프로젝트 정리 내역
+├── migrations/                    # 🔄 DB 마이그레이션 파일
+│   ├── supabase-migration-v5-election-groups.sql
+│   ├── supabase-migration-election-notes.sql
+│   ├── supabase-migration-remove-village-code.sql
+│   └── archive-*.sql              # 구버전 마이그레이션
+├── archive/                       # 📦 구버전 백업 (참고용)
+│   └── supabase-migration-v*.sql
+└── public/                        # 정적 파일
 ```
 
 ## 🔐 인증 및 권한
@@ -153,7 +169,10 @@ npm run dev
 - **SETUP.md**: 초기 설정 및 환경 구성
 - **GOOGLE_LOGIN_SETUP.md**: Google OAuth 설정 방법
 - **MIGRATION_GUIDE.md**: 데이터베이스 마이그레이션 가이드
+- **TODO.md**: 개발 진행 상황 및 할 일 목록
+- **MODAL_CONVERSION_GUIDE.md**: 모달 컴포넌트 변환 가이드
 - **UPDATE_SUMMARY.md**: 주요 업데이트 내역
+- **CLEANUP_SUMMARY.md**: 프로젝트 정리 내역 (2025-11-13)
 
 ## � 데이터베이스 스키마
 
@@ -170,14 +189,23 @@ npm run dev
 
 ## 🔄 업데이트 이력
 
-### v2.0 (최신)
+### v2.1 (2025-11-13)
+- ✅ 프로젝트 구조 정리
+  - `migrations/` 폴더 생성 및 마이그레이션 파일 통합
+  - `docs/` 폴더로 문서 파일 통합
+  - 루트 파일 16개 → 11개로 정리
+- ✅ 모달 시스템 전면 개편
+  - 모든 관리자 페이지의 alert/confirm을 디자인된 모달로 교체
+  - AlertModal, ConfirmModal 컴포넌트 적용
+
+### v2.0 (2025-11-12)
 - ✅ 투표 그룹 시스템 추가
 - ✅ 투표 비고/메모 기능
 - ✅ 동점 처리 로직 개선
 - ✅ 대시보드 네비게이션 개선
 - ✅ 불필요한 페이지 제거 (results 페이지)
 
-### v1.0
+### v1.0 (2025-11-01)
 - ✅ 기본 투표 시스템
 - ✅ 익명 투표 지원
 - ✅ 실시간 모니터링
