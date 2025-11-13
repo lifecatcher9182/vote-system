@@ -97,6 +97,12 @@ export default function ElectionDetailPage({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteContent, setEditingNoteContent] = useState('');
 
+  // 득표 기준 계산기 상태
+  const [voteThresholds, setVoteThresholds] = useState<Array<{ id: string; percentage: number; label: string }>>([
+    { id: '1', percentage: 50, label: '과반수' },
+    { id: '2', percentage: 66.67, label: '2/3' }
+  ]);
+
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -1275,6 +1281,84 @@ export default function ElectionDetailPage({
                   <div className="card-apple p-6">
                     <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미참석</div>
                     <div className="text-2xl font-semibold text-gray-500">{resultStats.totalCodes - resultStats.attendedCodes}</div>
+                  </div>
+                </div>
+
+                {/* 득표 기준 계산기 */}
+                <div className="card-apple p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold" style={{ 
+                      color: '#1d1d1f',
+                      letterSpacing: '-0.02em'
+                    }}>
+                      📊 득표 기준 계산
+                    </h3>
+                    <button
+                      onClick={() => {
+                        const percentage = prompt('비율을 입력하세요 (예: 50, 66.67, 75):');
+                        if (percentage && !isNaN(parseFloat(percentage))) {
+                          const value = parseFloat(percentage);
+                          if (value > 0 && value <= 100) {
+                            const label = prompt('라벨을 입력하세요 (예: 과반수, 2/3, 3/4):') || `${value}%`;
+                            setVoteThresholds([
+                              ...voteThresholds,
+                              { id: Date.now().toString(), percentage: value, label }
+                            ]);
+                          } else {
+                            alert('0보다 크고 100 이하의 값을 입력하세요.');
+                          }
+                        }
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                      style={{
+                        background: 'rgba(0, 113, 227, 0.1)',
+                        color: 'var(--color-secondary)'
+                      }}
+                    >
+                      + 비율 추가
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {voteThresholds.map((threshold) => {
+                      const attendedCodes = resultStats.attendedCodes;
+                      const requiredVotes = Math.ceil(attendedCodes * (threshold.percentage / 100));
+                      
+                      return (
+                        <div key={threshold.id} className="relative group bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
+                          <button
+                            onClick={() => {
+                              if (confirm(`"${threshold.label}" 비율을 삭제하시겠습니까?`)) {
+                                setVoteThresholds(voteThresholds.filter(t => t.id !== threshold.id));
+                              }
+                            }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-100 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold hover:bg-red-200"
+                            title="삭제"
+                          >
+                            ✕
+                          </button>
+                          
+                          <div className="flex items-center gap-2 mb-4">
+                            <div className="text-xl font-bold" style={{ color: 'var(--color-secondary)' }}>
+                              {threshold.label}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              ({threshold.percentage}%)
+                            </div>
+                          </div>
+                          
+                          <div className="text-center">
+                            <div className="text-sm text-gray-600 mb-2">필요한 득표수</div>
+                            <div className="text-4xl font-bold text-green-600 mb-2">
+                              {requiredVotes}명
+                            </div>
+                            <div className="text-xs text-gray-500 pt-3 border-t border-blue-200">
+                              참석자 {attendedCodes}명 기준
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
