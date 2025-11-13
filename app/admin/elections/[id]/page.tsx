@@ -671,7 +671,13 @@ export default function ElectionDetailPage({
             </h1>
             <Link 
               href={election.group_id ? `/admin/election-groups/${election.group_id}` : '/admin/dashboard'}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+              className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+              style={{
+                background: 'rgba(0, 0, 0, 0.04)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em',
+                display: 'inline-block'
+              }}
             >
               ← {election.group_id ? '투표 그룹' : '대시보드'}
             </Link>
@@ -782,7 +788,12 @@ export default function ElectionDetailPage({
                   <h2 className="text-xl font-bold">후보자 목록 ({candidates.length}명)</h2>
                   <button
                     onClick={() => setShowAddCandidate(true)}
-                    className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 text-sm"
+                    className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                    style={{
+                      background: 'var(--color-secondary)',
+                      color: 'white',
+                      letterSpacing: '-0.01em'
+                    }}
                   >
                     + 후보자 추가
                   </button>
@@ -805,7 +816,12 @@ export default function ElectionDetailPage({
                       />
                       <button
                         onClick={handleAddCandidate}
-                        className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90"
+                        className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                        style={{
+                          background: 'var(--color-secondary)',
+                          color: 'white',
+                          letterSpacing: '-0.01em'
+                        }}
                       >
                         추가
                       </button>
@@ -814,7 +830,12 @@ export default function ElectionDetailPage({
                           setShowAddCandidate(false);
                           setNewCandidateName('');
                         }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.04)',
+                          color: '#1d1d1f',
+                          letterSpacing: '-0.01em'
+                        }}
                       >
                         취소
                       </button>
@@ -845,7 +866,11 @@ export default function ElectionDetailPage({
                           </span>
                           <button
                             onClick={() => handleDeleteCandidate(candidate.id)}
-                            className="text-red-600 hover:text-red-800 text-sm"
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              color: '#dc2626'
+                            }}
                           >
                             삭제
                           </button>
@@ -872,19 +897,12 @@ export default function ElectionDetailPage({
                     <div className="text-2xl">ℹ️</div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-blue-900 mb-2">참여 코드 관리</h3>
-                      <p className="text-sm text-blue-800 mb-3">
+                      <p className="text-sm text-blue-800 mb-2">
                         임원 투표는 하나의 코드로 모든 임원 투표에 참여할 수 있도록 설계되었습니다.
                       </p>
-                      <p className="text-sm text-blue-800 mb-3">
+                      <p className="text-sm text-blue-800">
                         참여 코드는 <strong>투표 그룹 페이지</strong>에서 생성하고 관리하세요.
                       </p>
-                      <Link
-                        href={`/admin/election-groups`}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                      >
-                        <span>→</span>
-                        <span>투표 그룹으로 이동</span>
-                      </Link>
                     </div>
                   </div>
                 </div>
@@ -1224,7 +1242,7 @@ export default function ElectionDetailPage({
             return (
               <div className="space-y-6">
                 {/* 투표 통계 */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="card-apple p-6">
                     <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>발급 코드</div>
                     <div className="text-2xl font-semibold text-gray-900">{resultStats.totalCodes}</div>
@@ -1249,11 +1267,6 @@ export default function ElectionDetailPage({
                   <div className="card-apple p-6">
                     <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미참석</div>
                     <div className="text-2xl font-semibold text-gray-500">{resultStats.totalCodes - resultStats.attendedCodes}</div>
-                  </div>
-
-                  <div className="card-apple p-6">
-                    <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>총 투표 수</div>
-                    <div className="text-2xl font-semibold text-blue-600">{resultStats.totalVotes}</div>
                   </div>
                 </div>
 
@@ -1538,9 +1551,10 @@ export default function ElectionDetailPage({
             );
           })()}
 
-          {/* 비고/메모 섹션 - 모든 탭에서 하단에 표시 */}
-          <div className="space-y-6 mt-6">
-            <div className="card-apple p-6">
+          {/* 비고/메모 섹션 - 결과 탭에서만 표시 */}
+          {activeTab === 'results' && (
+            <div className="space-y-6 mt-6">
+              <div className="card-apple p-6">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1688,6 +1702,7 @@ export default function ElectionDetailPage({
               )}
             </div>
           </div>
+          )}
         </div>
       </main>
     </div>
