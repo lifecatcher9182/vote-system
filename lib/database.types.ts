@@ -18,6 +18,32 @@ export type Database = {
           created_at?: string
         }
       }
+      election_notes: {
+        Row: {
+          id: string
+          election_id: string
+          content: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          election_id: string
+          content: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          election_id?: string
+          content?: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       system_config: {
         Row: {
           id: string

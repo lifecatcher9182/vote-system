@@ -36,6 +36,15 @@ interface Candidate {
   vote_count: number;
 }
 
+interface ElectionNote {
+  id: string;
+  election_id: string;
+  content: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function ElectionDetailPage({ 
   params 
 }: { 
@@ -81,6 +90,12 @@ export default function ElectionDetailPage({
     usedCount: number;
     participationRate: number;
   }>>([]);
+
+  // 비고/메모 상태
+  const [notes, setNotes] = useState<ElectionNote[]>([]);
+  const [newNote, setNewNote] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteContent, setEditingNoteContent] = useState('');
 
   const checkAuth = useCallback(async () => {
     const supabase = createClient();
@@ -406,13 +421,120 @@ export default function ElectionDetailPage({
     }
   }, [activeTab, election, loadResultStats, loadVillageStats, loadElection]);
 
+  // 비고 로드
+  const loadNotes = useCallback(async () => {
+    if (!election) return;
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('election_notes')
+      .select('*')
+      .eq('election_id', election.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('비고 로딩 오류:', error);
+      return;
+    }
+
+    setNotes(data || []);
+  }, [election]);
+
+  useEffect(() => {
+    if (election) {
+      loadNotes();
+    }
+  }, [election, loadNotes]);
+
+  // 비고 추가
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !election) return;
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('election_notes')
+      .insert([{
+        election_id: election.id,
+        content: newNote.trim(),
+        created_by: '관리자', // 필요시 사용자 정보로 대체 가능
+      }]);
+
+    if (error) {
+      console.error('비고 추가 오류:', error);
+      alert('비고 추가에 실패했습니다.');
+      return;
+    }
+
+    setNewNote('');
+    loadNotes();
+  };
+
+  // 비고 수정
+  const handleUpdateNote = async (noteId: string) => {
+    if (!editingNoteContent.trim()) return;
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('election_notes')
+      .update({ 
+        content: editingNoteContent.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', noteId);
+
+    if (error) {
+      console.error('비고 수정 오류:', error);
+      alert('비고 수정에 실패했습니다.');
+      return;
+    }
+
+    setEditingNoteId(null);
+    setEditingNoteContent('');
+    loadNotes();
+  };
+
+  // 비고 삭제
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('정말 이 비고를 삭제하시겠습니까?')) return;
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('election_notes')
+      .delete()
+      .eq('id', noteId);
+
+    if (error) {
+      console.error('비고 삭제 오류:', error);
+      alert('비고 삭제에 실패했습니다.');
+      return;
+    }
+
+    loadNotes();
+  };
+
   const calculateWinners = useCallback(() => {
-    if (!election) return { winners: [], hasTie: false, meetsThreshold: false, requiredVotes: 0, thresholdMessage: '' };
+    if (!election) return { 
+      winners: [], 
+      hasTie: false, 
+      meetsThreshold: false, 
+      requiredVotes: 0, 
+      thresholdMessage: '',
+      confirmedWinners: [],
+      tiedCandidates: []
+    };
     
     const candidatesWithVotes = candidates.filter(c => c.vote_count > 0);
     
     if (candidatesWithVotes.length === 0) {
-      return { winners: [], hasTie: false, meetsThreshold: false, requiredVotes: 0, thresholdMessage: '' };
+      return { 
+        winners: [], 
+        hasTie: false, 
+        meetsThreshold: false, 
+        requiredVotes: 0, 
+        thresholdMessage: '',
+        confirmedWinners: [],
+        tiedCandidates: []
+      };
     }
 
     const criteria = election.winning_criteria;
@@ -440,25 +562,58 @@ export default function ElectionDetailPage({
 
     let winners: typeof candidates = [];
     let hasTie = false;
+    let confirmedWinners: typeof candidates = [];
+    let tiedCandidates: typeof candidates = [];
 
     if (!meetsThreshold && criteria.type !== 'plurality') {
       winners = [];
       hasTie = false;
     } else if (candidatesWithVotes.length >= election.max_selections) {
-      const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
-      const tiedCandidates = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
-      
-      if (tiedCandidates.length > election.max_selections) {
-        hasTie = true;
-        winners = tiedCandidates;
+      // For plurality voting, separate confirmed winners from tied candidates
+      if (criteria.type === 'plurality') {
+        const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
+        
+        // Find candidates with votes higher than the tie threshold (confirmed winners)
+        confirmedWinners = candidatesWithVotes.filter(c => c.vote_count > cutoffVotes);
+        
+        // Find tied candidates (those at the cutoff who are competing for remaining slots)
+        tiedCandidates = candidatesWithVotes.filter(c => c.vote_count === cutoffVotes);
+        
+        console.log('🔍 Plurality Tie Calculation:', {
+          max_selections: election.max_selections,
+          cutoffVotes,
+          confirmedWinners: confirmedWinners.map(c => `${c.name}:${c.vote_count}`),
+          tiedCandidates: tiedCandidates.map(c => `${c.name}:${c.vote_count}`),
+          totalInCompetition: confirmedWinners.length + tiedCandidates.length
+        });
+        
+        if (tiedCandidates.length + confirmedWinners.length > election.max_selections) {
+          // There's a tie - only tied candidates are uncertain
+          hasTie = true;
+          winners = [...confirmedWinners, ...tiedCandidates];
+        } else {
+          // No tie - all top candidates are confirmed winners
+          winners = candidatesWithVotes.slice(0, election.max_selections);
+          confirmedWinners = winners;
+          tiedCandidates = [];
+        }
       } else {
-        winners = candidatesWithVotes.slice(0, election.max_selections);
+        // For non-plurality voting, use old logic
+        const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
+        const tiedCandidates = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
+        
+        if (tiedCandidates.length > election.max_selections) {
+          hasTie = true;
+          winners = tiedCandidates;
+        } else {
+          winners = candidatesWithVotes.slice(0, election.max_selections);
+        }
       }
     } else {
       winners = candidatesWithVotes;
     }
 
-    return { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage };
+    return { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage, confirmedWinners, tiedCandidates };
   }, [election, candidates, resultStats]);
 
   const getStatusBadge = (status: Election['status']) => {
@@ -1062,7 +1217,7 @@ export default function ElectionDetailPage({
 
           {/* 결과 & 모니터링 탭 */}
           {activeTab === 'results' && (() => {
-            const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage } = calculateWinners();
+            const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage, confirmedWinners, tiedCandidates } = calculateWinners();
             const candidatesWithVotes = candidates.filter(c => c.vote_count > 0);
             const maxVotes = Math.max(...candidates.map(c => c.vote_count), 1);
 
@@ -1124,61 +1279,142 @@ export default function ElectionDetailPage({
                       </p>
                     </div>
                   </div>
-                ) : winners.length > 0 ? (
-                  <div className={`p-6 rounded-xl ${
-                    hasTie 
-                      ? 'bg-gradient-to-br from-orange-50 to-red-100 border-2 border-orange-400'
-                      : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-400'
-                  }`}>
-                    <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
-                      {hasTie ? '⚠️ 동점으로 당선자 미확정' : 
-                       election.max_selections === 1 ? '🏆 당선자' : 
-                       `🏆 당선자 (상위 ${election.max_selections}명)`}
-                    </h2>
-                    {hasTie && (
-                      <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
-                        <p className="text-sm text-gray-700">
-                          <strong>동점 발생:</strong> {election.max_selections}명을 선출해야 하지만, 
-                          {winners[election.max_selections - 1]?.vote_count}표로 동점인 후보가 {winners.length}명입니다.
+                ) : (
+                  <>
+                    {/* Confirmed Winners Section - Only for plurality with tie */}
+                    {election.winning_criteria.type === 'plurality' && hasTie && confirmedWinners.length > 0 && (
+                      <div className="p-6 rounded-xl bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-400">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                          🏆 당선 확정
+                        </h2>
+                        <p className="text-sm text-gray-700 mb-4">
+                          다득표로 당선이 확정된 후보자입니다.
                         </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {confirmedWinners.map((winner, index) => {
+                            let actualRank = 1;
+                            for (let i = 0; i < index; i++) {
+                              if (confirmedWinners[i].vote_count > winner.vote_count) {
+                                actualRank++;
+                              }
+                            }
+                            
+                            return (
+                              <div key={winner.id} className="p-4 rounded-xl shadow-sm" style={{ background: 'white' }}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
+                                    actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                                    actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                                    actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                                    'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                                  }`}>
+                                    {actualRank}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{winner.name}</div>
+                                    <div className="text-sm text-gray-600">
+                                      {winner.vote_count}표 ({resultStats.totalVotes > 0 ? ((winner.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {winners.map((winner, index) => {
-                        let actualRank = 1;
-                        for (let i = 0; i < index; i++) {
-                          if (winners[i].vote_count > winner.vote_count) {
-                            actualRank++;
-                          }
-                        }
-                        
-                        return (
-                          <div key={winner.id} className={`p-4 rounded-xl shadow-sm ${
-                            hasTie ? 'border-2 border-orange-300' : ''
-                          }`} style={{ background: 'white' }}>
-                            <div className="flex items-center gap-3">
-                              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
-                                hasTie ? 'bg-orange-200 text-orange-900' :
-                                actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
-                                actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
-                                actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
-                                'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
-                              }`}>
-                                {hasTie ? '?' : actualRank}
-                              </div>
-                              <div className="flex-1">
-                                <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{winner.name}</div>
-                                <div className="text-sm text-gray-600">
-                                  {winner.vote_count}표 ({resultStats.totalVotes > 0 ? ((winner.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
+
+                    {/* Tied Candidates Section - Only for plurality with tie */}
+                    {election.winning_criteria.type === 'plurality' && hasTie && tiedCandidates.length > 0 && (
+                      <div className="p-6 rounded-xl bg-gradient-to-br from-orange-50 to-red-100 border-2 border-orange-400">
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                          ⚠️ 동점으로 당선자 미확정
+                        </h2>
+                        <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
+                          <p className="text-sm text-gray-700">
+                            <strong>동점 발생:</strong> {election.max_selections}명을 선출해야 하며, 
+                            {tiedCandidates[0]?.vote_count}표로 동점인 후보가 {tiedCandidates.length}명입니다.
+                            {confirmedWinners.length > 0 && ` (당선 확정: ${confirmedWinners.length}명, 남은 자리: ${election.max_selections - confirmedWinners.length}명)`}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {tiedCandidates.map((candidate) => (
+                            <div key={candidate.id} className="p-4 rounded-xl shadow-sm border-2 border-orange-300" style={{ background: 'white' }}>
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold bg-orange-200 text-orange-900">
+                                  ?
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{candidate.name}</div>
+                                  <div className="text-sm text-gray-600">
+                                    {candidate.vote_count}표 ({resultStats.totalVotes > 0 ? ((candidate.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
+                                  </div>
                                 </div>
                               </div>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Standard Winners Section - For non-tie cases or non-plurality */}
+                    {(!hasTie || election.winning_criteria.type !== 'plurality') && winners.length > 0 && (
+                      <div className={`p-6 rounded-xl ${
+                        hasTie 
+                          ? 'bg-gradient-to-br from-orange-50 to-red-100 border-2 border-orange-400'
+                          : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-400'
+                      }`}>
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                          {hasTie ? '⚠️ 동점으로 당선자 미확정' : 
+                           election.max_selections === 1 ? '🏆 당선자' : 
+                           `🏆 당선자 (상위 ${election.max_selections}명)`}
+                        </h2>
+                        {hasTie && (
+                          <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
+                            <p className="text-sm text-gray-700">
+                              <strong>동점 발생:</strong> {election.max_selections}명을 선출해야 하지만, 
+                              {winners[election.max_selections - 1]?.vote_count}표로 동점인 후보가 {winners.length}명입니다.
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : null}
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {winners.map((winner, index) => {
+                            let actualRank = 1;
+                            for (let i = 0; i < index; i++) {
+                              if (winners[i].vote_count > winner.vote_count) {
+                                actualRank++;
+                              }
+                            }
+                            
+                            return (
+                              <div key={winner.id} className={`p-4 rounded-xl shadow-sm ${
+                                hasTie ? 'border-2 border-orange-300' : ''
+                              }`} style={{ background: 'white' }}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
+                                    hasTie ? 'bg-orange-200 text-orange-900' :
+                                    actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                                    actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                                    actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                                    'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                                  }`}>
+                                    {hasTie ? '?' : actualRank}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{winner.name}</div>
+                                    <div className="text-sm text-gray-600">
+                                      {winner.vote_count}표 ({resultStats.totalVotes > 0 ? ((winner.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 {/* 전체 후보자 득표 결과 */}
                 <div className="card-apple p-6">
@@ -1193,8 +1429,15 @@ export default function ElectionDetailPage({
                       {candidates.map((candidate, index) => {
                         const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
                         const votePercentage = resultStats.totalVotes > 0 ? (candidate.vote_count / resultStats.totalVotes) * 100 : 0;
-                        const isWinner = !hasTie && winners.some(w => w.id === candidate.id);
-                        const isTied = hasTie && winners.some(w => w.id === candidate.id);
+                        
+                        // For plurality with tie: distinguish confirmed winners from tied candidates
+                        const isConfirmedWinner = election.winning_criteria.type === 'plurality' && hasTie 
+                          ? confirmedWinners.some(w => w.id === candidate.id)
+                          : !hasTie && winners.some(w => w.id === candidate.id);
+                        
+                        const isTied = election.winning_criteria.type === 'plurality' && hasTie 
+                          ? tiedCandidates.some(t => t.id === candidate.id)
+                          : hasTie && winners.some(w => w.id === candidate.id);
                         
                         let actualRank = 1;
                         for (let i = 0; i < index; i++) {
@@ -1208,14 +1451,14 @@ export default function ElectionDetailPage({
                             key={candidate.id} 
                             className={`border rounded-xl p-4 ${
                               isTied ? 'border-orange-400 bg-orange-50' :
-                              isWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'
+                              isConfirmedWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'
                             }`}
                           >
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                                   isTied ? 'bg-orange-200 text-orange-800' :
-                                  isWinner ? (
+                                  isConfirmedWinner ? (
                                     actualRank === 1 ? 'bg-yellow-200 text-yellow-800' :
                                     actualRank === 2 ? 'bg-gray-300 text-gray-700' :
                                     'bg-orange-200 text-orange-800'
@@ -1226,8 +1469,8 @@ export default function ElectionDetailPage({
                                 <div>
                                   <div className="font-semibold flex items-center gap-2" style={{ color: '#1d1d1f' }}>
                                     {candidate.name}
-                                    {isWinner && <span className="text-xs px-2 py-0.5 bg-yellow-200 text-yellow-800 rounded-full font-bold">당선</span>}
-                                    {isTied && <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-800 rounded-full font-bold">동점</span>}
+                                    {isConfirmedWinner && <span className="text-xs px-2 py-0.5 bg-yellow-200 text-yellow-800 rounded-full font-bold">당선</span>}
+                                    {isTied && <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-800 rounded-full font-bold">미확정</span>}
                                   </div>
                                   <div className="text-xs text-gray-500">
                                     득표율: {votePercentage.toFixed(1)}%
@@ -1246,7 +1489,7 @@ export default function ElectionDetailPage({
                               <div
                                 className={`h-full transition-all duration-500 ${
                                   isTied ? 'bg-gradient-to-r from-orange-400 to-red-500' :
-                                  isWinner ? (
+                                  isConfirmedWinner ? (
                                     actualRank === 1 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
                                     actualRank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
                                     'bg-gradient-to-r from-orange-400 to-orange-500'
@@ -1294,6 +1537,157 @@ export default function ElectionDetailPage({
               </div>
             );
           })()}
+
+          {/* 비고/메모 섹션 - 모든 탭에서 하단에 표시 */}
+          <div className="space-y-6 mt-6">
+            <div className="card-apple p-6">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                비고
+              </h2>
+
+              {/* 비고 추가 입력 */}
+              <div className="mb-6">
+                <div className="flex gap-3">
+                  <textarea
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="비고를 입력하세요..."
+                    className="input-apple flex-1 resize-none"
+                    rows={3}
+                    style={{ minHeight: '80px' }}
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    disabled={!newNote.trim()}
+                    className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 self-end"
+                    style={{ 
+                      background: newNote.trim() ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)',
+                      color: newNote.trim() ? 'white' : '#999',
+                      letterSpacing: '-0.01em',
+                      cursor: newNote.trim() ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    추가
+                  </button>
+                </div>
+              </div>
+
+              {/* 비고 목록 */}
+              {notes.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <svg className="w-16 h-16 mx-auto mb-3 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p style={{ letterSpacing: '-0.01em' }}>작성된 비고가 없습니다.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {notes.map((note) => (
+                    <div 
+                      key={note.id} 
+                      className="border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors"
+                      style={{ background: 'white' }}
+                    >
+                      {editingNoteId === note.id ? (
+                        // 수정 모드
+                        <div className="space-y-3">
+                          <textarea
+                            value={editingNoteContent}
+                            onChange={(e) => setEditingNoteContent(e.target.value)}
+                            className="input-apple w-full resize-none"
+                            rows={3}
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <button
+                              onClick={() => {
+                                setEditingNoteId(null);
+                                setEditingNoteContent('');
+                              }}
+                              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                              style={{ 
+                                background: 'rgba(0, 0, 0, 0.04)',
+                                color: '#1d1d1f'
+                              }}
+                            >
+                              취소
+                            </button>
+                            <button
+                              onClick={() => handleUpdateNote(note.id)}
+                              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                              style={{ 
+                                background: 'var(--color-secondary)',
+                                color: 'white'
+                              }}
+                            >
+                              저장
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // 보기 모드
+                        <>
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <p className="text-gray-800 whitespace-pre-wrap" style={{ letterSpacing: '-0.01em' }}>
+                                {note.content}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <button
+                                onClick={() => {
+                                  setEditingNoteId(note.id);
+                                  setEditingNoteContent(note.content);
+                                }}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-gray-100"
+                                style={{ color: '#1d1d1f' }}
+                              >
+                                수정
+                              </button>
+                              <button
+                                onClick={() => handleDeleteNote(note.id)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-red-50"
+                                style={{ color: '#dc2626' }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            {note.created_by && (
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                {note.created_by}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {new Date(note.created_at).toLocaleString('ko-KR', { 
+                                year: 'numeric', 
+                                month: '2-digit', 
+                                day: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </span>
+                            {note.updated_at !== note.created_at && (
+                              <span className="text-gray-400">(수정됨)</span>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>

@@ -254,7 +254,15 @@ export default function ResultsPage({
   // 당선 기준 계산
   const calculateWinners = () => {
     if (candidatesWithVotes.length === 0) {
-      return { winners: [], hasTie: false, meetsThreshold: false, requiredVotes: 0, thresholdMessage: '' };
+      return { 
+        winners: [], 
+        hasTie: false, 
+        meetsThreshold: false, 
+        requiredVotes: 0, 
+        thresholdMessage: '',
+        confirmedWinners: [],
+        tiedCandidates: []
+      };
     }
 
     const criteria = election.winning_criteria;
@@ -287,31 +295,68 @@ export default function ResultsPage({
     // 2. 동점자 처리
     let winners: typeof candidates = [];
     let hasTie = false;
+    let confirmedWinners: typeof candidates = [];
+    let tiedCandidates: typeof candidates = [];
 
     if (!meetsThreshold && criteria.type !== 'plurality') {
       // 기준 미달 → 당선자 없음
       winners = [];
       hasTie = false;
+      confirmedWinners = [];
+      tiedCandidates = [];
     } else if (candidatesWithVotes.length >= election.max_selections) {
+      // 동점자 확인을 위한 로직
       const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
-      const tiedCandidates = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
+      const allTiedAtCutoff = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
       
-      if (tiedCandidates.length > election.max_selections) {
-        // 동점으로 인해 당선자를 확정할 수 없는 경우
+      if (allTiedAtCutoff.length > election.max_selections) {
+        // 동점이 발생한 경우
         hasTie = true;
-        winners = tiedCandidates;
+        
+        // 1. 확정 당선자: 동점 득표수보다 많이 받은 후보들
+        confirmedWinners = candidatesWithVotes.filter(c => c.vote_count > cutoffVotes);
+        
+        // 2. 동점 후보자: cutoffVotes와 동일한 득표를 한 후보들
+        tiedCandidates = candidatesWithVotes.filter(c => c.vote_count === cutoffVotes);
+        
+        // winners에는 확정 당선자 + 동점 후보자 모두 포함
+        winners = [...confirmedWinners, ...tiedCandidates];
       } else {
+        // 동점 없음 - 정상 당선
         winners = candidatesWithVotes.slice(0, election.max_selections);
+        confirmedWinners = winners;
+        tiedCandidates = [];
       }
     } else {
       // 후보자 수가 선발 인원보다 적은 경우
       winners = candidatesWithVotes;
+      confirmedWinners = winners;
+      tiedCandidates = [];
     }
 
-    return { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage };
+    const result = { 
+      winners, 
+      hasTie, 
+      meetsThreshold, 
+      requiredVotes, 
+      thresholdMessage, 
+      confirmedWinners, 
+      tiedCandidates 
+    };
+    
+    // 디버깅 로그
+    console.log('=== 당선자 계산 결과 ===');
+    console.log('전체 후보:', candidatesWithVotes.map(c => `${c.name}: ${c.vote_count}표`));
+    console.log('선출 인원:', election.max_selections);
+    console.log('hasTie:', hasTie);
+    console.log('확정 당선자:', confirmedWinners.map(c => `${c.name}: ${c.vote_count}표`));
+    console.log('동점 후보자:', tiedCandidates.map(c => `${c.name}: ${c.vote_count}표`));
+    console.log('전체 winners:', winners.map(c => `${c.name}: ${c.vote_count}표`));
+    
+    return result;
   };
 
-  const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage } = calculateWinners();
+  const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage, confirmedWinners, tiedCandidates } = calculateWinners();
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
@@ -470,61 +515,114 @@ export default function ResultsPage({
               </div>
             </div>
           ) : winners.length > 0 ? (
-            <div className={`border-2 rounded-lg p-6 mb-6 ${
-              hasTie 
-                ? 'bg-gradient-to-br from-orange-50 to-red-100 border-orange-400'
-                : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-400'
-            }`}>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                {hasTie ? '⚠️ 동점으로 당선자 미확정' : 
-                 election.max_selections === 1 ? '🏆 당선자' : 
-                 `🏆 당선자 (상위 ${election.max_selections}명)`}
-              </h2>
-              {hasTie && (
-                <div className="mb-4 p-4 bg-white/80 rounded-lg border border-orange-300">
-                  <p className="text-sm text-gray-700">
-                    <strong>동점 발생:</strong> {election.max_selections}명을 선출해야 하지만, 
-                    {winners[election.max_selections - 1]?.vote_count}표로 동점인 후보가 {winners.length}명입니다.
-                    {election.round > 1 ? ' 이미 결선 투표입니다.' : ' 결선 투표를 진행하거나 별도의 규정에 따라 결정해주세요.'}
-                  </p>
+            <>
+              {/* 확정 당선자 표시 (동점 발생 시) */}
+              {hasTie && confirmedWinners && confirmedWinners.length > 0 && (
+                <div className="border-2 rounded-lg p-6 mb-6 bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-400">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    🏆 확정 당선자
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {confirmedWinners.map((winner, index) => {
+                      // 실제 순위 계산 (득표수 기준)
+                      let actualRank = 1;
+                      for (let i = 0; i < index; i++) {
+                        if (confirmedWinners[i].vote_count > winner.vote_count) {
+                          actualRank++;
+                        }
+                      }
+                      
+                      return (
+                        <div key={winner.id} className="bg-white rounded-lg p-4 shadow-md">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
+                              actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                              actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                              actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                              'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                            }`}>
+                              {actualRank}
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-bold text-lg text-gray-900">{winner.name}</div>
+                              <div className="text-sm text-gray-600">
+                                {winner.vote_count}표 ({stats.totalVotes > 0 ? ((winner.vote_count / stats.totalVotes) * 100).toFixed(1) : 0}%)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {winners.map((winner, index) => {
-                  // 실제 순위 계산 (득표수 기준)
-                  let actualRank = 1;
-                  for (let i = 0; i < index; i++) {
-                    if (winners[i].vote_count > winner.vote_count) {
-                      actualRank++;
+
+              {/* 동점 후보자 또는 전체 당선자 표시 */}
+              <div className={`border-2 rounded-lg p-6 mb-6 ${
+                hasTie 
+                  ? 'bg-gradient-to-br from-orange-50 to-red-100 border-orange-400'
+                  : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-yellow-400'
+              }`}>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  {hasTie ? '⚠️ 동점으로 미확정 후보' : 
+                   election.max_selections === 1 ? '🏆 당선자' : 
+                   `🏆 당선자 (상위 ${election.max_selections}명)`}
+                </h2>
+                {hasTie && (
+                  <div className="mb-4 p-4 bg-white/80 rounded-lg border border-orange-300">
+                    <p className="text-sm text-gray-700 mb-2">
+                      <strong>동점 발생:</strong> {election.max_selections}명을 선출해야 하지만, 
+                      {tiedCandidates && tiedCandidates[0]?.vote_count}표로 동점인 후보가 {tiedCandidates?.length || 0}명입니다.
+                    </p>
+                    <p className="text-sm text-gray-700">
+                      <strong>남은 선출 인원:</strong> {election.max_selections - (confirmedWinners?.length || 0)}명 
+                      (확정 당선자 {confirmedWinners?.length || 0}명)
+                    </p>
+                    <p className="text-sm text-orange-700 mt-2 font-semibold">
+                      → {election.round > 1 ? '이미 결선 투표입니다.' : '결선 투표를 진행하거나'} 별도의 규정에 따라 결정해주세요.
+                    </p>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(hasTie && tiedCandidates ? tiedCandidates : winners).map((winner, index) => {
+                    // 실제 순위 계산 (득표수 기준)
+                    let actualRank = (confirmedWinners?.length || 0) + 1; // 동점자는 확정 당선자 다음 순위
+                    if (!hasTie) {
+                      actualRank = 1;
+                      for (let i = 0; i < index; i++) {
+                        if (winners[i].vote_count > winner.vote_count) {
+                          actualRank++;
+                        }
+                      }
                     }
-                  }
-                  
-                  return (
-                    <div key={winner.id} className={`bg-white rounded-lg p-4 shadow-md ${
-                      hasTie ? 'border-2 border-orange-300' : ''
-                    }`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
-                          hasTie ? 'bg-orange-200 text-orange-900' :
-                          actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
-                          actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
-                          actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
-                          'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
-                        }`}>
-                          {hasTie ? '?' : actualRank}
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-bold text-lg text-gray-900">{winner.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {winner.vote_count}표 ({stats.totalVotes > 0 ? ((winner.vote_count / stats.totalVotes) * 100).toFixed(1) : 0}%)
+                    
+                    return (
+                      <div key={winner.id} className={`bg-white rounded-lg p-4 shadow-md ${
+                        hasTie ? 'border-2 border-orange-300' : ''
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
+                            hasTie ? 'bg-orange-200 text-orange-900' :
+                            actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                            actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
+                            actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                            'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                          }`}>
+                            {hasTie ? '?' : actualRank}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-bold text-lg text-gray-900">{winner.name}</div>
+                            <div className="text-sm text-gray-600">
+                              {winner.vote_count}표 ({stats.totalVotes > 0 ? ((winner.vote_count / stats.totalVotes) * 100).toFixed(1) : 0}%)
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            </>
           ) : null}
 
           {/* 전체 후보자 득표 결과 */}
@@ -540,8 +638,13 @@ export default function ResultsPage({
                 {candidates.map((candidate, index) => {
                   const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
                   const votePercentage = stats.totalVotes > 0 ? (candidate.vote_count / stats.totalVotes) * 100 : 0;
-                  const isWinner = !hasTie && index < election.max_selections && candidate.vote_count > 0;
-                  const isTied = hasTie && winners.some(w => w.id === candidate.id);
+                  
+                  // 확정 당선자인지 확인
+                  const isConfirmedWinner = confirmedWinners?.some(w => w.id === candidate.id) || false;
+                  // 동점 후보자인지 확인
+                  const isTiedCandidate = tiedCandidates?.some(t => t.id === candidate.id) || false;
+                  // 일반 당선자인지 확인 (동점 없는 경우)
+                  const isWinner = !hasTie && winners.some(w => w.id === candidate.id) && candidate.vote_count > 0;
                   
                   // 실제 순위 계산 (득표수 기준, 동점자는 같은 순위)
                   let actualRank = 1;
@@ -555,27 +658,28 @@ export default function ResultsPage({
                     <div 
                       key={candidate.id} 
                       className={`border rounded-lg p-4 ${
-                        isTied ? 'border-orange-400 bg-orange-50' :
-                        isWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
+                        isTiedCandidate ? 'border-orange-400 bg-orange-50' :
+                        isConfirmedWinner || isWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
                       }`}
                     >
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-3">
                           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                            isTied ? 'bg-orange-200 text-orange-800' :
-                            isWinner ? (
+                            isTiedCandidate ? 'bg-orange-200 text-orange-800' :
+                            (isConfirmedWinner || isWinner) ? (
                               actualRank === 1 ? 'bg-yellow-200 text-yellow-800' :
                               actualRank === 2 ? 'bg-gray-300 text-gray-700' :
                               'bg-orange-200 text-orange-800'
                             ) : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isTied ? '?' : actualRank}
+                            {isTiedCandidate ? '?' : actualRank}
                           </div>
                           <div>
                             <div className="font-semibold text-gray-900 flex items-center gap-2">
                               {candidate.name}
+                              {isConfirmedWinner && <span className="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full font-bold">당선</span>}
+                              {isTiedCandidate && <span className="text-xs px-2 py-1 bg-orange-200 text-orange-800 rounded-full font-bold">미확정</span>}
                               {isWinner && <span className="text-xs px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full font-bold">당선</span>}
-                              {isTied && <span className="text-xs px-2 py-1 bg-orange-200 text-orange-800 rounded-full font-bold">동점</span>}
                             </div>
                             <div className="text-sm text-gray-500">
                               득표율: {votePercentage.toFixed(1)}%
@@ -594,8 +698,8 @@ export default function ResultsPage({
                       <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                         <div
                           className={`h-full transition-all duration-500 ${
-                            isTied ? 'bg-gradient-to-r from-orange-400 to-red-500' :
-                            isWinner ? (
+                            isTiedCandidate ? 'bg-gradient-to-r from-orange-400 to-red-500' :
+                            (isConfirmedWinner || isWinner) ? (
                               actualRank === 1 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
                               actualRank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
                               'bg-gradient-to-r from-orange-400 to-orange-500'
