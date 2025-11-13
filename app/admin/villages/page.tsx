@@ -9,7 +9,6 @@ import SystemLogo from '@/components/SystemLogo';
 interface Village {
   id: string;
   name: string;
-  code: string;
   is_active: boolean;
   created_at: string;
 }
@@ -19,11 +18,11 @@ export default function VillagesPage() {
   const [loading, setLoading] = useState(true);
   const [villages, setVillages] = useState<Village[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('active');
-  const [sortBy, setSortBy] = useState<'name' | 'code' | 'created_at'>('name');
+  const [sortBy, setSortBy] = useState<'name' | 'created_at'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [newVillage, setNewVillage] = useState({ name: '', code: '' });
+  const [newVillage, setNewVillage] = useState({ name: '' });
   const [editingVillage, setEditingVillage] = useState<Village | null>(null);
 
   const checkAuth = useCallback(async () => {
@@ -73,23 +72,23 @@ export default function VillagesPage() {
   const handleAddVillage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newVillage.name || !newVillage.code) {
-      alert('모든 필드를 입력해주세요.');
+    if (!newVillage.name) {
+      alert('마을 이름을 입력해주세요.');
       return;
     }
 
     const supabase = createClient();
     const { error } = await supabase
       .from('villages')
-      .insert([{ name: newVillage.name, code: newVillage.code }]);
+      .insert([{ name: newVillage.name }]);
 
     if (error) {
       console.error('마을 추가 오류:', error);
-      alert('마을 추가에 실패했습니다. 코드가 중복되었을 수 있습니다.');
+      alert('마을 추가에 실패했습니다.');
       return;
     }
 
-    setNewVillage({ name: '', code: '' });
+    setNewVillage({ name: '' });
     setShowAddModal(false);
     loadVillages();
   };
@@ -97,8 +96,8 @@ export default function VillagesPage() {
   const handleEditVillage = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!editingVillage || !editingVillage.name || !editingVillage.code) {
-      alert('모든 필드를 입력해주세요.');
+    if (!editingVillage || !editingVillage.name) {
+      alert('마을 이름을 입력해주세요.');
       return;
     }
 
@@ -106,14 +105,13 @@ export default function VillagesPage() {
     const { error } = await supabase
       .from('villages')
       .update({ 
-        name: editingVillage.name, 
-        code: editingVillage.code 
+        name: editingVillage.name
       })
       .eq('id', editingVillage.id);
 
     if (error) {
       console.error('마을 수정 오류:', error);
-      alert('마을 수정에 실패했습니다. 코드가 중복되었을 수 있습니다.');
+      alert('마을 수정에 실패했습니다.');
       return;
     }
 
@@ -170,8 +168,6 @@ export default function VillagesPage() {
     
     if (sortBy === 'name') {
       compareValue = a.name.localeCompare(b.name, 'ko');
-    } else if (sortBy === 'code') {
-      compareValue = a.code.localeCompare(b.code);
     } else if (sortBy === 'created_at') {
       compareValue = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     }
@@ -179,7 +175,7 @@ export default function VillagesPage() {
     return sortOrder === 'asc' ? compareValue : -compareValue;
   });
 
-  const handleSort = (column: 'name' | 'code' | 'created_at') => {
+  const handleSort = (column: 'name' | 'created_at') => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -356,24 +352,6 @@ export default function VillagesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-4 text-left">
-                    <button
-                      onClick={() => handleSort('code')}
-                      className="flex items-center gap-2 text-sm font-semibold hover:text-gray-900 transition-colors"
-                      style={{ color: sortBy === 'code' ? '#1d1d1f' : '#6b7280', letterSpacing: '-0.01em' }}
-                    >
-                      마을 코드
-                      {sortBy === 'code' && (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          {sortOrder === 'asc' ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                          ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          )}
-                        </svg>
-                      )}
-                    </button>
-                  </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
                     상태
                   </th>
@@ -418,11 +396,6 @@ export default function VillagesPage() {
                           {village.name}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-mono font-semibold text-gray-700" style={{ letterSpacing: '0.05em' }}>
-                        {village.code}
-                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <button
@@ -507,21 +480,6 @@ export default function VillagesPage() {
                     autoFocus
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    마을 코드
-                  </label>
-                  <input
-                    type="text"
-                    value={newVillage.code}
-                    onChange={(e) => setNewVillage({ ...newVillage, code: e.target.value.toUpperCase() })}
-                    className="input-apple font-mono"
-                    placeholder="예: GAL"
-                  />
-                  <p className="mt-2 text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                    영문 대문자로 입력하세요
-                  </p>
-                </div>
               </div>
               
               <div className="mt-8 flex gap-3">
@@ -529,7 +487,7 @@ export default function VillagesPage() {
                   type="button"
                   onClick={() => {
                     setShowAddModal(false);
-                    setNewVillage({ name: '', code: '' });
+                    setNewVillage({ name: '' });
                   }}
                   className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
                   style={{ 
@@ -583,21 +541,6 @@ export default function VillagesPage() {
                     placeholder="예: 갈보리"
                     autoFocus
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
-                    마을 코드
-                  </label>
-                  <input
-                    type="text"
-                    value={editingVillage.code}
-                    onChange={(e) => setEditingVillage({ ...editingVillage, code: e.target.value.toUpperCase() })}
-                    className="input-apple font-mono"
-                    placeholder="예: GAL"
-                  />
-                  <p className="mt-2 text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                    영문 대문자로 입력하세요
-                  </p>
                 </div>
               </div>
               
