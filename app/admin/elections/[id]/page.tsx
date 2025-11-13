@@ -579,14 +579,6 @@ export default function ElectionDetailPage({
         // Find tied candidates (those at the cutoff who are competing for remaining slots)
         tiedCandidates = candidatesWithVotes.filter(c => c.vote_count === cutoffVotes);
         
-        console.log('🔍 Plurality Tie Calculation:', {
-          max_selections: election.max_selections,
-          cutoffVotes,
-          confirmedWinners: confirmedWinners.map(c => `${c.name}:${c.vote_count}`),
-          tiedCandidates: tiedCandidates.map(c => `${c.name}:${c.vote_count}`),
-          totalInCompetition: confirmedWinners.length + tiedCandidates.length
-        });
-        
         if (tiedCandidates.length + confirmedWinners.length > election.max_selections) {
           // There's a tie - only tied candidates are uncertain
           hasTie = true;

@@ -154,7 +154,6 @@ export default function CodesPage() {
       return;
     }
 
-    console.log('불러온 투표 목록:', data); // 디버깅용
     setElections(data || []);
   }, [groupId]);
 

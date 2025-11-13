@@ -109,21 +109,17 @@ export default function SettingsPage() {
     }
 
     const supabase = createClient();
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('admin_emails')
       .insert([{ email: newEmail.trim() }])
       .select();
 
     if (error) {
-      console.error('관리자 추가 오류 상세:', error);
-      console.error('에러 코드:', error.code);
-      console.error('에러 메시지:', error.message);
-      console.error('에러 상세:', error.details);
-      alert(`관리자 추가에 실패했습니다.\n오류: ${error.message}\n개발자 도구 콘솔을 확인해주세요.`);
+      console.error('관리자 추가 오류:', error);
+      alert(`관리자 추가에 실패했습니다.\n오류: ${error.message}`);
       return;
     }
 
-    console.log('관리자 추가 성공:', data);
     alert(`${newEmail.trim()}이(가) 관리자로 추가되었습니다.\n해당 이메일로 Google 로그인하면 관리자 페이지에 접근할 수 있습니다.`);
     setNewEmail('');
     loadAdminEmails();

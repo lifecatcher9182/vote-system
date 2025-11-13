@@ -223,8 +223,6 @@ export default function VoteWithCodePage({
         voter_code_id: voterCode.id,
       }));
 
-      console.log('투표 데이터:', votes);
-
       const { error: votesError } = await supabase
         .from('votes')
         .insert(votes);
