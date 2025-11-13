@@ -551,7 +551,6 @@ export default function ElectionGroupDetailPage({
     );
   }
 
-  const totalVotes = elections.reduce((sum, e) => sum + (e._count?.votes || 0), 0);
   const activeElections = elections.filter(e => e.status === 'active').length;
   const completedElections = elections.filter(e => e.status === 'closed').length;
 
@@ -694,7 +693,7 @@ export default function ElectionGroupDetailPage({
           </div>
 
           {/* 통계 */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-sm text-gray-600 mb-1">총 투표 수</div>
               <div className="text-2xl font-bold" style={{ color: 'var(--color-secondary)' }}>
@@ -711,12 +710,6 @@ export default function ElectionGroupDetailPage({
               <div className="text-sm text-gray-600 mb-1">완료</div>
               <div className="text-2xl font-bold text-gray-600">
                 {completedElections}
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1">총 투표 수</div>
-              <div className="text-2xl font-bold text-blue-600">
-                {totalVotes}
               </div>
             </div>
           </div>
