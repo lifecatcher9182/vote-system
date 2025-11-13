@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function VoteCompletePage() {
+function VoteCompleteContent() {
   const searchParams = useSearchParams();
   const electionTitle = searchParams.get('election') || '';
 
@@ -133,5 +134,24 @@ export default function VoteCompletePage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function VoteCompletePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ 
+        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+      }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
+          <p className="mt-6 text-gray-600 font-medium" style={{ letterSpacing: '-0.01em' }}>
+            로딩 중...
+          </p>
+        </div>
+      </div>
+    }>
+      <VoteCompleteContent />
+    </Suspense>
   );
 }

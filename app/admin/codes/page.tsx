@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
@@ -39,7 +39,7 @@ interface Village {
   name: string;
 }
 
-export default function CodesPage() {
+function CodesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const groupId = searchParams?.get('group_id');
@@ -966,5 +966,24 @@ export default function CodesPage() {
         variant={confirmModal.variant}
       />
     </div>
+  );
+}
+
+export default function CodesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ 
+        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+      }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
+          <p className="mt-6 text-gray-600 font-medium" style={{ letterSpacing: '-0.01em' }}>
+            로딩 중...
+          </p>
+        </div>
+      </div>
+    }>
+      <CodesPageContent />
+    </Suspense>
   );
 }
