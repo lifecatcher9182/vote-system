@@ -25,6 +25,7 @@ interface Election {
   position: string | null;
   village_id: string | null;
   max_selections: number;
+  round: number;
   status: 'waiting' | 'active' | 'closed';
   created_at: string;
   villages?: {
@@ -1149,6 +1150,7 @@ export default function ElectionGroupDetailPage({
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">
                       {group.group_type === 'delegate' ? '마을' : '직책'}
                     </th>
+                    <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">라운드</th>
                     <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">선발 인원</th>
                     <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">후보자</th>
                     <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">투표 수</th>
@@ -1171,6 +1173,11 @@ export default function ElectionGroupDetailPage({
                         {group.group_type === 'delegate' 
                           ? election.villages?.name || '-'
                           : election.position || '-'}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                          {election.round}차
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-center text-sm">
                         {election.max_selections}명

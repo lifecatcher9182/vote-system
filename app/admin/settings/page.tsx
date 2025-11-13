@@ -109,21 +109,33 @@ export default function SettingsPage() {
     }
 
     const supabase = createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('admin_emails')
-      .insert([{ email: newEmail.trim() }]);
+      .insert([{ email: newEmail.trim() }])
+      .select();
 
     if (error) {
-      console.error('관리자 추가 오류:', error);
-      alert('관리자 추가에 실패했습니다.');
+      console.error('관리자 추가 오류 상세:', error);
+      console.error('에러 코드:', error.code);
+      console.error('에러 메시지:', error.message);
+      console.error('에러 상세:', error.details);
+      alert(`관리자 추가에 실패했습니다.\n오류: ${error.message}\n개발자 도구 콘솔을 확인해주세요.`);
       return;
     }
 
+    console.log('관리자 추가 성공:', data);
+    alert(`${newEmail.trim()}이(가) 관리자로 추가되었습니다.\n해당 이메일로 Google 로그인하면 관리자 페이지에 접근할 수 있습니다.`);
     setNewEmail('');
     loadAdminEmails();
   };
 
   const handleDeleteAdmin = async (id: string, email: string) => {
+    // 시스템 관리자 보호
+    if (email === 'lifecatcher9182@gmail.com') {
+      alert('시스템 관리자 계정은 삭제할 수 없습니다.');
+      return;
+    }
+
     // 본인은 삭제 불가
     if (email === currentUserEmail) {
       alert('본인 계정은 삭제할 수 없습니다.');
@@ -368,7 +380,7 @@ export default function SettingsPage() {
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                   <p className="text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                    추가된 이메일로 로그인하면 관리자 권한을 사용할 수 있습니다
+                    추가된 이메일로 Google 로그인하면 관리자 권한을 사용할 수 있습니다
                   </p>
                 </div>
               </div>
@@ -412,6 +424,11 @@ export default function SettingsPage() {
                                 본인
                               </span>
                             )}
+                            {admin.email === 'lifecatcher9182@gmail.com' && (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-medium text-white" style={{ background: 'rgb(34, 197, 94)' }}>
+                                시스템 관리자
+                              </span>
+                            )}
                           </div>
                           <span className="text-xs text-gray-500">
                             등록일: {new Date(admin.created_at).toLocaleDateString('ko-KR', {
@@ -424,10 +441,10 @@ export default function SettingsPage() {
                       </div>
                       <button
                         onClick={() => handleDeleteAdmin(admin.id, admin.email)}
-                        disabled={admin.email === currentUserEmail}
+                        disabled={admin.email === currentUserEmail || admin.email === 'lifecatcher9182@gmail.com'}
                         className="px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
                         style={{ 
-                          background: admin.email === currentUserEmail ? 'transparent' : 'rgba(239, 68, 68, 0.1)',
+                          background: (admin.email === currentUserEmail || admin.email === 'lifecatcher9182@gmail.com') ? 'transparent' : 'rgba(239, 68, 68, 0.1)',
                           color: '#ef4444',
                           letterSpacing: '-0.01em'
                         }}
@@ -452,6 +469,10 @@ export default function SettingsPage() {
                       <li className="flex items-start gap-2">
                         <span className="mt-1">•</span>
                         <span>본인 계정은 삭제할 수 없습니다</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-1">•</span>
+                        <span>시스템 관리자 계정(lifecatcher9182@gmail.com)은 보호됩니다</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-1">•</span>
