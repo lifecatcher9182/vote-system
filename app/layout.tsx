@@ -26,8 +26,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        style={{ fontFamily: '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}
       >
         <ThemeProvider>
           <div className="flex-1">
