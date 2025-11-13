@@ -88,11 +88,15 @@ export default function AdminPage() {
           <div className="text-center mb-8">
             <Link 
               href="/" 
-              className="inline-flex items-center gap-2 text-sm font-medium transition-colors"
-              style={{ color: 'var(--color-secondary)' }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-medium transition-all duration-200 hover:scale-105"
+              style={{ 
+                background: 'rgba(0, 0, 0, 0.06)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em'
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               홈으로 돌아가기
             </Link>

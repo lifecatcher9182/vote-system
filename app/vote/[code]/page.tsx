@@ -301,25 +301,25 @@ export default function VoteWithCodePage({
   }
 
   return (
-    <div className="min-h-screen py-12 px-4" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen py-6 sm:py-8 lg:py-12 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
       <div className="max-w-3xl mx-auto">
         {/* 헤더 - Glass Effect */}
-        <div className="glass-effect rounded-3xl p-8 mb-8" style={{ 
+        <div className="glass-effect rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-8 mb-6 sm:mb-8" style={{ 
           background: 'rgba(255, 255, 255, 0.7)',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255, 255, 255, 0.5)'
         }}>
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-semibold mb-2" style={{ 
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-semibold mb-2 sm:mb-3" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.03em'
               }}>
                 투표 진행
               </h1>
-              <div className="flex items-center gap-2 mt-3">
-                <span className="text-sm text-gray-600">참여코드</span>
-                <span className="px-3 py-1 rounded-lg font-mono text-sm font-semibold" style={{ 
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-gray-600">참여코드</span>
+                <span className="px-2.5 sm:px-3 py-1 rounded-lg font-mono text-xs sm:text-sm font-semibold" style={{ 
                   background: 'var(--color-secondary)',
                   color: 'white',
                   letterSpacing: '0.05em'
@@ -330,11 +330,15 @@ export default function VoteWithCodePage({
             </div>
             <Link 
               href="/vote" 
-              className="inline-flex items-center gap-2 text-sm font-medium transition-colors px-4 py-2 rounded-full hover:bg-white/50"
-              style={{ color: 'var(--color-secondary)' }}
+              className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-sm sm:text-base font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+              style={{ 
+                background: 'rgba(0, 0, 0, 0.06)',
+                color: '#1d1d1f',
+                letterSpacing: '-0.01em'
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               처음으로
             </Link>
@@ -344,14 +348,14 @@ export default function VoteWithCodePage({
         {!selectedElection ? (
           /* 투표 선택 - Apple Card Style */
           <div>
-            <div className="card-apple p-8">
-              <h2 className="text-2xl font-semibold mb-6" style={{ 
+            <div className="card-apple p-5 sm:p-6 lg:p-8">
+              <h2 className="text-xl sm:text-2xl font-semibold mb-5 sm:mb-6" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
                 투표를 선택하세요
               </h2>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {elections.map((election) => {
                   const isVoted = votedElectionIds.has(election.id);
                   
@@ -360,44 +364,44 @@ export default function VoteWithCodePage({
                       key={election.id}
                       onClick={() => handleElectionSelect(election)}
                       disabled={isVoted}
-                      className="group w-full p-6 rounded-2xl transition-all duration-200 text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="group w-full p-4 sm:p-5 lg:p-6 rounded-2xl transition-all duration-200 text-left disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98]"
                       style={{ 
                         background: isVoted ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.02)',
                         border: isVoted ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(0, 0, 0, 0.06)'
                       }}
                     >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold" style={{ 
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-2 flex-wrap">
+                            <h3 className="text-base sm:text-lg font-semibold" style={{ 
                               color: '#1d1d1f',
                               letterSpacing: '-0.02em'
                             }}>
                               {election.title}
                             </h3>
                             {isVoted && (
-                              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                              <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 whitespace-nowrap">
                                 투표 완료
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>
                             {election.election_type === 'delegate' 
                               ? `총대 선출 · ${election.villages?.name}`
                               : `임원 선출 · ${election.position}`
                             }
                           </p>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-500 flex-wrap">
                             <span className="px-2 py-1 rounded-md bg-white/50">{election.round}차</span>
-                            <span>최대 {election.max_selections}명 선택</span>
+                            <span className="whitespace-nowrap">최대 {election.max_selections}명 선택</span>
                           </div>
                         </div>
                         {!isVoted && (
-                          <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1" style={{ 
+                          <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-transform group-hover:translate-x-1 group-active:translate-x-0" style={{ 
                             background: 'var(--color-secondary)',
                             color: 'white'
                           }}>
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                             </svg>
                           </div>
@@ -411,29 +415,33 @@ export default function VoteWithCodePage({
           </div>
         ) : (
           /* 후보자 선택 - Apple Style */
-          <div className="space-y-6">
-            <div className="card-apple p-8">
+          <div className="space-y-5 sm:space-y-6">
+            <div className="card-apple p-5 sm:p-6 lg:p-8">
               <button
                 onClick={() => {
                   setSelectedElection(null);
                   setSelectedCandidates([]);
                 }}
-                className="inline-flex items-center gap-2 text-sm font-medium mb-6 px-4 py-2 rounded-full hover:bg-gray-50 transition-colors"
-                style={{ color: 'var(--color-secondary)' }}
+                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-sm sm:text-base font-medium mb-5 sm:mb-6 transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.06)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                <svg className="w-[16px] h-[16px] sm:w-[18px] sm:h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 투표 다시 선택
               </button>
               
-              <h2 className="text-2xl font-semibold mb-2" style={{ 
+              <h2 className="text-xl sm:text-2xl font-semibold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
               }}>
                 {selectedElection.title}
               </h2>
-              <p className="text-gray-600 mb-6" style={{ letterSpacing: '-0.01em' }}>
+              <p className="text-sm sm:text-base text-gray-600 mb-5 sm:mb-6" style={{ letterSpacing: '-0.01em' }}>
                 {selectedElection.election_type === 'delegate' 
                   ? `총대 선출 · ${selectedElection.villages?.name}`
                   : `임원 선출 · ${selectedElection.position}`
@@ -441,7 +449,7 @@ export default function VoteWithCodePage({
               </p>
 
               {/* 선택 가이드 */}
-              <div className="mb-8 p-5 rounded-2xl" style={{ background: 'rgba(0, 113, 227, 0.05)' }}>
+              <div className="mb-6 sm:mb-8 p-4 sm:p-5 rounded-2xl" style={{ background: 'rgba(0, 113, 227, 0.05)' }}>
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(0, 113, 227, 0.1)' }}>
                     <svg className="w-3.5 h-3.5" style={{ color: 'var(--color-secondary)' }} fill="currentColor" viewBox="0 0 20 20">
@@ -463,32 +471,32 @@ export default function VoteWithCodePage({
 
               {/* 후보자 목록 */}
               {candidates.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="text-center py-12 sm:py-16">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
+                    <svg className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <p className="text-gray-500" style={{ letterSpacing: '-0.01em' }}>후보자가 없습니다</p>
+                  <p className="text-sm sm:text-base text-gray-500" style={{ letterSpacing: '-0.01em' }}>후보자가 없습니다</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {candidates.map((candidate, index) => {
                     const isSelected = selectedCandidates.includes(candidate.id);
                     return (
                       <button
                         key={candidate.id}
                         onClick={() => handleCandidateToggle(candidate.id)}
-                        className="w-full p-5 rounded-2xl transition-all duration-200 text-left"
+                        className="w-full p-4 sm:p-5 rounded-2xl transition-all duration-200 text-left active:scale-[0.98]"
                         style={{ 
                           background: isSelected ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.02)',
                           border: `2px solid ${isSelected ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.06)'}`,
                           transform: isSelected ? 'scale(1.02)' : 'scale(1)'
                         }}
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
                           <div 
-                            className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-semibold text-lg transition-all"
+                            className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-semibold text-base sm:text-lg transition-all"
                             style={{ 
                               background: isSelected ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.05)',
                               color: isSelected ? 'white' : '#1d1d1f'
@@ -496,9 +504,9 @@ export default function VoteWithCodePage({
                           >
                             {isSelected ? '✓' : index + 1}
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <p 
-                              className="text-lg font-semibold"
+                              className="text-base sm:text-lg font-semibold truncate"
                               style={{ 
                                 color: isSelected ? 'white' : '#1d1d1f',
                                 letterSpacing: '-0.02em'
@@ -517,24 +525,24 @@ export default function VoteWithCodePage({
 
             {/* 투표 제출 카드 */}
             {selectedCandidates.length > 0 && (
-              <div className="card-apple p-8">
-                <h3 className="text-xl font-semibold mb-5" style={{ 
+              <div className="card-apple p-5 sm:p-6 lg:p-8">
+                <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-5" style={{ 
                   color: '#1d1d1f',
                   letterSpacing: '-0.02em'
                 }}>
                   선택한 후보자
                 </h3>
-                <div className="space-y-3 mb-6">
+                <div className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6">
                   {selectedCandidates.map((candidateId) => {
                     const candidate = candidates.find(c => c.id === candidateId);
                     return (
-                      <div key={candidateId} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(0, 113, 227, 0.05)' }}>
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'var(--color-secondary)' }}>
-                          <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <div key={candidateId} className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl" style={{ background: 'rgba(0, 113, 227, 0.05)' }}>
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-secondary)' }}>
+                          <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
                         </div>
-                        <span className="font-medium" style={{ color: '#1d1d1f' }}>{candidate?.name}</span>
+                        <span className="font-medium text-sm sm:text-base truncate" style={{ color: '#1d1d1f' }}>{candidate?.name}</span>
                       </div>
                     );
                   })}
@@ -543,24 +551,21 @@ export default function VoteWithCodePage({
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="btn-apple-primary w-full text-lg py-4 mb-4"
+                  className="btn-apple-primary w-full text-base sm:text-lg py-3.5 sm:py-4 mb-4 active:scale-95"
                 >
                   {submitting ? (
-                    <span className="flex items-center justify-center gap-3">
-                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                    <span className="flex items-center justify-center gap-2.5 sm:gap-3">
+                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-2 border-white border-t-transparent"></div>
                       투표 제출 중
                     </span>
                   ) : '투표 제출하기'}
                 </button>
                 
                 <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
-                  <span>투표 후에는 변경할 수 없습니다</span>
+                  <span className="text-center">투표 후에는 변경할 수 없습니다</span>
                 </div>
               </div>
             )}

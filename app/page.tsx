@@ -61,31 +61,31 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
           <Link
             href="/vote"
-            className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white rounded-full overflow-hidden transition-all duration-300 ease-out"
+            className="group inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white rounded-2xl transition-all duration-200 hover:scale-105"
             style={{ 
               background: 'var(--color-secondary)',
               boxShadow: '0 4px 16px rgba(0, 113, 227, 0.25)',
-              letterSpacing: '-0.02em'
+              letterSpacing: '-0.01em'
             }}
           >
-            <span className="relative z-10">투표 참여하기</span>
-            <svg className="relative z-10 ml-2 w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            투표 참여하기
+            <svg className="w-[18px] h-[18px] transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </Link>
           
           <Link
             href="/admin"
-            className="group inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-full transition-all duration-300"
+            className="group inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-200 hover:scale-105"
             style={{ 
-              background: 'rgba(0, 0, 0, 0.04)',
+              background: 'rgba(0, 0, 0, 0.06)',
               color: '#1d1d1f',
-              letterSpacing: '-0.02em'
+              letterSpacing: '-0.01em'
             }}
           >
-            <span>관리자 로그인</span>
-            <svg className="ml-2 w-5 h-5 opacity-60 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            관리자 로그인
+            <svg className="w-[18px] h-[18px] transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </Link>
         </div>
