@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           id: string
           logo_url: string | null
+          favicon_url: string | null
           primary_color: string
           created_at: string
           updated_at: string
@@ -55,6 +56,7 @@ export type Database = {
         Insert: {
           id?: string
           logo_url?: string | null
+          favicon_url?: string | null
           primary_color?: string
           created_at?: string
           updated_at?: string
@@ -62,6 +64,7 @@ export type Database = {
         Update: {
           id?: string
           logo_url?: string | null
+          favicon_url?: string | null
           primary_color?: string
           created_at?: string
           updated_at?: string

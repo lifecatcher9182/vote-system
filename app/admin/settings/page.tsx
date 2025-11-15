@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import LogoUploadSettings from '@/components/LogoUploadSettings';
+import FaviconUploadSettings from '@/components/FaviconUploadSettings';
 import ColorThemeSettings from '@/components/ColorThemeSettings';
 import SystemLogo from '@/components/SystemLogo';
 import AlertModal from '@/components/AlertModal';
@@ -319,29 +320,27 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
-      {/* Logo - 좌측 상단 고정 */}
-      <div className="fixed top-6 left-6 z-50">
-        <SystemLogo size="sm" linkToHome />
-      </div>
-
       {/* Header - Glass Effect */}
-      <header className="glass-effect border-b" style={{ 
-        background: 'rgba(255, 255, 255, 0.7)',
+      <header style={{ 
+        background: 'rgba(255, 255, 255, 0.8)',
         backdropFilter: 'blur(20px)',
-        borderColor: 'rgba(0, 0, 0, 0.05)'
+        borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-semibold mb-1" style={{ 
-                color: '#1d1d1f',
-                letterSpacing: '-0.03em'
-              }}>
-                시스템 설정
-              </h1>
-              <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                관리자 및 시스템 환경을 설정합니다
-              </p>
+            <div className="flex items-center gap-4">
+              <SystemLogo size="md" linkToHome />
+              <div>
+                <h1 className="text-3xl font-semibold" style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.03em'
+                }}>
+                  시스템 설정
+                </h1>
+                <p className="text-sm text-gray-600 mt-1" style={{ letterSpacing: '-0.01em' }}>
+                  관리자 및 시스템 환경을 설정합니다
+                </p>
+              </div>
             </div>
             <button
               onClick={() => router.back()}
@@ -367,6 +366,9 @@ export default function SettingsPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* 로고 업로드 */}
             <LogoUploadSettings />
+
+            {/* Favicon 설정 */}
+            <FaviconUploadSettings />
 
             {/* 색상 테마 설정 */}
             <ColorThemeSettings />

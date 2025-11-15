@@ -75,6 +75,14 @@ export default function ElectionDetailPage({
     first_login_at: string | null;
     has_voted: boolean;
   }>>([]);
+  
+  // 일괄 삭제를 위한 선택 상태
+  const [selectedCodeIds, setSelectedCodeIds] = useState<string[]>([]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+
+  // 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // 결과 상태
   const [resultStats, setResultStats] = useState({
@@ -355,6 +363,51 @@ export default function ElectionDetailPage({
         }
 
         loadVoterCodes();
+      }
+    });
+  };
+
+  // 전체 선택/해제
+  const handleSelectAll = (codes: Array<{ id: string }>) => {
+    const codeIds = codes.map(c => c.id);
+    if (selectedCodeIds.length === codeIds.length) {
+      // 전체 선택되어 있으면 해제
+      setSelectedCodeIds([]);
+    } else {
+      // 전체 선택
+      setSelectedCodeIds(codeIds);
+    }
+  };
+
+  // 일괄 삭제
+  const handleBulkDeleteCodes = async () => {
+    if (selectedCodeIds.length === 0) {
+      setAlertModal({ isOpen: true, message: '삭제할 코드를 선택해주세요.', title: '알림' });
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      message: `선택한 ${selectedCodeIds.length}개의 코드를 삭제하시겠습니까?\n\n관련된 투표 기록도 함께 삭제됩니다.`,
+      title: '코드 일괄 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('voter_codes')
+          .delete()
+          .in('id', selectedCodeIds);
+
+        if (error) {
+          console.error('코드 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '코드 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
+
+        setSelectedCodeIds([]);
+        setIsDeleteMode(false);
+        loadVoterCodes();
+        setAlertModal({ isOpen: true, message: `${selectedCodeIds.length}개의 코드가 삭제되었습니다.`, title: '삭제 완료' });
       }
     });
   };
@@ -1079,15 +1132,65 @@ export default function ElectionDetailPage({
                   </button>
                 </div>
                 
-                <button
-                  onClick={() => setShowCreateCodeModal(true)}
-                  className="btn-apple-primary inline-flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  코드 생성
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCreateCodeModal(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                    style={{
+                      background: 'var(--color-secondary)',
+                      color: 'white',
+                      letterSpacing: '-0.01em',
+                      boxShadow: 'var(--shadow-secondary)'
+                    }}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    코드 생성
+                  </button>
+                  {isDeleteMode ? (
+                    <button
+                      onClick={() => {
+                        setIsDeleteMode(false);
+                        setSelectedCodeIds([]);
+                      }}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.06)',
+                        color: '#1d1d1f',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      취소
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsDeleteMode(true);
+                        setSelectedCodeIds([]);
+                      }}
+                      disabled={voterCodes.length === 0}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      style={{
+                        background: voterCodes.length === 0 
+                          ? 'rgba(0, 0, 0, 0.1)' 
+                          : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                        color: 'white',
+                        letterSpacing: '-0.01em',
+                        boxShadow: voterCodes.length === 0 ? 'none' : '0 2px 8px rgba(239, 68, 68, 0.25)'
+                      }}
+                      title={voterCodes.length === 0 ? '삭제할 코드가 없습니다' : ''}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      일괄 삭제
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="card-apple p-8">
@@ -1111,51 +1214,151 @@ export default function ElectionDetailPage({
                     <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
                       생성된 코드가 없습니다
                     </h3>
-                    <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>
-                      &ldquo;코드 생성&rdquo; 버튼을 눌러 참여 코드를 만드세요
+                    <p className="text-gray-500" style={{ letterSpacing: '-0.01em' }}>
+                      상단 &ldquo;코드 생성&rdquo; 버튼을 눌러 참여 코드를 만드세요
                     </p>
-                    <button
-                      onClick={() => setShowCreateCodeModal(true)}
-                      className="btn-apple-primary inline-flex items-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      코드 생성
-                    </button>
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {/* 일괄 삭제 모드: 선택 삭제 버튼 */}
+                    {isDeleteMode && selectedCodeIds.length > 0 && (
+                      <button
+                        onClick={handleBulkDeleteCodes}
+                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-[1.02]"
+                        style={{
+                          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                          color: 'white',
+                          letterSpacing: '-0.01em',
+                          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.25)'
+                        }}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        선택 삭제 ({selectedCodeIds.length})
+                      </button>
+                    )}
+
+                    {/* 일괄 삭제 모드: 전체 선택 체크박스 */}
+                    {isDeleteMode && voterCodes.length > 0 && (() => {
+                      const filteredCodes = voterCodes.filter(code => {
+                        if (codeFilter === 'all') return true;
+                        if (codeFilter === 'voted') return code.has_voted;
+                        if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
+                        if (codeFilter === 'not_attended') return !code.first_login_at;
+                        return true;
+                      });
+                      const startIndex = (currentPage - 1) * itemsPerPage;
+                      const endIndex = startIndex + itemsPerPage;
+                      const currentPageCodes = filteredCodes.slice(startIndex, endIndex);
+                      const currentPageCodeIds = currentPageCodes.map(c => c.id);
+                      const allCurrentPageSelected = currentPageCodeIds.length > 0 && 
+                        currentPageCodeIds.every(id => selectedCodeIds.includes(id));
+                      
+                      return (
+                        <div 
+                          className="flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer hover:bg-red-50 transition-colors"
+                          style={{ borderColor: '#fecaca' }}
+                          onClick={() => handleSelectAll(currentPageCodes)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={allCurrentPageSelected}
+                            onChange={() => handleSelectAll(currentPageCodes)}
+                            className="w-5 h-5 rounded border-2 cursor-pointer"
+                            style={{
+                              accentColor: '#dc2626',
+                              borderColor: '#fca5a5'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <label 
+                            className="flex-1 text-sm font-semibold cursor-pointer select-none"
+                            style={{ color: '#dc2626', letterSpacing: '-0.01em' }}
+                          >
+                            현재 페이지 전체 선택 ({currentPageCodes.length}개)
+                          </label>
+                        </div>
+                      );
+                    })()}
+
+                    {/* 페이지당 항목 수 선택 */}
                     <div className="flex items-center justify-between mb-4">
-                      <p className="text-sm text-gray-600">
-                        총 {voterCodes.length}개의 코드
-                        {codeFilter !== 'all' && ` (${
-                          voterCodes.filter(code => {
-                            if (codeFilter === 'voted') return code.has_voted;
-                            if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
-                            if (codeFilter === 'not_attended') return !code.first_login_at;
-                            return true;
-                          }).length
-                        }개 표시)`}
-                      </p>
+                      <div className="flex items-center gap-4">
+                        <p className="text-sm text-gray-600">
+                          총 {voterCodes.length}개의 코드
+                          {codeFilter !== 'all' && ` (${
+                            voterCodes.filter(code => {
+                              if (codeFilter === 'voted') return code.has_voted;
+                              if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
+                              if (codeFilter === 'not_attended') return !code.first_login_at;
+                              return true;
+                            }).length
+                          }개 표시)`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">페이지당:</span>
+                        {[5, 10, 30, 50].map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => {
+                              setItemsPerPage(size);
+                              setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                              itemsPerPage === size ? 'text-white' : 'text-gray-700'
+                            }`}
+                            style={{ 
+                              background: itemsPerPage === size ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)'
+                            }}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     
                     <div className="grid gap-3">
-                      {voterCodes
-                        .filter(code => {
+                      {(() => {
+                        const filteredCodes = voterCodes.filter(code => {
                           if (codeFilter === 'all') return true;
                           if (codeFilter === 'voted') return code.has_voted;
                           if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
                           if (codeFilter === 'not_attended') return !code.first_login_at;
                           return true;
-                        })
-                        .map((code) => (
+                        });
+                        
+                        const startIndex = (currentPage - 1) * itemsPerPage;
+                        const endIndex = startIndex + itemsPerPage;
+                        const paginatedCodes = filteredCodes.slice(startIndex, endIndex);
+                        
+                        return paginatedCodes.map((code) => (
                         <div 
                           key={code.id}
                           className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
                           style={{ background: 'white' }}
                         >
                           <div className="flex items-center gap-4">
+                            {/* 일괄 삭제 모드: 체크박스 표시 */}
+                            {isDeleteMode && (
+                              <input
+                                type="checkbox"
+                                checked={selectedCodeIds.includes(code.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedCodeIds(prev => [...prev, code.id]);
+                                  } else {
+                                    setSelectedCodeIds(prev => prev.filter(id => id !== code.id));
+                                  }
+                                }}
+                                className="w-5 h-5 rounded border-2 cursor-pointer"
+                                style={{
+                                  accentColor: '#dc2626',
+                                  borderColor: '#fca5a5'
+                                }}
+                              />
+                            )}
                             <code className="px-3 py-1.5 rounded-lg text-lg font-mono font-semibold" style={{ 
                               background: 'rgba(0, 0, 0, 0.04)',
                               color: '#1d1d1f',
@@ -1179,34 +1382,109 @@ export default function ElectionDetailPage({
                               )}
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(code.code);
-                                setAlertModal({ isOpen: true, message: '코드가 복사되었습니다.', title: '복사 완료' });
-                              }}
-                              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                              style={{ 
-                                background: 'rgba(0, 0, 0, 0.04)',
-                                color: '#1d1d1f'
-                              }}
-                            >
-                              복사
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCode(code.id)}
-                              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                              style={{ 
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                color: '#dc2626'
-                              }}
-                            >
-                              삭제
-                            </button>
-                          </div>
+                          {/* 일괄 삭제 모드가 아닐 때만 복사/삭제 버튼 표시 */}
+                          {!isDeleteMode && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(code.code);
+                                  setAlertModal({ isOpen: true, message: '코드가 복사되었습니다.', title: '복사 완료' });
+                                }}
+                                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                style={{ 
+                                  background: 'rgba(0, 0, 0, 0.04)',
+                                  color: '#1d1d1f'
+                                }}
+                              >
+                                복사
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCode(code.id)}
+                                className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                                style={{ 
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  color: '#dc2626'
+                                }}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                        ));
+                      })()}
                     </div>
+
+                    {/* 페이지네이션 */}
+                    {(() => {
+                      const filteredCodes = voterCodes.filter(code => {
+                        if (codeFilter === 'all') return true;
+                        if (codeFilter === 'voted') return code.has_voted;
+                        if (codeFilter === 'attended') return code.first_login_at && !code.has_voted;
+                        if (codeFilter === 'not_attended') return !code.first_login_at;
+                        return true;
+                      });
+                      const totalPages = Math.ceil(filteredCodes.length / itemsPerPage);
+                      
+                      if (totalPages <= 1) return null;
+                      
+                      return (
+                        <div className="flex justify-center items-center gap-2 mt-6">
+                          <button
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            style={{ 
+                              background: 'rgba(0, 0, 0, 0.04)',
+                              color: '#1d1d1f'
+                            }}
+                          >
+                            ← 이전
+                          </button>
+                          
+                          <div className="flex gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                              // 현재 페이지 주변만 표시
+                              if (
+                                page === 1 ||
+                                page === totalPages ||
+                                (page >= currentPage - 1 && page <= currentPage + 1)
+                              ) {
+                                return (
+                                  <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+                                      currentPage === page ? 'text-white' : 'text-gray-700'
+                                    }`}
+                                    style={{ 
+                                      background: currentPage === page ? 'var(--color-secondary)' : 'rgba(0, 0, 0, 0.04)'
+                                    }}
+                                  >
+                                    {page}
+                                  </button>
+                                );
+                              } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                return <span key={page} className="w-10 h-10 flex items-center justify-center text-gray-400">...</span>;
+                              }
+                              return null;
+                            })}
+                          </div>
+                          
+                          <button
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            style={{ 
+                              background: 'rgba(0, 0, 0, 0.04)',
+                              color: '#1d1d1f'
+                            }}
+                          >
+                            다음 →
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>

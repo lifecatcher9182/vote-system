@@ -47,6 +47,7 @@ export default function SystemLogo({
         src={logoUrl}
         alt={systemName}
         fill
+        sizes={`${sizeMap[size].width}px`}
         className="object-contain"
         priority
       />
