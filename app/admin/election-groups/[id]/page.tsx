@@ -80,6 +80,10 @@ export default function ElectionGroupDetailPage({
     vote_count: number; // 이 코드로 투표한 투표 수
   }>>([]);
   
+  // 일괄 삭제를 위한 선택 상태
+  const [selectedCodeIds, setSelectedCodeIds] = useState<string[]>([]);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  
   // 페이지네이션 상태
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -257,7 +261,14 @@ export default function ElectionGroupDetailPage({
     const filteredCodes = (codesData || []).filter(code => {
       // accessible_elections가 배열 형태로 저장되어 있는지 확인
       const accessibleElections = (code as { accessible_elections?: string[] }).accessible_elections || [];
-      return electionIds.some(id => accessibleElections.includes(id));
+      
+      // 조건 1: 이 그룹의 투표 ID를 최소 하나 이상 포함
+      const hasGroupElection = accessibleElections.some(id => electionIds.includes(id));
+      
+      // 조건 2: 다른 그룹의 투표 ID는 포함하지 않음 (모든 ID가 현재 그룹 것이어야 함)
+      const onlyGroupElections = accessibleElections.every(id => electionIds.includes(id));
+      
+      return hasGroupElection && onlyGroupElections;
     });
 
     // 각 코드가 실제로 투표한 선거 개수 계산
@@ -284,6 +295,7 @@ export default function ElectionGroupDetailPage({
     }));
 
     setVoterCodes(codesWithVoteCount);
+    setSelectedCodeIds([]); // 코드 목록 변경 시 선택 초기화
   }, [group, elections]);
 
   // 임원 투표용 코드 생성
@@ -358,6 +370,50 @@ export default function ElectionGroupDetailPage({
         }
 
         loadVoterCodes();
+      }
+    });
+  };
+
+  // 전체 선택/해제
+  const handleSelectAll = (codes: Array<{ id: string }>) => {
+    const codeIds = codes.map(c => c.id);
+    if (selectedCodeIds.length === codeIds.length) {
+      // 전체 선택되어 있으면 해제
+      setSelectedCodeIds([]);
+    } else {
+      // 전체 선택
+      setSelectedCodeIds(codeIds);
+    }
+  };
+
+  // 일괄 삭제
+  const handleBulkDeleteCodes = async () => {
+    if (selectedCodeIds.length === 0) {
+      setAlertModal({ isOpen: true, message: '삭제할 코드를 선택해주세요.', title: '알림' });
+      return;
+    }
+
+    setConfirmModal({
+      isOpen: true,
+      message: `선택한 ${selectedCodeIds.length}개의 코드를 삭제하시겠습니까?\n\n관련된 투표 기록도 함께 삭제됩니다.`,
+      title: '코드 일괄 삭제',
+      variant: 'danger',
+      onConfirm: async () => {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from('voter_codes')
+          .delete()
+          .in('id', selectedCodeIds);
+
+        if (error) {
+          console.error('코드 삭제 오류:', error);
+          setAlertModal({ isOpen: true, message: '코드 삭제에 실패했습니다.', title: '오류' });
+          return;
+        }
+
+        setSelectedCodeIds([]);
+        loadVoterCodes();
+        setAlertModal({ isOpen: true, message: `${selectedCodeIds.length}개의 코드가 삭제되었습니다.`, title: '삭제 완료' });
       }
     });
   };
@@ -455,15 +511,22 @@ export default function ElectionGroupDetailPage({
               const currentElectionIds = elections.map(e => e.id);
               const allElectionIds = [...currentElectionIds, ...newElectionIds];
 
-              // 이 그룹의 기존 코드 가져오기
-              const { data: existingCodes } = await supabase
+              // 이 그룹의 기존 코드만 정확하게 가져오기
+              const { data: allCodes } = await supabase
                 .from('voter_codes')
                 .select('id, accessible_elections')
-                .eq('code_type', 'officer')
-                .contains('accessible_elections', currentElectionIds);
+                .eq('code_type', 'officer');
+
+              // 클라이언트 사이드에서 필터링: 현재 그룹의 투표 ID만 포함하는 코드
+              const existingCodes = (allCodes || []).filter(code => {
+                const accessibleElections = (code as { accessible_elections?: string[] }).accessible_elections || [];
+                // 현재 그룹의 모든 투표 ID를 포함하는 코드만 선택
+                // (이 그룹 전용 코드만 업데이트)
+                return currentElectionIds.every(id => accessibleElections.includes(id));
+              });
 
               // 각 코드의 accessible_elections 업데이트
-              if (existingCodes && existingCodes.length > 0) {
+              if (existingCodes.length > 0) {
                 for (const code of existingCodes) {
                   await supabase
                     .from('voter_codes')
@@ -786,23 +849,49 @@ export default function ElectionGroupDetailPage({
                     : '투표를 생성한 후 참여코드를 생성할 수 있습니다.'}
                 </p>
               </div>
-              <button
-                onClick={() => setShowCreateCodeModal(true)}
-                disabled={elections.length === 0}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={{
-                  background: elections.length === 0 ? 'rgba(0, 0, 0, 0.1)' : 'var(--color-secondary)',
-                  color: 'white',
-                  letterSpacing: '-0.01em',
-                  boxShadow: elections.length === 0 ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
-                }}
-                title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                코드 생성
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowCreateCodeModal(true)}
+                  disabled={elections.length === 0}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  style={{
+                    background: elections.length === 0 ? 'rgba(0, 0, 0, 0.1)' : 'var(--color-secondary)',
+                    color: 'white',
+                    letterSpacing: '-0.01em',
+                    boxShadow: elections.length === 0 ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                  }}
+                  title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  코드 생성
+                </button>
+                <button
+                  onClick={() => {
+                    setIsDeleteMode(!isDeleteMode);
+                    setSelectedCodeIds([]);
+                  }}
+                  disabled={voterCodes.length === 0}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  style={{
+                    background: isDeleteMode 
+                      ? '#dc2626' 
+                      : voterCodes.length === 0 
+                        ? 'rgba(0, 0, 0, 0.1)' 
+                        : 'rgba(239, 68, 68, 0.1)',
+                    color: isDeleteMode ? 'white' : '#dc2626',
+                    letterSpacing: '-0.01em',
+                    boxShadow: isDeleteMode ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none'
+                  }}
+                  title={voterCodes.length === 0 ? '삭제할 코드가 없습니다' : ''}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  {isDeleteMode ? '취소' : '일괄 삭제'}
+                </button>
+              </div>
             </div>
 
             {/* 필터 버튼 */}
@@ -940,12 +1029,27 @@ export default function ElectionGroupDetailPage({
 
               return (
                 <div className="space-y-4">
-                  {/* 상단: 개수 표시 + 페이지당 개수 선택 */}
+                  {/* 상단: 개수 표시 + 삭제 모드 액션 버튼 + 페이지당 개수 선택 */}
                   <div className="flex justify-between items-center">
-                    <p className="text-sm text-gray-600">
-                      총 {voterCodes.length}개의 코드
-                      {codeFilter !== 'all' && ` (${filteredCodes.length}개 표시)`}
-                    </p>
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm text-gray-600">
+                        총 {voterCodes.length}개의 코드
+                        {codeFilter !== 'all' && ` (${filteredCodes.length}개 표시)`}
+                      </p>
+                      {isDeleteMode && selectedCodeIds.length > 0 && (
+                        <button
+                          onClick={handleBulkDeleteCodes}
+                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                          style={{ 
+                            background: '#dc2626',
+                            color: 'white',
+                            boxShadow: '0 2px 8px rgba(220, 38, 38, 0.25)'
+                          }}
+                        >
+                          선택 삭제 ({selectedCodeIds.length})
+                        </button>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">페이지당:</span>
                       {[5, 10, 30, 50].map((size) => (
@@ -968,6 +1072,22 @@ export default function ElectionGroupDetailPage({
                     </div>
                   </div>
                   
+                  {/* 전체 선택 체크박스 - 삭제 모드일 때만 표시 */}
+                  {isDeleteMode && paginatedCodes.length > 0 && (
+                    <div className="flex items-center gap-2 p-3 rounded-lg border-2 border-red-200" style={{ background: 'rgba(239, 68, 68, 0.05)' }}>
+                      <input
+                        type="checkbox"
+                        checked={paginatedCodes.every(code => selectedCodeIds.includes(code.id))}
+                        onChange={() => handleSelectAll(paginatedCodes)}
+                        className="w-4 h-4 rounded cursor-pointer"
+                        style={{ accentColor: '#dc2626' }}
+                      />
+                      <label className="text-sm font-medium cursor-pointer" style={{ color: '#dc2626' }} onClick={() => handleSelectAll(paginatedCodes)}>
+                        현재 페이지 전체 선택
+                      </label>
+                    </div>
+                  )}
+                  
                   {/* 코드 목록 */}
                   <div className="grid gap-3">
                     {paginatedCodes.map((code) => (
@@ -977,6 +1097,22 @@ export default function ElectionGroupDetailPage({
                       style={{ background: 'white' }}
                     >
                       <div className="flex items-center gap-4">
+                        {/* 체크박스 - 삭제 모드일 때만 표시 */}
+                        {isDeleteMode && (
+                          <input
+                            type="checkbox"
+                            checked={selectedCodeIds.includes(code.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCodeIds([...selectedCodeIds, code.id]);
+                              } else {
+                                setSelectedCodeIds(selectedCodeIds.filter(id => id !== code.id));
+                              }
+                            }}
+                            className="w-5 h-5 rounded cursor-pointer"
+                            style={{ accentColor: '#dc2626' }}
+                          />
+                        )}
                         <code className="px-3 py-1.5 rounded-lg text-lg font-mono font-semibold" style={{ 
                           background: 'rgba(0, 0, 0, 0.04)',
                           color: '#1d1d1f',
@@ -1017,31 +1153,33 @@ export default function ElectionGroupDetailPage({
                           })()}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(code.code);
-                            setAlertModal({ isOpen: true, message: '코드가 복사되었습니다.', title: '복사 완료' });
-                          }}
-                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                          style={{ 
-                            background: 'rgba(0, 0, 0, 0.04)',
-                            color: '#1d1d1f'
-                          }}
-                        >
-                          복사
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCode(code.id)}
-                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                          style={{ 
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            color: '#dc2626'
-                          }}
-                        >
-                          삭제
-                        </button>
-                      </div>
+                      {!isDeleteMode && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(code.code);
+                              setAlertModal({ isOpen: true, message: '코드가 복사되었습니다.', title: '복사 완료' });
+                            }}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                            style={{ 
+                              background: 'rgba(0, 0, 0, 0.04)',
+                              color: '#1d1d1f'
+                            }}
+                          >
+                            복사
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCode(code.id)}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                            style={{ 
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              color: '#dc2626'
+                            }}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                   </div>
