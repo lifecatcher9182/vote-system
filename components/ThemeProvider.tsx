@@ -28,6 +28,14 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
         
         document.documentElement.style.setProperty('--color-primary', primary);
         document.documentElement.style.setProperty('--color-secondary', secondary);
+        
+        // RGB 값 추출 (shadow에 사용)
+        const hexToRgb = (hex: string) => {
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 113, 227';
+        };
+        
+        document.documentElement.style.setProperty('--color-secondary-rgb', hexToRgb(secondary));
       }
     };
 

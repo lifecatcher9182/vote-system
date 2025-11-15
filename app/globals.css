@@ -7,12 +7,19 @@
   /* 테마 색상 변수 (ThemeProvider에서 동적으로 업데이트됨) */
   --color-primary: #f5f5f7;
   --color-secondary: #0071e3;
+  --color-secondary-rgb: 0, 113, 227; /* RGB 값 (shadow에 사용) */
   
   /* Apple-style elevation shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+  
+  /* Secondary color shadows (테마에 따라 자동 변경) */
+  --shadow-secondary: 0 4px 12px rgba(var(--color-secondary-rgb), 0.25);
+  --shadow-secondary-sm: 0 2px 8px rgba(var(--color-secondary-rgb), 0.25);
+  --shadow-secondary-lg: 0 4px 16px rgba(var(--color-secondary-rgb), 0.25);
+  --shadow-secondary-xl: 0 8px 24px rgba(var(--color-secondary-rgb), 0.3);
   
   /* Apple-style border radius */
   --radius-sm: 8px;

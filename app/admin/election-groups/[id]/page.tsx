@@ -858,7 +858,7 @@ export default function ElectionGroupDetailPage({
                     background: elections.length === 0 ? 'rgba(0, 0, 0, 0.1)' : 'var(--color-secondary)',
                     color: 'white',
                     letterSpacing: '-0.01em',
-                    boxShadow: elections.length === 0 ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                    boxShadow: elections.length === 0 ? 'none' : 'var(--shadow-secondary)'
                   }}
                   title={elections.length === 0 ? '먼저 투표를 생성하세요' : ''}
                 >
@@ -867,30 +867,48 @@ export default function ElectionGroupDetailPage({
                   </svg>
                   코드 생성
                 </button>
-                <button
-                  onClick={() => {
-                    setIsDeleteMode(!isDeleteMode);
-                    setSelectedCodeIds([]);
-                  }}
-                  disabled={voterCodes.length === 0}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                  style={{
-                    background: isDeleteMode 
-                      ? '#dc2626' 
-                      : voterCodes.length === 0 
+                {isDeleteMode ? (
+                  <button
+                    onClick={() => {
+                      setIsDeleteMode(false);
+                      setSelectedCodeIds([]);
+                    }}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.06)',
+                      color: '#1d1d1f',
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    취소
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsDeleteMode(true);
+                      setSelectedCodeIds([]);
+                    }}
+                    disabled={voterCodes.length === 0}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    style={{
+                      background: voterCodes.length === 0 
                         ? 'rgba(0, 0, 0, 0.1)' 
-                        : 'rgba(239, 68, 68, 0.1)',
-                    color: isDeleteMode ? 'white' : '#dc2626',
-                    letterSpacing: '-0.01em',
-                    boxShadow: isDeleteMode ? '0 4px 12px rgba(220, 38, 38, 0.25)' : 'none'
-                  }}
-                  title={voterCodes.length === 0 ? '삭제할 코드가 없습니다' : ''}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  {isDeleteMode ? '취소' : '일괄 삭제'}
-                </button>
+                        : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                      color: 'white',
+                      letterSpacing: '-0.01em',
+                      boxShadow: voterCodes.length === 0 ? 'none' : '0 2px 8px rgba(239, 68, 68, 0.25)'
+                    }}
+                    title={voterCodes.length === 0 ? '삭제할 코드가 없습니다' : ''}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    일괄 삭제
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1287,10 +1305,10 @@ export default function ElectionGroupDetailPage({
                 onClick={() => setShowBatchModal(true)}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
                 style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  background: 'var(--color-secondary)',
                   color: 'white',
                   letterSpacing: '-0.01em',
-                  boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
+                  boxShadow: 'var(--shadow-secondary)'
                 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1461,7 +1479,7 @@ export default function ElectionGroupDetailPage({
                   background: generatingCodes ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
                   color: 'white',
                   letterSpacing: '-0.01em',
-                  boxShadow: generatingCodes ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                  boxShadow: generatingCodes ? 'none' : 'var(--shadow-secondary)'
                 }}
                 disabled={generatingCodes}
               >
@@ -1604,7 +1622,7 @@ export default function ElectionGroupDetailPage({
                   background: batchCreating ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
                   color: 'white',
                   letterSpacing: '-0.01em',
-                  boxShadow: batchCreating ? 'none' : '0 4px 12px rgba(0, 102, 204, 0.25)'
+                  boxShadow: batchCreating ? 'none' : 'var(--shadow-secondary)'
                 }}
               >
                 {batchCreating ? (
