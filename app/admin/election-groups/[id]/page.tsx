@@ -154,7 +154,7 @@ export default function ElectionGroupDetailPage({
       return;
     }
 
-    // 각 투표별 후보자 수와 투표 수 조회
+    // 각 투표별 후보자 수와 투표자 수 조회
     const electionsWithCounts = await Promise.all(
       (data || []).map(async (election) => {
         const { data: candidates } = await supabase
@@ -162,16 +162,20 @@ export default function ElectionGroupDetailPage({
           .select('id')
           .eq('election_id', election.id);
 
+        // 고유한 voter_code_id 개수를 세어서 실제 투표한 사람 수를 계산
         const { data: votes } = await supabase
           .from('votes')
-          .select('id')
+          .select('voter_code_id')
           .eq('election_id', election.id);
+
+        // 고유한 투표자 수 계산
+        const uniqueVoters = new Set(votes?.map(v => v.voter_code_id) || []).size;
 
         return {
           ...election,
           _count: {
             candidates: candidates?.length || 0,
-            votes: votes?.length || 0,
+            votes: uniqueVoters, // 투표 수 → 투표자 수로 변경
           },
         };
       })
