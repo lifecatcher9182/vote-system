@@ -198,19 +198,30 @@ export default function ElectionDetailPage({
     // 각 코드에 대해 투표 여부 확인
     const codesWithVoteStatus = await Promise.all(
       (codesData || []).map(async (code) => {
-        const { data: voteData } = await supabase
+        const { data: voteData, error: voteError } = await supabase
           .from('votes')
           .select('id')
           .eq('voter_code_id', code.id)
-          .eq('election_id', election.id)
-          .maybeSingle();
+          .eq('election_id', election.id);
+
+        if (voteError) {
+          console.error('투표 조회 오류 (코드 ID:', code.id, '):', voteError);
+        }
+
+        // 투표 데이터가 하나라도 있으면 투표 완료
+        const hasVoted = voteData && voteData.length > 0;
 
         return {
           ...code,
-          has_voted: !!voteData
+          has_voted: hasVoted
         };
       })
     );
+
+    console.log('총', codesWithVoteStatus.length, '개 코드 로드 완료');
+    console.log('투표 완료:', codesWithVoteStatus.filter(c => c.has_voted).length, '개');
+    console.log('참석 확인:', codesWithVoteStatus.filter(c => c.first_login_at && !c.has_voted).length, '개');
+    console.log('미참석:', codesWithVoteStatus.filter(c => !c.first_login_at).length, '개');
 
     setVoterCodes(codesWithVoteStatus);
   }, [election]);
