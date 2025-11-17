@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import ConfirmModal from '@/components/ConfirmModal';
+import AlertModal from '@/components/AlertModal';
 
 interface Election {
   id: string;
@@ -48,6 +50,12 @@ export default function VoteWithCodePage({
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title: string }>({
+    isOpen: false,
+    message: '',
+    title: ''
+  });
 
   const loadData = useCallback(async () => {
     const supabase = createClient();
@@ -60,8 +68,8 @@ export default function VoteWithCodePage({
       .single();
 
     if (codeError || !codeData) {
-      alert('올바르지 않은 참여코드입니다.');
-      router.push('/vote');
+      setAlertModal({ isOpen: true, message: '올바르지 않은 참여코드입니다.', title: '오류' });
+      setTimeout(() => router.push('/vote'), 1500);
       return;
     }
 
@@ -116,14 +124,14 @@ export default function VoteWithCodePage({
 
     if (electionsError) {
       console.error('투표 로딩 오류:', electionsError);
-      alert('투표를 불러오지 못했습니다.');
-      router.push('/vote');
+      setAlertModal({ isOpen: true, message: '투표를 불러오지 못했습니다.', title: '오류' });
+      setTimeout(() => router.push('/vote'), 1500);
       return;
     }
 
     if (!electionsData || electionsData.length === 0) {
-      alert('현재 진행 중인 투표가 없습니다.');
-      router.push('/vote');
+      setAlertModal({ isOpen: true, message: '현재 진행 중인 투표가 없습니다.', title: '안내' });
+      setTimeout(() => router.push('/vote'), 1500);
       return;
     }
 
@@ -157,7 +165,7 @@ export default function VoteWithCodePage({
   const handleElectionSelect = (election: Election) => {
     // 이미 투표한 선거는 선택 불가
     if (votedElectionIds.has(election.id)) {
-      alert('이미 투표를 완료한 선거입니다.');
+      setAlertModal({ isOpen: true, message: '이미 투표를 완료한 선거입니다.', title: '안내' });
       return;
     }
 
@@ -173,29 +181,32 @@ export default function VoteWithCodePage({
       setSelectedCandidates(selectedCandidates.filter(id => id !== candidateId));
     } else {
       if (selectedCandidates.length >= selectedElection.max_selections) {
-        alert(`최대 ${selectedElection.max_selections}명까지 선택할 수 있습니다.`);
+        setAlertModal({ isOpen: true, message: `최대 ${selectedElection.max_selections}명까지 선택할 수 있습니다.`, title: '안내' });
         return;
       }
       setSelectedCandidates([...selectedCandidates, candidateId]);
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitClick = () => {
     if (!selectedElection || !voterCode) return;
 
     if (selectedCandidates.length === 0) {
-      alert('최소 1명의 후보자를 선택하세요.');
+      setAlertModal({ isOpen: true, message: '최소 1명의 후보자를 선택하세요.', title: '안내' });
       return;
     }
 
-    if (selectedCandidates.length > selectedElection.max_selections) {
-      alert(`최대 ${selectedElection.max_selections}명까지 선택할 수 있습니다.`);
+    // 정확히 max_selections 명을 선택해야 함
+    if (selectedCandidates.length !== selectedElection.max_selections) {
+      setAlertModal({ isOpen: true, message: `정확히 ${selectedElection.max_selections}명을 선택해야 합니다.\n현재 ${selectedCandidates.length}명 선택됨`, title: '안내' });
       return;
     }
 
-    if (!confirm(`${selectedCandidates.length}명의 후보자에게 투표하시겠습니까?\n투표 후에는 변경할 수 없습니다.`)) {
-      return;
-    }
+    setShowConfirmModal(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedElection || !voterCode) return;
 
     setSubmitting(true);
 
@@ -211,7 +222,7 @@ export default function VoteWithCodePage({
         .maybeSingle();
 
       if (existingVote) {
-        alert('이미 이 투표에 참여하셨습니다.');
+        setAlertModal({ isOpen: true, message: '이미 이 투표에 참여하셨습니다.', title: '안내' });
         setSubmitting(false);
         return;
       }
@@ -229,7 +240,7 @@ export default function VoteWithCodePage({
 
       if (votesError) {
         console.error('투표 제출 오류:', votesError);
-        alert(`투표 제출에 실패했습니다.\n오류: ${votesError.message}`);
+        setAlertModal({ isOpen: true, message: `투표 제출에 실패했습니다.\n오류: ${votesError.message}`, title: '오류' });
         setSubmitting(false);
         return;
       }
@@ -278,11 +289,11 @@ export default function VoteWithCodePage({
         // 목록으로 돌아가서 다음 투표 진행 가능
         setSelectedElection(null);
         setSelectedCandidates([]);
-        alert(`투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`);
+        setAlertModal({ isOpen: true, message: `투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`, title: '완료' });
       }
     } catch (error) {
       console.error('투표 제출 중 오류:', error);
-      alert('투표 제출 중 오류가 발생했습니다.');
+      setAlertModal({ isOpen: true, message: '투표 제출 중 오류가 발생했습니다.', title: '오류' });
       setSubmitting(false);
     }
   };
@@ -455,11 +466,14 @@ export default function VoteWithCodePage({
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium" style={{ color: '#1d1d1f' }}>
+                    <p className="text-sm font-medium mb-1" style={{ color: '#1d1d1f' }}>
                       최대 <strong>{selectedElection.max_selections}명</strong>까지 선택할 수 있습니다
                     </p>
+                    <p className="text-xs text-red-600 font-medium">
+                      ⚠️ {selectedElection.max_selections}명을 선택하지 않을 경우 무효표 처리 됩니다.
+                    </p>
                     {selectedCandidates.length > 0 && (
-                      <p className="text-sm mt-1" style={{ color: 'var(--color-secondary)' }}>
+                      <p className="text-sm mt-2" style={{ color: 'var(--color-secondary)' }}>
                         현재 <strong>{selectedCandidates.length}명</strong> 선택됨
                       </p>
                     )}
@@ -547,7 +561,7 @@ export default function VoteWithCodePage({
                 </div>
                 
                 <button
-                  onClick={handleSubmit}
+                  onClick={handleSubmitClick}
                   disabled={submitting}
                   className="btn-apple-primary w-full text-base sm:text-lg py-3.5 sm:py-4 mb-4 active:scale-95"
                 >
@@ -570,6 +584,26 @@ export default function VoteWithCodePage({
           </div>
         )}
       </div>
+
+      {/* 투표 확인 모달 */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleSubmit}
+        title="투표 제출"
+        message={`${selectedCandidates.length}명의 후보자에게 투표하시겠습니까?\n투표 후에는 변경할 수 없습니다.`}
+        confirmText="투표하기"
+        cancelText="취소"
+        variant="primary"
+      />
+
+      {/* 알림 모달 */}
+      <AlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal({ isOpen: false, message: '', title: '' })}
+        message={alertModal.message}
+        title={alertModal.title}
+      />
     </div>
   );
 }
