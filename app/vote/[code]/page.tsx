@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import Link from 'next/link';
 import ConfirmModal from '@/components/ConfirmModal';
 import AlertModal from '@/components/AlertModal';
 
@@ -42,6 +41,7 @@ export default function VoteWithCodePage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [voterCode, setVoterCode] = useState<VoterCode | null>(null);
   const [elections, setElections] = useState<Election[]>([]);
@@ -162,6 +162,32 @@ export default function VoteWithCodePage({
     initialize();
   }, [loadData]);
 
+  // URL 쿼리 파라미터 변경 감지
+  useEffect(() => {
+    if (loading || elections.length === 0) return;
+    
+    const electionId = searchParams.get('election');
+    
+    if (!electionId) {
+      // 쿼리 파라미터가 없으면 투표 목록으로
+      if (selectedElection) {
+        setSelectedElection(null);
+        setSelectedCandidates([]);
+      }
+    } else if (selectedElection?.id !== electionId) {
+      // 쿼리 파라미터가 있고 현재 선택된 투표와 다르면 해당 투표 선택
+      const election = elections.find(e => e.id === electionId);
+      if (election && !votedElectionIds.has(election.id)) {
+        setSelectedElection(election);
+        setSelectedCandidates([]);
+        loadCandidates(election.id);
+      } else {
+        // 유효하지 않은 투표 ID거나 이미 투표한 경우
+        router.push(`/vote/${resolvedParams.code}`);
+      }
+    }
+  }, [searchParams, elections, votedElectionIds, resolvedParams.code, router, loading, selectedElection, loadCandidates]);
+
   const handleElectionSelect = (election: Election) => {
     // 이미 투표한 선거는 선택 불가
     if (votedElectionIds.has(election.id)) {
@@ -169,9 +195,8 @@ export default function VoteWithCodePage({
       return;
     }
 
-    setSelectedElection(election);
-    setSelectedCandidates([]);
-    loadCandidates(election.id);
+    // URL 업데이트만 하고, useEffect가 나머지 처리
+    router.push(`/vote/${resolvedParams.code}?election=${election.id}`);
   };
 
   const handleCandidateToggle = (candidateId: string) => {
@@ -286,9 +311,8 @@ export default function VoteWithCodePage({
       if (allCompleted) {
         router.push(`/vote/complete?election=${selectedElection.title}`);
       } else {
-        // 목록으로 돌아가서 다음 투표 진행 가능
-        setSelectedElection(null);
-        setSelectedCandidates([]);
+        // 목록으로 돌아가서 다음 투표 진행 가능 (URL만 변경, useEffect가 state 업데이트)
+        router.push(`/vote/${resolvedParams.code}`);
         setAlertModal({ isOpen: true, message: `투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`, title: '완료' });
       }
     } catch (error) {
@@ -337,20 +361,25 @@ export default function VoteWithCodePage({
                 </span>
               </div>
             </div>
-            <Link 
-              href="/vote" 
-              className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-sm sm:text-base font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
-              style={{ 
-                background: 'rgba(0, 0, 0, 0.06)',
-                color: '#1d1d1f',
-                letterSpacing: '-0.01em'
-              }}
-            >
-              <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              처음으로
-            </Link>
+            {selectedElection && (
+              <button
+                onClick={() => {
+                  // URL에서 쿼리 파라미터 제거만 하고, useEffect가 나머지 처리
+                  router.push(`/vote/${resolvedParams.code}`);
+                }}
+                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-sm sm:text-base font-medium transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+                style={{ 
+                  background: 'rgba(0, 0, 0, 0.06)',
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                투표 목록
+              </button>
+            )}
           </div>
         </div>
 
@@ -421,29 +450,28 @@ export default function VoteWithCodePage({
                 })}
               </div>
             </div>
+
+            {/* 하단 처음으로 버튼 */}
+            <div className="text-center mt-6">
+              <button
+                onClick={() => router.push('/vote')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium transition-all hover:scale-105 active:scale-95"
+                style={{ 
+                  color: '#1d1d1f',
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                다른 코드로 투표하기
+              </button>
+            </div>
           </div>
         ) : (
           /* 후보자 선택 - Apple Style */
           <div className="space-y-5 sm:space-y-6">
             <div className="card-apple p-5 sm:p-6 lg:p-8">
-              <button
-                onClick={() => {
-                  setSelectedElection(null);
-                  setSelectedCandidates([]);
-                }}
-                className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl text-sm sm:text-base font-medium mb-5 sm:mb-6 transition-all duration-200 hover:scale-105 active:scale-95"
-                style={{ 
-                  background: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                <svg className="w-[16px] h-[16px] sm:w-[18px] sm:h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                투표 다시 선택
-              </button>
-              
               <h2 className="text-xl sm:text-2xl font-semibold mb-2" style={{ 
                 color: '#1d1d1f',
                 letterSpacing: '-0.02em'
