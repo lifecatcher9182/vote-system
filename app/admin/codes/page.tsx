@@ -5,10 +5,27 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
-import { nanoid } from 'nanoid';
 import SystemLogo from '@/components/SystemLogo';
 import AlertModal from '@/components/AlertModal';
 import ConfirmModal from '@/components/ConfirmModal';
+
+// 알파벳 2자 + 숫자 4자 조합으로 코드 생성 (예: AB1234)
+function generateVoterCode(): string {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  
+  let code = '';
+  // 알파벳 2자
+  for (let i = 0; i < 2; i++) {
+    code += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+  // 숫자 4자
+  for (let i = 0; i < 4; i++) {
+    code += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  }
+  
+  return code;
+}
 
 interface VoterCode {
   id: string;
@@ -277,7 +294,7 @@ function CodesPageContent() {
           village_id?: string;
           is_used: boolean;
         } = {
-          code: nanoid(10),
+          code: generateVoterCode(),
           code_type: codeType,
           accessible_elections: electionsToAccess,
           is_used: false,

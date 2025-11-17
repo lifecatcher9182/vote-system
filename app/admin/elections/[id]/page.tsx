@@ -7,9 +7,26 @@ import { checkAdminAccess, signOut } from '@/lib/auth';
 import Link from 'next/link';
 import { use } from 'react';
 import QRCodeSection from '@/components/QRCodeSection';
-import { nanoid } from 'nanoid';
 import AlertModal from '@/components/AlertModal';
 import ConfirmModal from '@/components/ConfirmModal';
+
+// 알파벳 2자 + 숫자 4자 조합으로 코드 생성 (예: AB1234)
+function generateVoterCode(): string {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  
+  let code = '';
+  // 알파벳 2자
+  for (let i = 0; i < 2; i++) {
+    code += letters.charAt(Math.floor(Math.random() * letters.length));
+  }
+  // 숫자 4자
+  for (let i = 0; i < 4; i++) {
+    code += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  }
+  
+  return code;
+}
 
 interface Election {
   id: string;
@@ -324,7 +341,7 @@ export default function ElectionDetailPage({
 
       for (let i = 0; i < codeQuantity; i++) {
         newCodes.push({
-          code: nanoid(10).toUpperCase(),
+          code: generateVoterCode(),
           code_type: 'delegate' as const,
           accessible_elections: [election.id],
           village_id: election.village_id,
