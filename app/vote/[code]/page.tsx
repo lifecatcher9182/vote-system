@@ -186,7 +186,7 @@ export default function VoteWithCodePage({
         router.push(`/vote/${resolvedParams.code}`);
       }
     }
-  }, [searchParams, elections, votedElectionIds, resolvedParams.code, router, loading, selectedElection, loadCandidates]);
+  }, [searchParams, elections, votedElectionIds, resolvedParams.code, router, loading]);
 
   const handleElectionSelect = (election: Election) => {
     // 이미 투표한 선거는 선택 불가
@@ -310,11 +310,18 @@ export default function VoteWithCodePage({
       if (allCompleted) {
         router.push(`/vote/complete?election=${selectedElection.title}`);
       } else {
-        // 데이터를 다시 로드하여 최신 상태 반영
-        await loadData();
+        // votedElectionIds 상태 업데이트
+        setVotedElectionIds(updatedVotedIds);
         
-        // 목록으로 돌아가기 (URL만 변경, useEffect가 state 업데이트)
+        // 선택 상태 초기화 (목록으로 돌아가기)
+        setSelectedElection(null);
+        setSelectedCandidates([]);
+        setSubmitting(false);
+        
+        // 목록으로 돌아가기 (URL 변경)
         router.push(`/vote/${resolvedParams.code}`);
+        
+        // 완료 메시지
         setAlertModal({ isOpen: true, message: `투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`, title: '완료' });
       }
     } catch (error) {
