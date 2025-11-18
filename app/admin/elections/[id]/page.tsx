@@ -225,8 +225,8 @@ export default function ElectionDetailPage({
           console.error('투표 조회 오류 (코드 ID:', code.id, '):', voteError);
         }
 
-        // 투표 데이터가 하나라도 있으면 투표 완료
-        const hasVoted = voteData && voteData.length > 0;
+        // 투표 데이터가 하나라도 있으면 투표 완료 (명시적 boolean 타입)
+        const hasVoted: boolean = !!(voteData && voteData.length > 0);
 
         return {
           ...code,
