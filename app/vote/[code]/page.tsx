@@ -285,7 +285,6 @@ export default function VoteWithCodePage({
       // 3. 투표 완료된 선거 목록 업데이트
       const updatedVotedIds = new Set(votedElectionIds);
       updatedVotedIds.add(selectedElection.id);
-      setVotedElectionIds(updatedVotedIds);
 
       // 4. 모든 투표가 완료되었는지 확인
       const allCompleted = voterCode.accessible_elections.every(electionId => 
@@ -311,7 +310,10 @@ export default function VoteWithCodePage({
       if (allCompleted) {
         router.push(`/vote/complete?election=${selectedElection.title}`);
       } else {
-        // 목록으로 돌아가서 다음 투표 진행 가능 (URL만 변경, useEffect가 state 업데이트)
+        // 데이터를 다시 로드하여 최신 상태 반영
+        await loadData();
+        
+        // 목록으로 돌아가기 (URL만 변경, useEffect가 state 업데이트)
         router.push(`/vote/${resolvedParams.code}`);
         setAlertModal({ isOpen: true, message: `투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`, title: '완료' });
       }
