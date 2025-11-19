@@ -51,10 +51,16 @@ export default function VoteWithCodePage({
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title: string }>({
+  const [alertModal, setAlertModal] = useState<{ 
+    isOpen: boolean; 
+    message: string; 
+    title: string;
+    onClose?: () => void;
+  }>({
     isOpen: false,
     message: '',
-    title: ''
+    title: '',
+    onClose: undefined
   });
 
   const loadData = useCallback(async () => {
@@ -68,8 +74,13 @@ export default function VoteWithCodePage({
       .single();
 
     if (codeError || !codeData) {
-      setAlertModal({ isOpen: true, message: '올바르지 않은 참여코드입니다.', title: '오류' });
-      setTimeout(() => router.push('/vote'), 1500);
+      setLoading(false);
+      setAlertModal({ 
+        isOpen: true, 
+        message: '올바르지 않은 참여코드입니다.', 
+        title: '오류',
+        onClose: () => router.push('/vote')
+      });
       return;
     }
 
@@ -124,14 +135,24 @@ export default function VoteWithCodePage({
 
     if (electionsError) {
       console.error('투표 로딩 오류:', electionsError);
-      setAlertModal({ isOpen: true, message: '투표를 불러오지 못했습니다.', title: '오류' });
-      setTimeout(() => router.push('/vote'), 1500);
+      setLoading(false);
+      setAlertModal({ 
+        isOpen: true, 
+        message: '투표를 불러오지 못했습니다.', 
+        title: '오류',
+        onClose: () => router.push('/vote')
+      });
       return;
     }
 
     if (!electionsData || electionsData.length === 0) {
-      setAlertModal({ isOpen: true, message: '현재 진행 중인 투표가 없습니다.', title: '안내' });
-      setTimeout(() => router.push('/vote'), 1500);
+      setLoading(false);
+      setAlertModal({ 
+        isOpen: true, 
+        message: '현재 참여 가능한 투표가 없습니다.\n투표가 시작되면 다시 시도해주세요.', 
+        title: '투표 없음',
+        onClose: () => router.push('/vote')
+      });
       return;
     }
 
@@ -637,7 +658,12 @@ export default function VoteWithCodePage({
       {/* 알림 모달 */}
       <AlertModal
         isOpen={alertModal.isOpen}
-        onClose={() => setAlertModal({ isOpen: false, message: '', title: '' })}
+        onClose={() => {
+          setAlertModal({ isOpen: false, message: '', title: '', onClose: undefined });
+          if (alertModal.onClose) {
+            alertModal.onClose();
+          }
+        }}
         message={alertModal.message}
         title={alertModal.title}
       />
