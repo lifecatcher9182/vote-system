@@ -343,7 +343,7 @@ export default function VoteWithCodePage({
         router.push(`/vote/${resolvedParams.code}`);
         
         // 완료 메시지
-        setAlertModal({ isOpen: true, message: `투표가 완료되었습니다!\n\n남은 투표: ${voterCode.accessible_elections.length - updatedVotedIds.size}개`, title: '완료' });
+        setAlertModal({ isOpen: true, message: '투표를 완료하셨습니다', title: '완료' });
       }
     } catch (error) {
       console.error('투표 제출 중 오류:', error);

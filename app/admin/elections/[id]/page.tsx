@@ -506,10 +506,22 @@ export default function ElectionDetailPage({
     const supabase = createClient();
     
     // 이 투표에 접근 가능한 코드 통계
-    const { data: codes } = await supabase
+    let codesQuery = supabase
       .from('voter_codes')
       .select('*')
       .contains('accessible_elections', [election.id]);
+    
+    // 임원투표인 경우 group_id로 필터링
+    if (election.election_type === 'officer' && election.group_id) {
+      codesQuery = codesQuery.eq('group_id', election.group_id);
+    }
+    
+    // 총대투표인 경우 village_id로 필터링
+    if (election.election_type === 'delegate' && election.village_id) {
+      codesQuery = codesQuery.eq('village_id', election.village_id);
+    }
+
+    const { data: codes } = await codesQuery;
 
     const totalCodes = codes?.length || 0;
     const attendedCodes = codes?.filter(c => c.first_login_at !== null).length || 0;
@@ -553,11 +565,18 @@ export default function ElectionDetailPage({
     const villageStatsData = [];
 
     for (const village of villages) {
-      const { data: codes } = await supabase
+      let villageCodesQuery = supabase
         .from('voter_codes')
         .select('*')
         .eq('village_id', village.id)
         .contains('accessible_elections', [election.id]);
+      
+      // 임원투표인 경우 group_id로 필터링
+      if (election.election_type === 'officer' && election.group_id) {
+        villageCodesQuery = villageCodesQuery.eq('group_id', election.group_id);
+      }
+
+      const { data: codes } = await villageCodesQuery;
 
       const codesCount = codes?.length || 0;
       const usedCount = codes?.filter(c => c.is_used).length || 0;

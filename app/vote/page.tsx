@@ -104,7 +104,7 @@ export default function VotePage() {
                 name="code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="ABCD123456"
+                placeholder="AB1234"
                 className="input-apple uppercase text-center text-lg tracking-widest"
                 disabled={loading}
                 style={{ letterSpacing: '0.1em' }}
