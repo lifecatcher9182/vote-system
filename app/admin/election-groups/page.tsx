@@ -27,8 +27,7 @@ export default function ElectionGroupsPage() {
   
   // 필터링 및 정렬 상태
   const [filterType, setFilterType] = useState<'all' | 'delegate' | 'officer'>('all');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'waiting' | 'active' | 'closed'>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'title' | 'type' | 'status'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'type'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // 페이징 상태
@@ -127,10 +126,6 @@ export default function ElectionGroupsPage() {
     filteredGroups = filteredGroups.filter(g => g.group_type === filterType);
   }
   
-  if (filterStatus !== 'all') {
-    filteredGroups = filteredGroups.filter(g => g.status === filterStatus);
-  }
-  
   // 정렬
   filteredGroups = [...filteredGroups].sort((a, b) => {
     let comparison = 0;
@@ -144,10 +139,6 @@ export default function ElectionGroupsPage() {
         break;
       case 'type':
         comparison = a.group_type.localeCompare(b.group_type);
-        break;
-      case 'status':
-        const statusOrder = { waiting: 0, active: 1, closed: 2 };
-        comparison = statusOrder[a.status] - statusOrder[b.status];
         break;
     }
     
@@ -270,53 +261,6 @@ export default function ElectionGroupsPage() {
               </div>
             </div>
 
-            {/* 상태 필터 */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">상태:</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { setFilterStatus('all'); setCurrentPage(1); }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterStatus === 'all' 
-                      ? 'bg-[var(--color-secondary)] text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  전체
-                </button>
-                <button
-                  onClick={() => { setFilterStatus('waiting'); setCurrentPage(1); }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterStatus === 'waiting' 
-                      ? 'bg-[var(--color-secondary)] text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  대기
-                </button>
-                <button
-                  onClick={() => { setFilterStatus('active'); setCurrentPage(1); }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterStatus === 'active' 
-                      ? 'bg-[var(--color-secondary)] text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  진행중
-                </button>
-                <button
-                  onClick={() => { setFilterStatus('closed'); setCurrentPage(1); }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterStatus === 'closed' 
-                      ? 'bg-[var(--color-secondary)] text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  종료
-                </button>
-              </div>
-            </div>
-
             {/* 검색 결과 표시 */}
             <div className="ml-auto text-sm text-gray-600">
               총 <span className="font-semibold text-[var(--color-secondary)]">{filteredGroups.length}</span>개 그룹
@@ -332,7 +276,7 @@ export default function ElectionGroupsPage() {
                 {filterType === 'delegate' ? '📋' : filterType === 'officer' ? '👔' : '📁'}
               </div>
               <p className="text-gray-600 mb-6">
-                {filterType === 'all' && filterStatus === 'all' 
+                {filterType === 'all'
                   ? '투표 그룹이 없습니다.' 
                   : '조건에 맞는 그룹이 없습니다.'}
               </p>
@@ -387,19 +331,6 @@ export default function ElectionGroupsPage() {
                       <th className="text-left py-4 px-6 text-sm font-semibold text-gray-700">
                         설명
                       </th>
-                      <th 
-                        className="text-center py-4 px-6 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          상태
-                          {sortBy === 'status' && (
-                            <span className="text-[var(--color-secondary)]">
-                              {sortOrder === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
                       <th className="text-center py-4 px-6 text-sm font-semibold text-gray-700">
                         투표 수
                       </th>
@@ -447,24 +378,6 @@ export default function ElectionGroupsPage() {
                           <div className="text-sm text-gray-600 max-w-md truncate">
                             {group.description || '-'}
                           </div>
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <span 
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-block"
-                            style={{
-                              background: group.status === 'active' ? '#dcfce7' : 
-                                          group.status === 'closed' ? '#f3f4f6' : '#fef3c7',
-                              color: group.status === 'active' ? '#166534' : 
-                                     group.status === 'closed' ? '#374151' : '#854d0e',
-                              border: `1.5px solid ${
-                                group.status === 'active' ? '#86efac' : 
-                                group.status === 'closed' ? '#d1d5db' : '#fde047'
-                              }`
-                            }}
-                          >
-                            {group.status === 'active' ? '진행중' :
-                             group.status === 'closed' ? '종료' : '대기'}
-                          </span>
                         </td>
                         <td className="py-4 px-6 text-center">
                           <div className="flex flex-col gap-1">

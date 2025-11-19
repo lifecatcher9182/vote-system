@@ -623,39 +623,6 @@ export default function ElectionGroupDetailPage({
     }
   };
 
-  const handleStatusChange = async (newStatus: 'waiting' | 'active' | 'closed') => {
-    if (!group) return;
-
-    const confirmMessage = 
-      newStatus === 'active' ? '이 그룹을 활성화하시겠습니까?' :
-      newStatus === 'closed' ? '이 그룹을 종료하시겠습니까? (되돌릴 수 없습니다)' :
-      '이 그룹을 대기 상태로 변경하시겠습니까?';
-
-    setConfirmModal({
-      isOpen: true,
-      message: confirmMessage,
-      title: '상태 변경',
-      variant: 'primary',
-      onConfirm: async () => {
-        const supabase = createClient();
-
-        const { error } = await supabase
-          .from('election_groups')
-          .update({ status: newStatus })
-          .eq('id', group.id);
-
-        if (error) {
-          console.error('상태 변경 오류:', error);
-          setAlertModal({ isOpen: true, message: '상태 변경에 실패했습니다.', title: '오류' });
-          return;
-        }
-
-        setAlertModal({ isOpen: true, message: '상태가 변경되었습니다.', title: '변경 완료' });
-        await loadGroup();
-      }
-    });
-  };
-
   const handleDelete = async () => {
     if (!group) return;
 
@@ -747,14 +714,6 @@ export default function ElectionGroupDetailPage({
                   }}>
                     {group.title}
                   </h1>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    group.status === 'active' ? 'bg-green-100 text-green-700' :
-                    group.status === 'closed' ? 'bg-gray-100 text-gray-600' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {group.status === 'active' ? '진행중' :
-                     group.status === 'closed' ? '종료' : '대기'}
-                  </span>
                 </div>
                 <p className="text-sm text-gray-600 mt-1" style={{ letterSpacing: '-0.01em' }}>
                   {group.group_type === 'delegate' ? '📋 총대 투표 그룹' : '👔 임원 투표 그룹'}
@@ -824,48 +783,8 @@ export default function ElectionGroupDetailPage({
               </div>
             </div>
 
-            {/* 상태 변경 버튼 */}
+            {/* 그룹 삭제 버튼 */}
             <div className="flex gap-3">
-              {group.status === 'waiting' && (
-                <button
-                  onClick={() => handleStatusChange('active')}
-                  className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
-                  style={{
-                    background: 'var(--color-secondary)',
-                    color: 'white',
-                    letterSpacing: '-0.01em',
-                    boxShadow: '0 2px 8px rgba(0, 102, 204, 0.25)'
-                  }}
-                >
-                  활성화
-                </button>
-              )}
-              {group.status === 'active' && (
-                <>
-                  <button
-                    onClick={() => handleStatusChange('waiting')}
-                    className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
-                    style={{ 
-                      background: 'rgba(0, 0, 0, 0.06)',
-                      color: '#1d1d1f',
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    대기로 변경
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange('closed')}
-                    className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
-                    style={{ 
-                      background: 'rgba(0, 0, 0, 0.06)',
-                      color: '#1d1d1f',
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    종료
-                  </button>
-                </>
-              )}
               <button
                 onClick={handleDelete}
                 className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
