@@ -1913,10 +1913,7 @@ export default function ElectionDetailPage({
                                 <div className="flex items-center gap-3">
                                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
                                     hasTie ? 'bg-orange-200 text-orange-900' :
-                                    actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
-                                    actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
-                                    actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
-                                    'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
+                                    'bg-gradient-to-br from-green-400 to-emerald-500 text-white'
                                   }`}>
                                     {hasTie ? '?' : actualRank}
                                   </div>
@@ -1971,25 +1968,21 @@ export default function ElectionDetailPage({
                             key={candidate.id} 
                             className={`border rounded-xl p-4 ${
                               isTied ? 'border-orange-400 bg-orange-50' :
-                              isConfirmedWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'
+                              isConfirmedWinner ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white'
                             }`}
                           >
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                                   isTied ? 'bg-orange-200 text-orange-800' :
-                                  isConfirmedWinner ? (
-                                    actualRank === 1 ? 'bg-yellow-200 text-yellow-800' :
-                                    actualRank === 2 ? 'bg-gray-300 text-gray-700' :
-                                    'bg-orange-200 text-orange-800'
-                                  ) : 'bg-gray-100 text-gray-600'
+                                  isConfirmedWinner ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'
                                 }`}>
                                   {isTied ? '?' : actualRank}
                                 </div>
                                 <div>
                                   <div className="font-semibold flex items-center gap-2" style={{ color: '#1d1d1f' }}>
                                     {candidate.name}
-                                    {isConfirmedWinner && <span className="text-xs px-2 py-0.5 bg-yellow-200 text-yellow-800 rounded-full font-bold">당선</span>}
+                                    {isConfirmedWinner && <span className="text-xs px-2 py-0.5 bg-green-500 text-white rounded-full font-bold">당선</span>}
                                     {isTied && <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-800 rounded-full font-bold">미확정</span>}
                                   </div>
                                   <div className="text-xs text-gray-500">
