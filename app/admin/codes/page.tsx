@@ -27,6 +27,35 @@ function generateVoterCode(): string {
   return code;
 }
 
+// 중복되지 않는 코드 생성 (데이터베이스 체크)
+async function generateUniqueVoterCode(): Promise<string> {
+  const supabase = createClient();
+  let code = '';
+  let attempts = 0;
+  const maxAttempts = 10; // 최대 10번 시도
+  
+  while (attempts < maxAttempts) {
+    code = generateVoterCode();
+    
+    // 데이터베이스에서 중복 확인
+    const { data, error } = await supabase
+      .from('voter_codes')
+      .select('code')
+      .eq('code', code)
+      .maybeSingle();
+    
+    // 중복되지 않으면 반환
+    if (!data && !error) {
+      return code;
+    }
+    
+    attempts++;
+  }
+  
+  // 10번 시도해도 실패하면 타임스탬프 추가하여 고유성 보장
+  return generateVoterCode() + Date.now().toString().slice(-2);
+}
+
 interface VoterCode {
   id: string;
   code: string;
@@ -284,54 +313,76 @@ function CodesPageContent() {
 
     try {
       const supabase = createClient();
-      const newCodes = [];
+      let retryCount = 0;
+      const maxRetries = 3;
+      let success = false;
 
-      for (let i = 0; i < quantity; i++) {
-        const codeData: {
-          code: string;
-          code_type: 'delegate' | 'officer';
-          accessible_elections: string[];
-          village_id?: string;
-          is_used: boolean;
-        } = {
-          code: generateVoterCode(),
-          code_type: codeType,
-          accessible_elections: electionsToAccess,
-          is_used: false,
-        };
+      while (!success && retryCount < maxRetries) {
+        const newCodes = [];
 
-        if (codeType === 'delegate') {
-          codeData.village_id = selectedVillage;
+        // 중복되지 않는 코드 생성
+        for (let i = 0; i < quantity; i++) {
+          const uniqueCode = await generateUniqueVoterCode();
+          const codeData: {
+            code: string;
+            code_type: 'delegate' | 'officer';
+            accessible_elections: string[];
+            village_id?: string;
+            is_used: boolean;
+          } = {
+            code: uniqueCode,
+            code_type: codeType,
+            accessible_elections: electionsToAccess,
+            is_used: false,
+          };
+
+          if (codeType === 'delegate') {
+            codeData.village_id = selectedVillage;
+          }
+
+          newCodes.push(codeData);
         }
 
-        newCodes.push(codeData);
+        const { error } = await supabase
+          .from('voter_codes')
+          .insert(newCodes);
+
+        if (!error) {
+          // 성공!
+          success = true;
+          setAlertModal({
+            isOpen: true,
+            message: `${quantity}개의 참여코드가 생성되었습니다!`,
+            title: '생성 완료'
+          });
+          setShowCreateModal(false);
+          setSelectedElections([]);
+          setSelectedVillage('');
+          setQuantity(10);
+          loadCodes();
+        } else if (error.code === '23505') {
+          // UNIQUE 제약 위반 - 재시도
+          retryCount++;
+          console.log(`중복 코드 감지, 재시도 중... (${retryCount}/${maxRetries})`);
+          
+          if (retryCount >= maxRetries) {
+            setAlertModal({
+              isOpen: true,
+              message: '코드 생성 중 중복이 계속 발생합니다.\n잠시 후 다시 시도해주세요.',
+              title: '생성 실패'
+            });
+          }
+        } else {
+          // 다른 오류
+          console.error('코드 생성 오류:', error);
+          setAlertModal({
+            isOpen: true,
+            message: '코드 생성에 실패했습니다.',
+            title: '오류'
+          });
+          break;
+        }
       }
-
-      const { error } = await supabase
-        .from('voter_codes')
-        .insert(newCodes);
-
-      if (error) {
-        console.error('코드 생성 오류:', error);
-        setAlertModal({
-          isOpen: true,
-          message: '코드 생성에 실패했습니다.',
-          title: '오류'
-        });
-        setGenerating(false);
-        return;
-      }
-
-      setAlertModal({
-        isOpen: true,
-        message: `${quantity}개의 참여코드가 생성되었습니다!`,
-        title: '생성 완료'
-      });
-      setShowCreateModal(false);
-      setSelectedElections([]);
-      setSelectedVillage('');
-      setQuantity(10);
-      loadCodes();
     } catch (error) {
       console.error('코드 생성 중 오류:', error);
       setAlertModal({
