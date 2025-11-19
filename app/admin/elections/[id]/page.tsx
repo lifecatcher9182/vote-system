@@ -229,12 +229,19 @@ export default function ElectionDetailPage({
     
     const supabase = createClient();
     
-    // voter_codes와 votes를 조인해서 투표 여부 확인
-    const { data: codesData, error } = await supabase
+    // voter_codes에서 이 투표에 속한 코드만 조회 (group_id와 village_id로 필터링)
+    let query = supabase
       .from('voter_codes')
       .select('id, code, is_used, village_id, created_at, first_login_at')
       .contains('accessible_elections', [election.id])
-      .order('created_at', { ascending: false });
+      .eq('group_id', election.group_id);
+    
+    // 총대 투표인 경우 마을별로 필터링
+    if (election.election_type === 'delegate' && election.village_id) {
+      query = query.eq('village_id', election.village_id);
+    }
+    
+    const { data: codesData, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.error('코드 로딩 오류:', error);
@@ -381,6 +388,7 @@ export default function ElectionDetailPage({
             code_type: 'delegate' as const,
             accessible_elections: [election.id],
             village_id: election.village_id,
+            group_id: election.group_id,
             is_used: false,
           });
         }

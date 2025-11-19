@@ -153,18 +153,8 @@ function CodesPageContent() {
   const loadCodes = useCallback(async () => {
     const supabase = createClient();
     
-    // group_id가 있으면 먼저 그룹의 투표 ID들을 가져옴
-    let groupElectionIds: string[] = [];
-    if (groupId) {
-      const { data: groupElections } = await supabase
-        .from('elections')
-        .select('id')
-        .eq('group_id', groupId);
-      
-      groupElectionIds = groupElections?.map(e => e.id) || [];
-    }
-    
-    const { data, error } = await supabase
+    // group_id로 바로 필터링
+    let query = supabase
       .from('voter_codes')
       .select(`
         *,
@@ -173,6 +163,12 @@ function CodesPageContent() {
         )
       `)
       .order('created_at', { ascending: false });
+    
+    if (groupId) {
+      query = query.eq('group_id', groupId);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error('코드 로딩 오류:', error);
@@ -180,16 +176,6 @@ function CodesPageContent() {
     }
 
     let filteredData = data || [];
-
-    // group_id가 있으면 해당 그룹의 투표들에 속한 코드만 필터링
-    if (groupId && groupElectionIds.length > 0) {
-      filteredData = filteredData.filter(code => {
-        // accessible_elections 배열과 그룹의 투표 ID들이 겹치는지 확인
-        return code.accessible_elections.some((electionId: string) => 
-          groupElectionIds.includes(electionId)
-        );
-      });
-    }
 
     // 클라이언트 사이드 필터링
     if (filter === 'voted') {
@@ -328,6 +314,7 @@ function CodesPageContent() {
             code_type: 'delegate' | 'officer';
             accessible_elections: string[];
             village_id?: string;
+            group_id?: string;
             is_used: boolean;
           } = {
             code: uniqueCode,
@@ -338,6 +325,10 @@ function CodesPageContent() {
 
           if (codeType === 'delegate') {
             codeData.village_id = selectedVillage;
+          }
+
+          if (groupId) {
+            codeData.group_id = groupId;
           }
 
           newCodes.push(codeData);

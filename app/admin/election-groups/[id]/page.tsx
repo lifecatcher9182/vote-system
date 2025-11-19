@@ -295,11 +295,12 @@ export default function ElectionGroupDetailPage({
     const electionIds = elections.map(e => e.id);
     if (electionIds.length === 0) return;
     
-    // voter_codes에서 이 그룹의 투표에 접근 가능한 코드 조회
+    // voter_codes에서 이 그룹의 코드만 조회 (group_id로 필터링)
     const { data: codesData, error } = await supabase
       .from('voter_codes')
       .select('id, code, is_used, village_id, created_at, first_login_at, accessible_elections')
       .eq('code_type', 'officer')
+      .eq('group_id', group.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -380,6 +381,7 @@ export default function ElectionGroupDetailPage({
             code: uniqueCode,
             code_type: 'officer' as const,
             accessible_elections: electionIds,
+            group_id: group.id,
             is_used: false,
           });
         }
