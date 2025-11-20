@@ -85,6 +85,9 @@ npm run dev
 │   ├── SystemLogo.tsx             # 시스템 로고 컴포넌트
 │   ├── ThemeProvider.tsx          # 테마 프로바이더
 │   ├── ColorThemeSettings.tsx     # 색상 테마 설정
+│   ├── LogoUploadSettings.tsx     # 로고 업로드 설정
+│   ├── FaviconUploadSettings.tsx  # 파비콘 업로드 설정
+│   ├── DynamicFavicon.tsx         # 동적 파비콘
 │   ├── AlertModal.tsx             # 알림 모달
 │   ├── ConfirmModal.tsx           # 확인 모달
 │   └── QRCodeSection.tsx          # QR 코드 생성
@@ -97,21 +100,25 @@ npm run dev
 │   ├── database.types.ts          # DB 타입 정의
 │   └── hooks/
 │       └── useSystemConfig.ts     # 시스템 설정 훅
-├── docs/                          # 📚 모든 문서 파일
-│   ├── GOOGLE_LOGIN_SETUP.md      # Google OAuth 설정
+├── docs/                          # 📚 문서 파일
+│   ├── GOOGLE_LOGIN_SETUP.md      # Google OAuth 설정 가이드
 │   ├── MIGRATION_GUIDE.md         # DB 마이그레이션 가이드
-│   ├── MODAL_CONVERSION_GUIDE.md  # 모달 변환 가이드
 │   ├── SETUP.md                   # 초기 설정 가이드
-│   ├── TODO.md                    # 개발 할 일 목록
-│   ├── UPDATE_SUMMARY.md          # 업데이트 내역
-│   └── CLEANUP_SUMMARY.md         # 프로젝트 정리 내역
-├── migrations/                    # 🔄 DB 마이그레이션 파일
+│   ├── TODO.md                    # 개발 진행 상황
+│   └── QA_TEST_CHECKLIST.csv      # QA 테스트 체크리스트
+├── migrations/                    # 🔄 DB 마이그레이션 파일 (활성)
+│   ├── add-group-id-to-voter-codes.sql
+│   ├── add-system-description.sql
+│   ├── add-unique-constraint-voter-codes.sql
 │   ├── supabase-migration-v5-election-groups.sql
 │   ├── supabase-migration-election-notes.sql
 │   ├── supabase-migration-remove-village-code.sql
-│   └── archive-*.sql              # 구버전 마이그레이션
-├── archive/                       # 📦 구버전 백업 (참고용)
-│   └── supabase-migration-v*.sql
+│   └── supabase-migration-cascade-delete.sql
+├── archive/                       # 📦 구버전 백업 (히스토리 참고용)
+│   ├── supabase-migration-v2.sql
+│   ├── supabase-migration-v3-anonymous-voting.sql
+│   ├── supabase-migration-v4-villages-active.sql
+│   └── archive-*.sql
 └── public/                        # 정적 파일
 ```
 
@@ -170,9 +177,7 @@ npm run dev
 - **GOOGLE_LOGIN_SETUP.md**: Google OAuth 설정 방법
 - **MIGRATION_GUIDE.md**: 데이터베이스 마이그레이션 가이드
 - **TODO.md**: 개발 진행 상황 및 할 일 목록
-- **MODAL_CONVERSION_GUIDE.md**: 모달 컴포넌트 변환 가이드
-- **UPDATE_SUMMARY.md**: 주요 업데이트 내역
-- **CLEANUP_SUMMARY.md**: 프로젝트 정리 내역 (2025-11-13)
+- **QA_TEST_CHECKLIST.csv**: QA 테스트 체크리스트
 
 ## � 데이터베이스 스키마
 
@@ -187,30 +192,31 @@ npm run dev
 - `system_config`: 시스템 설정
 - `election_notes`: 투표 비고/메모
 
-## 🔄 업데이트 이력
+## 🔄 최근 업데이트
 
-### v2.1 (2025-11-13)
+### 2025-11-20
+
+- ✅ 투표 그룹별 코드 분리 (group_id 추가)
+- ✅ 총대투표 당선자 색상 개선 (초록색 통일)
+- ✅ 개별 투표 통계 필터링 개선
 - ✅ 프로젝트 구조 정리
+  - 사용하지 않는 문서 파일 제거
+  - migrations 폴더 정리
+  - 컴포넌트 정리 (Footer 제거)
+
+### 2025-11-13
+
+- ✅ 프로젝트 구조 대대적 정리
   - `migrations/` 폴더 생성 및 마이그레이션 파일 통합
   - `docs/` 폴더로 문서 파일 통합
-  - 루트 파일 16개 → 11개로 정리
 - ✅ 모달 시스템 전면 개편
-  - 모든 관리자 페이지의 alert/confirm을 디자인된 모달로 교체
   - AlertModal, ConfirmModal 컴포넌트 적용
 
-### v2.0 (2025-11-12)
+### 2025-11-12
+
 - ✅ 투표 그룹 시스템 추가
 - ✅ 투표 비고/메모 기능
 - ✅ 동점 처리 로직 개선
-- ✅ 대시보드 네비게이션 개선
-- ✅ 불필요한 페이지 제거 (results 페이지)
-
-### v1.0 (2025-11-01)
-- ✅ 기본 투표 시스템
-- ✅ 익명 투표 지원
-- ✅ 실시간 모니터링
-- ✅ QR 코드 생성
-- ✅ 테마 커스터마이징
 
 ## � 지원
 
