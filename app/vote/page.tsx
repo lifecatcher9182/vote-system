@@ -26,11 +26,11 @@ export default function VotePage() {
     try {
       const supabase = createClient();
 
-      // 참여코드 확인
+      // 참여코드 확인 (대문자로 변환하여 검색)
       const { data: voterCode, error: codeError } = await supabase
         .from('voter_codes')
         .select('*')
-        .eq('code', code.trim())
+        .eq('code', code.trim().toUpperCase())
         .single();
 
       if (codeError || !voterCode) {
@@ -57,8 +57,8 @@ export default function VotePage() {
         return;
       }
 
-      // 투표 페이지로 이동
-      router.push(`/vote/${code.trim()}`);
+      // 투표 페이지로 이동 (대문자로 변환)
+      router.push(`/vote/${code.trim().toUpperCase()}`);
     } catch (error) {
       console.error('코드 확인 오류:', error);
       setError('코드 확인 중 오류가 발생했습니다.');

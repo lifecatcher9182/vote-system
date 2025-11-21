@@ -66,11 +66,11 @@ export default function VoteWithCodePage({
   const loadData = useCallback(async () => {
     const supabase = createClient();
 
-    // 1. 참여코드 확인
+    // 1. 참여코드 확인 (대문자로 변환하여 검색)
     const { data: codeData, error: codeError } = await supabase
       .from('voter_codes')
       .select('*')
-      .eq('code', resolvedParams.code)
+      .eq('code', resolvedParams.code.toUpperCase())
       .single();
 
     if (codeError || !codeData) {
