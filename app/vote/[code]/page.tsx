@@ -655,48 +655,50 @@ export default function VoteWithCodePage({
                     );
                   })}
 
-                  {/* 기권 버튼 */}
-                  <button
-                    onClick={handleAbstainToggle}
-                    disabled={isAbstain}
-                    className="w-full p-4 sm:p-5 rounded-2xl transition-all duration-200 text-left active:scale-[0.98] mt-4"
-                    style={{ 
-                      background: isAbstain ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(0, 0, 0, 0.02)',
-                      border: `2px solid ${isAbstain ? '#f59e0b' : 'rgba(0, 0, 0, 0.06)'}`,
-                      opacity: isAbstain ? 1 : 0.9
-                    }}
-                  >
-                    <div className="flex items-center gap-3 sm:gap-4">
-                      <div 
-                        className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-xl transition-all"
-                        style={{ 
-                          background: isAbstain ? 'rgba(255, 255, 255, 0.3)' : 'rgba(249, 115, 22, 0.1)',
-                          color: isAbstain ? 'white' : '#f97316'
-                        }}
-                      >
-                        🗳️
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p 
-                          className="text-base sm:text-lg font-semibold"
+                  {/* 기권 버튼 - 임원 투표에서만 표시 */}
+                  {selectedElection.election_type === 'officer' && (
+                    <button
+                      onClick={handleAbstainToggle}
+                      disabled={isAbstain}
+                      className="w-full p-4 sm:p-5 rounded-2xl transition-all duration-200 text-left active:scale-[0.98] mt-4"
+                      style={{ 
+                        background: isAbstain ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(0, 0, 0, 0.02)',
+                        border: `2px solid ${isAbstain ? '#f59e0b' : 'rgba(0, 0, 0, 0.06)'}`,
+                        opacity: isAbstain ? 1 : 0.9
+                      }}
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div 
+                          className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-xl transition-all"
                           style={{ 
-                            color: isAbstain ? 'white' : '#1d1d1f',
-                            letterSpacing: '-0.02em'
+                            background: isAbstain ? 'rgba(255, 255, 255, 0.3)' : 'rgba(249, 115, 22, 0.1)',
+                            color: isAbstain ? 'white' : '#f97316'
                           }}
                         >
-                          {isAbstain ? '✓ 기권 (투표하지 않음)' : '기권 (투표하지 않음)'}
-                        </p>
-                        <p 
-                          className="text-xs sm:text-sm mt-1"
-                          style={{ 
-                            color: isAbstain ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'
-                          }}
-                        >
-                          투표에 참여하지 않습니다
-                        </p>
+                          🗳️
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p 
+                            className="text-base sm:text-lg font-semibold"
+                            style={{ 
+                              color: isAbstain ? 'white' : '#1d1d1f',
+                              letterSpacing: '-0.02em'
+                            }}
+                          >
+                            {isAbstain ? '✓ 기권 (투표하지 않음)' : '기권 (투표하지 않음)'}
+                          </p>
+                          <p 
+                            className="text-xs sm:text-sm mt-1"
+                            style={{ 
+                              color: isAbstain ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'
+                            }}
+                          >
+                            투표에 참여하지 않습니다
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </button>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
