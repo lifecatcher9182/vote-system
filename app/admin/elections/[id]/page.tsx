@@ -138,6 +138,9 @@ export default function ElectionDetailPage({
     unusedCodes: 0,
     participationRate: 0,
     totalVotes: 0,
+    validVotes: 0,
+    abstainCount: 0,
+    abstainRate: 0,
     uniqueVoters: 0,
   });
   const [villageStats, setVillageStats] = useState<Array<{
@@ -529,16 +532,21 @@ export default function ElectionDetailPage({
     // 실제로 이 투표에 투표한 사람 수 (접근 가능이 아니라 실제 투표 기준)
     const { data: votes } = await supabase
       .from('votes')
-      .select('voter_code_id')
+      .select('voter_code_id, is_abstain')
       .eq('election_id', election.id);
 
     const uniqueVoterIds = new Set(votes?.map(v => v.voter_code_id) || []);
     const actualVoterCount = uniqueVoterIds.size;
 
+    // 기권 수 계산
+    const abstainCount = votes?.filter(v => v.is_abstain === true).length || 0;
+    const validVotes = votes?.filter(v => v.is_abstain !== true).length || 0;
+
     // usedCodes는 실제로 이 투표에 투표한 사람 수로 계산
     const usedCodes = actualVoterCount;
     const unusedCodes = totalCodes - usedCodes;
     const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
+    const abstainRate = actualVoterCount > 0 ? (abstainCount / actualVoterCount) * 100 : 0;
 
     setResultStats({
       totalCodes,
@@ -547,6 +555,9 @@ export default function ElectionDetailPage({
       unusedCodes,
       participationRate,
       totalVotes: votes?.length || 0,
+      validVotes,
+      abstainCount,
+      abstainRate,
       uniqueVoters: actualVoterCount,
     });
   }, [election]);
@@ -1665,7 +1676,7 @@ export default function ElectionDetailPage({
             return (
               <div className="space-y-6">
                 {/* 투표 통계 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   <div className="card-apple p-6">
                     <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>발급 코드</div>
                     <div className="text-2xl font-semibold text-gray-900">{resultStats.totalCodes}</div>
@@ -1684,6 +1695,14 @@ export default function ElectionDetailPage({
                     <div className="text-2xl font-semibold" style={{ color: 'var(--color-secondary)' }}>{resultStats.uniqueVoters}</div>
                     <div className="text-xs text-gray-500 mt-1">
                       ({resultStats.attendedCodes > 0 ? ((resultStats.uniqueVoters / resultStats.attendedCodes) * 100).toFixed(1) : 0}%)
+                    </div>
+                  </div>
+
+                  <div className="card-apple p-6">
+                    <div className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>기권</div>
+                    <div className="text-2xl font-semibold text-orange-600">{resultStats.abstainCount}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      ({resultStats.uniqueVoters > 0 ? ((resultStats.abstainCount / resultStats.uniqueVoters) * 100).toFixed(1) : 0}%)
                     </div>
                   </div>
 

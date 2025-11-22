@@ -54,10 +54,8 @@ export default function DynamicFavicon() {
         createFaviconLink('icon', 'image/x-icon');
         createFaviconLink('shortcut icon', 'image/x-icon');
         createFaviconLink('apple-touch-icon');
-
-        console.log('✅ Favicon 적용됨:', faviconUrl);
-      } catch (error) {
-        console.error('Favicon 로드 중 오류:', error);
+      } catch {
+        // 무시 (조용히 처리)
       }
     };
 

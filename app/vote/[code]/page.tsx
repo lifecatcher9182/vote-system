@@ -49,6 +49,7 @@ export default function VoteWithCodePage({
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+  const [isAbstain, setIsAbstain] = useState(false); // 기권 여부
   const [submitting, setSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [alertModal, setAlertModal] = useState<{ 
@@ -201,6 +202,7 @@ export default function VoteWithCodePage({
       if (election && !votedElectionIds.has(election.id)) {
         setSelectedElection(election);
         setSelectedCandidates([]);
+        setIsAbstain(false); // 기권 상태 초기화
         loadCandidates(election.id);
       } else {
         // 유효하지 않은 투표 ID거나 이미 투표한 경우
@@ -223,6 +225,11 @@ export default function VoteWithCodePage({
   const handleCandidateToggle = (candidateId: string) => {
     if (!selectedElection) return;
 
+    // 후보자 선택 시 기권 해제
+    if (isAbstain) {
+      setIsAbstain(false);
+    }
+
     if (selectedCandidates.includes(candidateId)) {
       setSelectedCandidates(selectedCandidates.filter(id => id !== candidateId));
     } else {
@@ -234,17 +241,29 @@ export default function VoteWithCodePage({
     }
   };
 
+  const handleAbstainToggle = () => {
+    if (isAbstain) {
+      // 기권 해제
+      setIsAbstain(false);
+    } else {
+      // 기권 선택 시 다른 선택 모두 취소
+      setIsAbstain(true);
+      setSelectedCandidates([]);
+    }
+  };
+
   const handleSubmitClick = () => {
     if (!selectedElection || !voterCode) return;
 
-    if (selectedCandidates.length === 0) {
-      setAlertModal({ isOpen: true, message: '최소 1명의 후보자를 선택하세요.', title: '안내' });
+    // 기권도 안 하고 후보자도 안 선택한 경우
+    if (!isAbstain && selectedCandidates.length === 0) {
+      setAlertModal({ isOpen: true, message: '후보자를 선택하거나 기권을 선택하세요.', title: '안내' });
       return;
     }
 
-    // 정확히 max_selections 명을 선택해야 함
-    if (selectedCandidates.length !== selectedElection.max_selections) {
-      setAlertModal({ isOpen: true, message: `정확히 ${selectedElection.max_selections}명을 선택해야 합니다.\n현재 ${selectedCandidates.length}명 선택됨`, title: '안내' });
+    // 기권이 아닌데 정확한 인원을 선택하지 않은 경우
+    if (!isAbstain && selectedCandidates.length !== selectedElection.max_selections) {
+      setAlertModal({ isOpen: true, message: `정확히 ${selectedElection.max_selections}명을 선택해야 합니다.\n현재 ${selectedCandidates.length}명 선택됨\n\n투표하지 않으려면 '기권'을 선택하세요.`, title: '안내' });
       return;
     }
 
@@ -274,32 +293,65 @@ export default function VoteWithCodePage({
       }
 
       // 2. 투표 기록 생성
-      const votes = selectedCandidates.map(candidateId => ({
-        election_id: selectedElection.id,
-        candidate_id: candidateId,
-        voter_code_id: voterCode.id,
-      }));
+      if (isAbstain) {
+        // 기권인 경우: candidate_id를 null로 저장
+        const { error: abstainError } = await supabase
+          .from('votes')
+          .insert({
+            election_id: selectedElection.id,
+            candidate_id: null,
+            voter_code_id: voterCode.id,
+            is_abstain: true
+          });
 
-      const { error: votesError } = await supabase
-        .from('votes')
-        .insert(votes);
+        if (abstainError) {
+          console.error('기권 제출 오류:', abstainError);
+          setAlertModal({ isOpen: true, message: `기권 제출에 실패했습니다.\n오류: ${abstainError.message}`, title: '오류' });
+          setSubmitting(false);
+          return;
+        }
+      } else {
+        // 일반 투표인 경우
+        const validCandidates = selectedCandidates.filter(id => id && id.trim());
+        
+        if (validCandidates.length !== selectedElection.max_selections) {
+          setAlertModal({ 
+            isOpen: true, 
+            message: '올바르지 않은 투표 데이터입니다. 다시 선택해주세요.', 
+            title: '오류' 
+          });
+          setSubmitting(false);
+          return;
+        }
 
-      if (votesError) {
-        console.error('투표 제출 오류:', votesError);
-        setAlertModal({ isOpen: true, message: `투표 제출에 실패했습니다.\n오류: ${votesError.message}`, title: '오류' });
-        setSubmitting(false);
-        return;
-      }
+        const votes = validCandidates.map(candidateId => ({
+          election_id: selectedElection.id,
+          candidate_id: candidateId,
+          voter_code_id: voterCode.id,
+          is_abstain: false
+        }));
 
-      // 3. 후보자 득표수 업데이트
-      for (const candidateId of selectedCandidates) {
-        const { error: updateError } = await supabase.rpc('increment_vote_count', {
-          candidate_id: candidateId
-        });
+        const { error: votesError } = await supabase
+          .from('votes')
+          .insert(votes);
 
-        if (updateError) {
-          console.error('득표수 업데이트 오류:', updateError);
-          // 득표수 업데이트 실패해도 투표는 기록되었으므로 계속 진행
+        if (votesError) {
+          console.error('투표 제출 오류:', votesError);
+          setAlertModal({ isOpen: true, message: `투표 제출에 실패했습니다.\n오류: ${votesError.message}`, title: '오류' });
+          setSubmitting(false);
+          return;
+        }
+
+        // 3. 후보자 득표수 업데이트 (기권이 아닐 때만)
+        for (const candidateId of validCandidates) {
+          const { error: updateError } = await supabase.rpc('increment_vote_count', {
+            candidate_id: candidateId
+          });
+
+          if (updateError) {
+            console.error('득표수 업데이트 오류:', updateError);
+            // 득표수 업데이트 실패해도 투표는 기록되었으므로 계속 진행
+          }
         }
       }
 
@@ -525,14 +577,27 @@ export default function VoteWithCodePage({
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium mb-1" style={{ color: '#1d1d1f' }}>
-                      최대 <strong>{selectedElection.max_selections}명</strong>까지 선택할 수 있습니다
+                      {isAbstain ? (
+                        <span className="text-orange-600">🗳️ 기권 선택됨</span>
+                      ) : (
+                        <>최대 <strong>{selectedElection.max_selections}명</strong>까지 선택할 수 있습니다</>
+                      )}
                     </p>
-                    <p className="text-xs text-red-600 font-medium">
-                      ⚠️ {selectedElection.max_selections}명을 선택하지 않을 경우 무효표 처리 됩니다.
-                    </p>
-                    {selectedCandidates.length > 0 && (
-                      <p className="text-sm mt-2" style={{ color: 'var(--color-secondary)' }}>
-                        현재 <strong>{selectedCandidates.length}명</strong> 선택됨
+                    {!isAbstain && (
+                      <>
+                        <p className="text-xs text-red-600 font-medium">
+                          ⚠️ {selectedElection.max_selections}명을 정확히 선택해야 합니다.
+                        </p>
+                        {selectedCandidates.length > 0 && (
+                          <p className="text-sm mt-2" style={{ color: 'var(--color-secondary)' }}>
+                            현재 <strong>{selectedCandidates.length}명</strong> 선택됨
+                          </p>
+                        )}
+                      </>
+                    )}
+                    {isAbstain && (
+                      <p className="text-xs text-gray-600 mt-1">
+                        투표하지 않습니다. 후보자를 선택하면 기권이 취소됩니다.
                       </p>
                     )}
                   </div>
@@ -589,34 +654,91 @@ export default function VoteWithCodePage({
                       </button>
                     );
                   })}
+
+                  {/* 기권 버튼 */}
+                  <button
+                    onClick={handleAbstainToggle}
+                    disabled={isAbstain}
+                    className="w-full p-4 sm:p-5 rounded-2xl transition-all duration-200 text-left active:scale-[0.98] mt-4"
+                    style={{ 
+                      background: isAbstain ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'rgba(0, 0, 0, 0.02)',
+                      border: `2px solid ${isAbstain ? '#f59e0b' : 'rgba(0, 0, 0, 0.06)'}`,
+                      opacity: isAbstain ? 1 : 0.9
+                    }}
+                  >
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      <div 
+                        className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-xl transition-all"
+                        style={{ 
+                          background: isAbstain ? 'rgba(255, 255, 255, 0.3)' : 'rgba(249, 115, 22, 0.1)',
+                          color: isAbstain ? 'white' : '#f97316'
+                        }}
+                      >
+                        🗳️
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p 
+                          className="text-base sm:text-lg font-semibold"
+                          style={{ 
+                            color: isAbstain ? 'white' : '#1d1d1f',
+                            letterSpacing: '-0.02em'
+                          }}
+                        >
+                          {isAbstain ? '✓ 기권 (투표하지 않음)' : '기권 (투표하지 않음)'}
+                        </p>
+                        <p 
+                          className="text-xs sm:text-sm mt-1"
+                          style={{ 
+                            color: isAbstain ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'
+                          }}
+                        >
+                          투표에 참여하지 않습니다
+                        </p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
 
             {/* 투표 제출 카드 */}
-            {selectedCandidates.length > 0 && (
+            {(selectedCandidates.length > 0 || isAbstain) && (
               <div className="card-apple p-5 sm:p-6 lg:p-8">
                 <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-5" style={{ 
                   color: '#1d1d1f',
                   letterSpacing: '-0.02em'
                 }}>
-                  선택한 후보자
+                  {isAbstain ? '기권 확인' : '선택한 후보자'}
                 </h3>
-                <div className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6">
-                  {selectedCandidates.map((candidateId) => {
-                    const candidate = candidates.find(c => c.id === candidateId);
-                    return (
-                      <div key={candidateId} className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl" style={{ background: 'rgba(0, 113, 227, 0.05)' }}>
-                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-secondary)' }}>
-                          <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <span className="font-medium text-sm sm:text-base truncate" style={{ color: '#1d1d1f' }}>{candidate?.name}</span>
+                {isAbstain ? (
+                  <div className="mb-5 sm:mb-6 p-4 sm:p-5 rounded-xl" style={{ background: 'rgba(249, 115, 22, 0.1)' }}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(249, 115, 22, 0.2)' }}>
+                        <span className="text-2xl">🗳️</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-orange-700">기권 (투표하지 않음)</p>
+                        <p className="text-sm text-gray-600 mt-1">이 투표에 참여하지 않습니다</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6">
+                    {selectedCandidates.map((candidateId) => {
+                      const candidate = candidates.find(c => c.id === candidateId);
+                      return (
+                        <div key={candidateId} className="flex items-center gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl" style={{ background: 'rgba(0, 113, 227, 0.05)' }}>
+                          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'var(--color-secondary)' }}>
+                            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="font-medium text-sm sm:text-base truncate" style={{ color: '#1d1d1f' }}>{candidate?.name}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 
                 <button
                   onClick={handleSubmitClick}
@@ -649,8 +771,11 @@ export default function VoteWithCodePage({
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleSubmit}
         title="투표 제출"
-        message={`${selectedCandidates.length}명의 후보자에게 투표하시겠습니까?\n투표 후에는 변경할 수 없습니다.`}
-        confirmText="투표하기"
+        message={isAbstain 
+          ? '기권(투표하지 않음)으로 제출하시겠습니까?\n제출 후에는 변경할 수 없습니다.'
+          : `${selectedCandidates.length}명의 후보자에게 투표하시겠습니까?\n투표 후에는 변경할 수 없습니다.`
+        }
+        confirmText={isAbstain ? '기권 제출' : '투표하기'}
         cancelText="취소"
         variant="primary"
       />
