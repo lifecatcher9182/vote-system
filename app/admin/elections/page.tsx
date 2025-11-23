@@ -21,7 +21,7 @@ interface Election {
   created_at: string;
   villages?: {
     name: string;
-  };
+  } | null;
 }
 
 export default function ElectionsPage() {
@@ -92,7 +92,15 @@ export default function ElectionsPage() {
       return;
     }
 
-    setElections(data || []);
+    // Supabase 관계 쿼리는 배열로 반환될 수 있으므로 첫 번째 요소만 사용
+    const normalizedData = (data || []).map((election: any) => ({
+      ...election,
+      villages: Array.isArray(election.villages) 
+        ? (election.villages.length > 0 ? election.villages[0] : null)
+        : election.villages
+    }));
+
+    setElections(normalizedData);
   }, [filter]);
 
   useEffect(() => {
