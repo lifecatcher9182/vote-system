@@ -65,7 +65,7 @@ export default function ElectionGroupsPage() {
     // 모든 그룹 조회
     const { data: groupsData, error: groupsError } = await supabase
       .from('election_groups')
-      .select('*')
+      .select('id, title, description, group_type, status, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (groupsError) {
@@ -73,21 +73,33 @@ export default function ElectionGroupsPage() {
       return;
     }
 
-    // 각 그룹별 투표 개수 조회
-    const groupsWithCounts = await Promise.all(
-      (groupsData || []).map(async (group) => {
-        const { data: elections } = await supabase
-          .from('elections')
-          .select('id, status')
-          .eq('group_id', group.id);
+    if (!groupsData || groupsData.length === 0) {
+      setGroups([]);
+      return;
+    }
 
-        return {
-          ...group,
-          election_count: elections?.length || 0,
-          active_elections: elections?.filter(e => e.status === 'active').length || 0,
-        };
-      })
-    );
+    // 모든 그룹의 elections를 한 번에 조회 (N+1 문제 해결)
+    const groupIds = groupsData.map(g => g.id);
+    const { data: allElections, error: electionsError } = await supabase
+      .from('elections')
+      .select('id, status, group_id')
+      .in('group_id', groupIds);
+
+    if (electionsError) {
+      console.error('투표 조회 오류:', electionsError);
+      setGroups(groupsData.map(g => ({ ...g, election_count: 0, active_elections: 0 })));
+      return;
+    }
+
+    // 그룹별로 통계 계산
+    const groupsWithCounts = groupsData.map((group) => {
+      const groupElections = allElections?.filter(e => e.group_id === group.id) || [];
+      return {
+        ...group,
+        election_count: groupElections.length,
+        active_elections: groupElections.filter(e => e.status === 'active').length,
+      };
+    });
 
     setGroups(groupsWithCounts);
   }, []);

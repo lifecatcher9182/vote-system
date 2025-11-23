@@ -67,10 +67,10 @@ export default function VoteWithCodePage({
   const loadData = useCallback(async () => {
     const supabase = createClient();
 
-    // 1. 참여코드 확인 (대문자로 변환하여 검색)
+    // 1. 참여코드 확인 (대문자로 변환하여 검색) - 필요한 컬럼만 선택
     const { data: codeData, error: codeError } = await supabase
       .from('voter_codes')
-      .select('*')
+      .select('id, code, accessible_elections, first_login_at, last_login_at')
       .eq('code', resolvedParams.code.toUpperCase())
       .single();
 
@@ -121,11 +121,22 @@ export default function VoteWithCodePage({
     const voted = new Set(votesData?.map(v => v.election_id) || []);
     setVotedElectionIds(voted);
 
-    // 3. 접근 가능한 투표 목록 조회
+    // 3. 접근 가능한 투표 목록 조회 - 필요한 컬럼만 선택
     const { data: electionsData, error: electionsError } = await supabase
       .from('elections')
       .select(`
-        *,
+        id,
+        title,
+        election_type,
+        position,
+        village_id,
+        max_selections,
+        round,
+        status,
+        created_at,
+        winning_criteria,
+        series_id,
+        series_title,
         villages (
           name
         )
@@ -165,7 +176,7 @@ export default function VoteWithCodePage({
     const supabase = createClient();
     const { data, error } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, election_id')
       .eq('election_id', electionId)
       .order('name', { ascending: true });
 

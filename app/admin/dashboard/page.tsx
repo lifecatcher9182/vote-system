@@ -103,10 +103,10 @@ export default function AdminDashboard() {
       totalGroups: groupsCount || 0,
     });
 
-    // 최근 그룹 로드 (정렬은 클라이언트에서 처리)
+    // 최근 그룹 로드 (정렬은 클라이언트에서 처리) - 필요한 컬럼만 선택
     const { data: groups } = await supabase
       .from('election_groups')
-      .select('*')
+      .select('id, title, group_type, created_at, updated_at')
       .limit(10);
 
     if (groups) {

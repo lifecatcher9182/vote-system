@@ -26,10 +26,10 @@ export default function VotePage() {
     try {
       const supabase = createClient();
 
-      // 참여코드 확인 (대문자로 변환하여 검색)
+      // 참여코드 확인 (대문자로 변환하여 검색) - 필요한 컬럼만 선택
       const { data: voterCode, error: codeError } = await supabase
         .from('voter_codes')
-        .select('*')
+        .select('id, accessible_elections')
         .eq('code', code.trim().toUpperCase())
         .single();
 

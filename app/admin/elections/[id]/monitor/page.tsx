@@ -120,7 +120,7 @@ export default function MonitorPage({
     
     const { data, error } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, vote_count, election_id')
       .eq('election_id', resolvedParams.id)
       .order('vote_count', { ascending: false });
 
@@ -135,10 +135,10 @@ export default function MonitorPage({
   const loadStats = useCallback(async () => {
     const supabase = createClient();
     
-    // 이 투표에 접근 가능한 코드 통계
+    // 이 투표에 접근 가능한 코드 통계 - 필요한 컬럼만 선택
     const { data: codes, error: codesError } = await supabase
       .from('voter_codes')
-      .select('*')
+      .select('is_used')
       .contains('accessible_elections', [resolvedParams.id]);
 
     if (codesError) {
@@ -151,10 +151,10 @@ export default function MonitorPage({
     const unusedCodes = totalCodes - usedCodes;
     const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
 
-    // 총 투표 수
-    const { data: votes, error: votesError } = await supabase
+    // 총 투표 수 - count만 가져오기
+    const { count: totalVotes, error: votesError } = await supabase
       .from('votes')
-      .select('id')
+      .select('*', { count: 'exact', head: true })
       .eq('election_id', resolvedParams.id);
 
     if (votesError) {
@@ -166,7 +166,7 @@ export default function MonitorPage({
       usedCodes,
       unusedCodes,
       participationRate,
-      totalVotes: votes?.length || 0,
+      totalVotes: totalVotes || 0,
     });
 
     setLastUpdate(new Date());

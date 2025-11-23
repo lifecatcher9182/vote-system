@@ -64,7 +64,15 @@ export default function ElectionsPage() {
     let query = supabase
       .from('elections')
       .select(`
-        *,
+        id,
+        title,
+        election_type,
+        position,
+        village_id,
+        max_selections,
+        round,
+        status,
+        created_at,
         villages (
           name
         )

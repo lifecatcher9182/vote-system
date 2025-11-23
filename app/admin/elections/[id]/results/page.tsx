@@ -124,7 +124,7 @@ export default function ResultsPage({
     
     const { data, error } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, vote_count, election_id')
       .eq('election_id', resolvedParams.id)
       .order('vote_count', { ascending: false });
 
@@ -139,10 +139,10 @@ export default function ResultsPage({
   const loadStats = useCallback(async () => {
     const supabase = createClient();
     
-    // 이 투표에 접근 가능한 코드 통계
+    // 이 투표에 접근 가능한 코드 통계 - 필요한 컬럼만 선택
     const { data: codes, error: codesError } = await supabase
       .from('voter_codes')
-      .select('*')
+      .select('is_used, first_login_at')
       .contains('accessible_elections', [resolvedParams.id]);
 
     if (codesError) {
@@ -156,7 +156,7 @@ export default function ResultsPage({
     const unusedCodes = totalCodes - usedCodes;
     const participationRate = totalCodes > 0 ? (usedCodes / totalCodes) * 100 : 0;
 
-    // 총 투표 수
+    // 총 투표 수 및 고유 투표자 수 - 필요한 컬럼만 선택
     const { data: votes, error: votesError } = await supabase
       .from('votes')
       .select('voter_code_id')
@@ -193,18 +193,33 @@ export default function ResultsPage({
       return;
     }
 
+    if (villages.length === 0) {
+      setVillageStats([]);
+      return;
+    }
+
+    // 모든 마을의 코드를 한 번에 조회 (N+1 문제 해결)
+    const villageIds = villages.map(v => v.id);
+    const { data: allCodes, error: codesError } = await supabase
+      .from('voter_codes')
+      .select('village_id, is_used')
+      .in('village_id', villageIds)
+      .contains('accessible_elections', [resolvedParams.id]);
+
+    if (codesError) {
+      console.error('코드 조회 오류:', codesError);
+      setVillageStats([]);
+      return;
+    }
+
+    // 마을별로 통계 계산
     const villageStatsData: VillageStats[] = [];
+    const villageMap = new Map(villages.map(v => [v.id, v.name]));
 
     for (const village of villages) {
-      // 각 마을의 코드 통계
-      const { data: codes } = await supabase
-        .from('voter_codes')
-        .select('*')
-        .eq('village_id', village.id)
-        .contains('accessible_elections', [resolvedParams.id]);
-
-      const codesCount = codes?.length || 0;
-      const usedCount = codes?.filter(c => c.is_used).length || 0;
+      const villageCodes = allCodes?.filter(c => c.village_id === village.id) || [];
+      const codesCount = villageCodes.length;
+      const usedCount = villageCodes.filter(c => c.is_used).length;
       const participationRate = codesCount > 0 ? (usedCount / codesCount) * 100 : 0;
 
       if (codesCount > 0) {

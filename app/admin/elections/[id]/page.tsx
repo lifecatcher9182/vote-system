@@ -251,28 +251,31 @@ export default function ElectionDetailPage({
       return;
     }
 
-    // 각 코드에 대해 투표 여부 확인
-    const codesWithVoteStatus = await Promise.all(
-      (codesData || []).map(async (code) => {
-        const { data: voteData, error: voteError } = await supabase
-          .from('votes')
-          .select('id')
-          .eq('voter_code_id', code.id)
-          .eq('election_id', election.id);
+    if (!codesData || codesData.length === 0) {
+      setVoterCodes([]);
+      return;
+    }
 
-        if (voteError) {
-          console.error('투표 조회 오류 (코드 ID:', code.id, '):', voteError);
-        }
+    // 모든 코드의 투표 여부를 한 번에 조회 (N+1 문제 해결)
+    const codeIds = codesData.map(c => c.id);
+    const { data: allVotes, error: votesError } = await supabase
+      .from('votes')
+      .select('voter_code_id')
+      .in('voter_code_id', codeIds)
+      .eq('election_id', election.id);
 
-        // 투표 데이터가 하나라도 있으면 투표 완료 (명시적 boolean 타입)
-        const hasVoted: boolean = !!(voteData && voteData.length > 0);
+    if (votesError) {
+      console.error('투표 조회 오류:', votesError);
+    }
 
-        return {
-          ...code,
-          has_voted: hasVoted
-        };
-      })
-    );
+    // 투표한 코드 ID 집합 생성
+    const votedCodeIds = new Set(allVotes?.map(v => v.voter_code_id) || []);
+
+    // 각 코드에 투표 여부 추가
+    const codesWithVoteStatus = codesData.map((code) => ({
+      ...code,
+      has_voted: votedCodeIds.has(code.id)
+    }));
 
     console.log('총', codesWithVoteStatus.length, '개 코드 로드 완료');
     console.log('투표 완료:', codesWithVoteStatus.filter(c => c.has_voted).length, '개');
