@@ -590,13 +590,15 @@ export default function ElectionDetailPage({
       const { data: codes } = await villageCodesQuery;
 
       const codesCount = codes?.length || 0;
+      const attendedCount = codes?.filter(c => c.first_login_at !== null).length || 0;
       const usedCount = codes?.filter(c => c.is_used).length || 0;
-      const participationRate = codesCount > 0 ? (usedCount / codesCount) * 100 : 0;
+      const participationRate = attendedCount > 0 ? (usedCount / attendedCount) * 100 : 0;
 
       if (codesCount > 0) {
         villageStatsData.push({
           villageName: village.name,
           codesCount,
+          attendedCount,
           usedCount,
           participationRate,
         });
@@ -1831,22 +1833,12 @@ export default function ElectionDetailPage({
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {confirmedWinners.map((winner, index) => {
-                            let actualRank = 1;
-                            for (let i = 0; i < index; i++) {
-                              if (confirmedWinners[i].vote_count > winner.vote_count) {
-                                actualRank++;
-                              }
-                            }
+                            const actualRank = index + 1;
                             
                             return (
                               <div key={winner.id} className="p-4 rounded-xl shadow-sm" style={{ background: 'white' }}>
                                 <div className="flex items-center gap-3">
-                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
-                                    actualRank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
-                                    actualRank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-800' :
-                                    actualRank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
-                                    'bg-gradient-to-br from-blue-300 to-blue-400 text-gray-800'
-                                  }`}>
+                                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold bg-gradient-to-br from-yellow-400 to-amber-500 text-yellow-900">
                                     {actualRank}
                                   </div>
                                   <div className="flex-1">
@@ -1918,12 +1910,7 @@ export default function ElectionDetailPage({
                         )}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {winners.map((winner, index) => {
-                            let actualRank = 1;
-                            for (let i = 0; i < index; i++) {
-                              if (winners[i].vote_count > winner.vote_count) {
-                                actualRank++;
-                              }
-                            }
+                            const actualRank = index + 1;
                             
                             return (
                               <div key={winner.id} className={`p-4 rounded-xl shadow-sm ${
@@ -1932,7 +1919,7 @@ export default function ElectionDetailPage({
                                 <div className="flex items-center gap-3">
                                   <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold ${
                                     hasTie ? 'bg-orange-200 text-orange-900' :
-                                    'bg-gradient-to-br from-green-400 to-emerald-500 text-white'
+                                    'bg-gradient-to-br from-yellow-400 to-amber-500 text-yellow-900'
                                   }`}>
                                     {hasTie ? '?' : actualRank}
                                   </div>
@@ -1962,7 +1949,7 @@ export default function ElectionDetailPage({
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {candidates.map((candidate, index) => {
+                      {[...candidates].sort((a, b) => b.vote_count - a.vote_count).map((candidate, index) => {
                         const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
                         const votePercentage = resultStats.totalVotes > 0 ? (candidate.vote_count / resultStats.totalVotes) * 100 : 0;
                         
@@ -1975,33 +1962,28 @@ export default function ElectionDetailPage({
                           ? tiedCandidates.some(t => t.id === candidate.id)
                           : hasTie && winners.some(w => w.id === candidate.id);
                         
-                        let actualRank = 1;
-                        for (let i = 0; i < index; i++) {
-                          if (candidates[i].vote_count > candidate.vote_count) {
-                            actualRank++;
-                          }
-                        }
+                        const actualRank = index + 1;
 
                         return (
                           <div 
                             key={candidate.id} 
                             className={`border rounded-xl p-4 ${
                               isTied ? 'border-orange-400 bg-orange-50' :
-                              isConfirmedWinner ? 'border-green-400 bg-green-50' : 'border-gray-200 bg-white'
+                              isConfirmedWinner ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'
                             }`}
                           >
                             <div className="flex justify-between items-center mb-2">
                               <div className="flex items-center gap-3">
                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                                   isTied ? 'bg-orange-200 text-orange-800' :
-                                  isConfirmedWinner ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600'
+                                  isConfirmedWinner ? 'bg-gradient-to-br from-yellow-400 to-amber-500 text-yellow-900' : 'bg-gray-200 text-gray-600'
                                 }`}>
                                   {isTied ? '?' : actualRank}
                                 </div>
                                 <div>
                                   <div className="font-semibold flex items-center gap-2" style={{ color: '#1d1d1f' }}>
                                     {candidate.name}
-                                    {isConfirmedWinner && <span className="text-xs px-2 py-0.5 bg-green-500 text-white rounded-full font-bold">당선</span>}
+                                    {isConfirmedWinner && <span className="text-xs px-2 py-0.5 bg-yellow-500 text-yellow-900 rounded-full font-bold">당선</span>}
                                     {isTied && <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-800 rounded-full font-bold">미확정</span>}
                                   </div>
                                   <div className="text-xs text-gray-500">
@@ -2021,11 +2003,7 @@ export default function ElectionDetailPage({
                               <div
                                 className={`h-full transition-all duration-500 ${
                                   isTied ? 'bg-gradient-to-r from-orange-400 to-red-500' :
-                                  isConfirmedWinner ? (
-                                    actualRank === 1 ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
-                                    actualRank === 2 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
-                                    'bg-gradient-to-r from-orange-400 to-orange-500'
-                                  ) : 'bg-blue-400'
+                                  isConfirmedWinner ? 'bg-gradient-to-r from-yellow-400 to-amber-500' : 'bg-gray-400'
                                 }`}
                                 style={{ width: `${percentage}%` }}
                               />
@@ -2051,7 +2029,7 @@ export default function ElectionDetailPage({
                                 {villageStat.participationRate.toFixed(1)}%
                               </div>
                               <div className="text-xs text-gray-500">
-                                {villageStat.usedCount} / {villageStat.codesCount}
+                                투표 {villageStat.usedCount} / 참석 {villageStat.attendedCount}
                               </div>
                             </div>
                           </div>
