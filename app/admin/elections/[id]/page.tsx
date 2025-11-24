@@ -578,7 +578,7 @@ export default function ElectionDetailPage({
     for (const village of villages) {
       let villageCodesQuery = supabase
         .from('voter_codes')
-        .select('id, first_login_at')
+        .select('id, first_login_at, is_used')
         .eq('village_id', village.id)
         .contains('accessible_elections', [election.id]);
       
