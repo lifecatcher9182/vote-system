@@ -171,9 +171,9 @@ export default function VoteWithCodePage({
     const supabase = createClient();
     const { data, error } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, election_id')
       .eq('election_id', electionId)
-      .order('name', { ascending: true });
+      .order('name', { ascending: true});
 
     if (error) {
       console.error('후보자 로딩 오류:', error);

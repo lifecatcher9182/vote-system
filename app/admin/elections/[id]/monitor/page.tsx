@@ -53,7 +53,6 @@ export default function MonitorPage({
     participationRate: 0,
     totalVotes: 0,
   });
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   // Alert modal state
@@ -191,16 +190,7 @@ export default function MonitorPage({
     initialize();
   }, [checkAuth, loadElection, loadCandidates, loadStats]);
 
-  // 자동 새로고침 (30초마다 - 대역폭 절약)
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      refreshData();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshData]);
+  // 자동 새로고침 제거 (수동 새로고침만 사용)
 
   if (loading || !election) {
     return (
@@ -263,32 +253,18 @@ export default function MonitorPage({
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {/* 자동 새로고침 컨트롤 */}
+          {/* 수동 새로고침 컨트롤 */}
           <div className="bg-white rounded-lg shadow p-4 mb-6 flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setAutoRefresh(!autoRefresh)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    autoRefresh ? 'bg-[var(--color-secondary)]' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      autoRefresh ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-                <span className="text-sm font-medium text-gray-700">
-                  자동 새로고침 {autoRefresh ? 'ON' : 'OFF'}
-                </span>
-              </div>
               <button
                 onClick={refreshData}
-                className="px-4 py-2 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
+                className="px-6 py-2.5 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all hover:scale-105 text-sm font-medium"
               >
-                🔄 지금 새로고침
+                🔄 새로고침
               </button>
+              <p className="text-sm text-gray-600">
+                데이터를 최신 상태로 업데이트합니다
+              </p>
             </div>
             <p className="text-xs text-gray-500">
               마지막 업데이트: {lastUpdate.toLocaleTimeString('ko-KR')}
