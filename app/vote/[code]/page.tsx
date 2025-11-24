@@ -16,7 +16,7 @@ interface Election {
   status: string;
   villages?: {
     name: string;
-  } | null;
+  }[] | null;
 }
 
 interface Candidate {
@@ -513,7 +513,7 @@ export default function VoteWithCodePage({
                           </div>
                           <p className="text-xs sm:text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>
                             {election.election_type === 'delegate' 
-                              ? `총대 선출 · ${election.villages?.name}`
+                              ? `총대 선출 · ${election.villages?.[0]?.name || '-'}`
                               : `임원 선출 · ${election.position}`
                             }
                           </p>
@@ -568,7 +568,7 @@ export default function VoteWithCodePage({
               </h2>
               <p className="text-sm sm:text-base text-gray-600 mb-5 sm:mb-6" style={{ letterSpacing: '-0.01em' }}>
                 {selectedElection.election_type === 'delegate' 
-                  ? `총대 선출 · ${selectedElection.villages?.name}`
+                  ? `총대 선출 · ${selectedElection.villages?.[0]?.name || '-'}`
                   : `임원 선출 · ${selectedElection.position}`
                 }
               </p>
