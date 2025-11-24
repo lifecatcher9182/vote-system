@@ -215,7 +215,7 @@ export default function ElectionDetailPage({
 
     const { data: candidatesData, error: candidatesError } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, election_id, vote_count, created_at')
       .eq('election_id', resolvedParams.id)
       .order('name', { ascending: true });
 
@@ -511,7 +511,7 @@ export default function ElectionDetailPage({
     // 이 투표에 접근 가능한 코드 통계
     let codesQuery = supabase
       .from('voter_codes')
-      .select('*')
+      .select('id, first_login_at')
       .contains('accessible_elections', [election.id]);
     
     // 임원투표인 경우 group_id로 필터링
@@ -578,7 +578,7 @@ export default function ElectionDetailPage({
     for (const village of villages) {
       let villageCodesQuery = supabase
         .from('voter_codes')
-        .select('*')
+        .select('id, first_login_at')
         .eq('village_id', village.id)
         .contains('accessible_elections', [election.id]);
       

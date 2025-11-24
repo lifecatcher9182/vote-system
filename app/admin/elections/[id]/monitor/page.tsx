@@ -120,7 +120,7 @@ export default function MonitorPage({
     
     const { data, error } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, election_id, vote_count')
       .eq('election_id', resolvedParams.id)
       .order('vote_count', { ascending: false });
 
@@ -138,7 +138,7 @@ export default function MonitorPage({
     // 이 투표에 접근 가능한 코드 통계
     const { data: codes, error: codesError } = await supabase
       .from('voter_codes')
-      .select('*')
+      .select('id, is_used')
       .contains('accessible_elections', [resolvedParams.id]);
 
     if (codesError) {
@@ -191,13 +191,13 @@ export default function MonitorPage({
     initialize();
   }, [checkAuth, loadElection, loadCandidates, loadStats]);
 
-  // 자동 새로고침 (10초마다)
+  // 자동 새로고침 (30초마다 - 대역폭 절약)
   useEffect(() => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
       refreshData();
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [autoRefresh, refreshData]);

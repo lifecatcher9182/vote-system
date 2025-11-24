@@ -60,17 +60,20 @@ interface VoterCode {
   id: string;
   code: string;
   code_type: 'delegate' | 'officer';
-  accessible_elections: string[];
+  accessible_elections?: string[];
   village_id: string | null;
   is_used: boolean;
-  voter_name: string | null;
-  used_at: string | null;
+  voter_name?: string | null;
+  used_at?: string | null;
   first_login_at: string | null;
   last_login_at: string | null;
   created_at: string;
+  group_id?: string | null;
   villages?: {
     name: string;
-  };
+  } | {
+    name: string;
+  }[] | null;
 }
 
 interface Election {
@@ -157,7 +160,15 @@ function CodesPageContent() {
     let query = supabase
       .from('voter_codes')
       .select(`
-        *,
+        id,
+        code,
+        code_type,
+        village_id,
+        is_used,
+        first_login_at,
+        last_login_at,
+        created_at,
+        group_id,
         villages (
           name
         )
@@ -219,7 +230,7 @@ function CodesPageContent() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('villages')
-      .select('*')
+      .select('id, name, is_active')
       .order('name', { ascending: true });
 
     if (error) {
@@ -716,7 +727,7 @@ function CodesPageContent() {
                         {code.code_type === 'delegate' ? '총대' : '임원'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
-                        {code.villages?.name || '-'}
+                        {(Array.isArray(code.villages) ? code.villages[0]?.name : code.villages?.name) || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
                         {code.voter_name || '-'}

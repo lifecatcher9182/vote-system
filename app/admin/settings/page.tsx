@@ -77,7 +77,7 @@ export default function SettingsPage() {
     
     const { data, error } = await supabase
       .from('admin_emails')
-      .select('*')
+      .select('id, email, created_at')
       .order('created_at', { ascending: true });
 
     if (error) {

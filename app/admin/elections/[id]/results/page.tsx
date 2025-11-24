@@ -124,7 +124,7 @@ export default function ResultsPage({
     
     const { data, error } = await supabase
       .from('candidates')
-      .select('*')
+      .select('id, name, election_id, vote_count')
       .eq('election_id', resolvedParams.id)
       .order('vote_count', { ascending: false });
 
@@ -142,7 +142,7 @@ export default function ResultsPage({
     // 이 투표에 접근 가능한 코드 통계
     const { data: codes, error: codesError } = await supabase
       .from('voter_codes')
-      .select('*')
+      .select('id, first_login_at, is_used')
       .contains('accessible_elections', [resolvedParams.id]);
 
     if (codesError) {
@@ -199,7 +199,7 @@ export default function ResultsPage({
       // 각 마을의 코드 통계
       const { data: codes } = await supabase
         .from('voter_codes')
-        .select('*')
+        .select('id, is_used')
         .eq('village_id', village.id)
         .contains('accessible_elections', [resolvedParams.id]);
 

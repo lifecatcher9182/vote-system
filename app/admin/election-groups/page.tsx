@@ -65,7 +65,7 @@ export default function ElectionGroupsPage() {
     // 모든 그룹 조회
     const { data: groupsData, error: groupsError } = await supabase
       .from('election_groups')
-      .select('*')
+      .select('id, title, description, group_type, status, created_at, updated_at')
       .order('created_at', { ascending: false });
 
     if (groupsError) {

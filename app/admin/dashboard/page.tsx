@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     // 최근 그룹 로드 (정렬은 클라이언트에서 처리)
     const { data: groups } = await supabase
       .from('election_groups')
-      .select('*')
+      .select('id, title, group_type, created_at, updated_at')
       .limit(10);
 
     if (groups) {

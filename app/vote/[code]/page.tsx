@@ -16,7 +16,7 @@ interface Election {
   status: string;
   villages?: {
     name: string;
-  };
+  } | null;
 }
 
 interface Candidate {
@@ -70,7 +70,7 @@ export default function VoteWithCodePage({
     // 1. 참여코드 확인 (대문자로 변환하여 검색)
     const { data: codeData, error: codeError } = await supabase
       .from('voter_codes')
-      .select('*')
+      .select('id, code, code_type, accessible_elections, village_id, is_used, first_login_at, last_login_at')
       .eq('code', resolvedParams.code.toUpperCase())
       .single();
 
@@ -125,7 +125,13 @@ export default function VoteWithCodePage({
     const { data: electionsData, error: electionsError } = await supabase
       .from('elections')
       .select(`
-        *,
+        id,
+        title,
+        election_type,
+        position,
+        max_selections,
+        round,
+        status,
         villages (
           name
         )
