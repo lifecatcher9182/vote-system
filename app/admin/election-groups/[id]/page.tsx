@@ -134,6 +134,15 @@ export default function ElectionGroupDetailPage({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // 마을별 투표율 (총대 투표용)
+  const [villageStats, setVillageStats] = useState<Array<{
+    villageName: string;
+    codesCount: number;
+    attendedCount: number;
+    usedCount: number;
+    participationRate: number;
+  }>>([]);
+
   // 모달 상태
   const [alertModal, setAlertModal] = useState<{ isOpen: boolean; message: string; title?: string }>({ 
     isOpen: false, message: '', title: '알림' 
@@ -284,6 +293,60 @@ export default function ElectionGroupDetailPage({
     const activeVillages = (data || []).filter(v => v.is_active !== false);
     setVillages(activeVillages.map(v => ({ ...v, selections: 1 })));
   }, []);
+
+  // 마을별 투표율 로딩 (총대 투표 그룹용)
+  const loadVillageStats = useCallback(async () => {
+    if (!group || group.group_type !== 'delegate') return;
+    
+    const supabase = createClient();
+
+    // 이 그룹의 모든 총대 투표 가져오기
+    const { data: delegateElections } = await supabase
+      .from('elections')
+      .select('id, village_id')
+      .eq('group_id', group.id)
+      .eq('election_type', 'delegate');
+
+    if (!delegateElections) return;
+
+    const villageStatsData = [];
+
+    for (const delegateElection of delegateElections) {
+      if (!delegateElection.village_id) continue;
+
+      // 해당 마을 정보 가져오기
+      const { data: village } = await supabase
+        .from('villages')
+        .select('id, name')
+        .eq('id', delegateElection.village_id)
+        .single();
+
+      if (!village) continue;
+
+      // 해당 총대 투표의 코드 통계
+      const { data: codes } = await supabase
+        .from('voter_codes')
+        .select('id, first_login_at, is_used')
+        .eq('village_id', village.id)
+        .contains('accessible_elections', [delegateElection.id]);
+
+      const codesCount = codes?.length || 0;
+      const attendedCount = codes?.filter(c => c.first_login_at !== null).length || 0;
+      const usedCount = codes?.filter(c => c.is_used).length || 0;
+      const participationRate = attendedCount > 0 ? (usedCount / attendedCount) * 100 : 0;
+
+      villageStatsData.push({
+        villageName: village.name,
+        codesCount,
+        attendedCount,
+        usedCount,
+        participationRate,
+      });
+    }
+
+    villageStatsData.sort((a, b) => b.participationRate - a.participationRate);
+    setVillageStats(villageStatsData);
+  }, [group]);
 
   // 임원 투표용 코드 로딩
   const loadVoterCodes = useCallback(async () => {
@@ -679,6 +742,13 @@ export default function ElectionGroupDetailPage({
     }
   }, [group, elections, loadVoterCodes]);
 
+  // 총대 투표인 경우 마을별 투표율 로드
+  useEffect(() => {
+    if (group && group.group_type === 'delegate' && elections.length > 0) {
+      loadVillageStats();
+    }
+  }, [group, elections, loadVillageStats]);
+
   if (loading || !group) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
@@ -824,6 +894,42 @@ export default function ElectionGroupDetailPage({
             </div>
           </div>
         </div>
+
+        {/* 마을별 투표율 (총대 투표 그룹만) */}
+        {group.group_type === 'delegate' && villageStats.length > 0 && (
+          <div className="card-apple p-8 mb-6">
+            <h2 className="text-xl font-semibold mb-6" style={{ 
+              color: '#1d1d1f',
+              letterSpacing: '-0.02em'
+            }}>
+              📊 마을별 투표율
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {villageStats.map((villageStat, index) => (
+                <div key={index} className="border border-gray-200 rounded-xl p-5" style={{ background: 'white' }}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="font-semibold text-lg" style={{ color: '#1d1d1f' }}>{villageStat.villageName}</div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold" style={{ color: 'var(--color-secondary)' }}>
+                        {villageStat.participationRate.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600 mb-3">
+                    투표 {villageStat.usedCount} / 참석 {villageStat.attendedCount}
+                    <span className="text-xs text-gray-400 ml-2">(전체: {villageStat.codesCount})</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500"
+                      style={{ width: `${villageStat.participationRate}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 참여코드 관리 */}
         {group.group_type === 'officer' ? (

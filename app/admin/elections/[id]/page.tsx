@@ -143,12 +143,6 @@ export default function ElectionDetailPage({
     abstainRate: 0,
     uniqueVoters: 0,
   });
-  const [villageStats, setVillageStats] = useState<Array<{
-    villageName: string;
-    codesCount: number;
-    usedCount: number;
-    participationRate: number;
-  }>>([]);
 
   // 비고/메모 상태
   const [notes, setNotes] = useState<ElectionNote[]>([]);
@@ -562,61 +556,13 @@ export default function ElectionDetailPage({
     });
   }, [election]);
 
-  const loadVillageStats = useCallback(async () => {
-    if (!election) return;
-    
-    const supabase = createClient();
-
-    const { data: villages } = await supabase
-      .from('villages')
-      .select('id, name');
-
-    if (!villages) return;
-
-    const villageStatsData = [];
-
-    for (const village of villages) {
-      let villageCodesQuery = supabase
-        .from('voter_codes')
-        .select('id, first_login_at, is_used')
-        .eq('village_id', village.id)
-        .contains('accessible_elections', [election.id]);
-      
-      // 임원투표인 경우 group_id로 필터링
-      if (election.election_type === 'officer' && election.group_id) {
-        villageCodesQuery = villageCodesQuery.eq('group_id', election.group_id);
-      }
-
-      const { data: codes } = await villageCodesQuery;
-
-      const codesCount = codes?.length || 0;
-      const attendedCount = codes?.filter(c => c.first_login_at !== null).length || 0;
-      const usedCount = codes?.filter(c => c.is_used).length || 0;
-      const participationRate = attendedCount > 0 ? (usedCount / attendedCount) * 100 : 0;
-
-      if (codesCount > 0) {
-        villageStatsData.push({
-          villageName: village.name,
-          codesCount,
-          attendedCount,
-          usedCount,
-          participationRate,
-        });
-      }
-    }
-
-    villageStatsData.sort((a, b) => b.participationRate - a.participationRate);
-    setVillageStats(villageStatsData);
-  }, [election]);
-
   // 결과 탭 활성화 시 데이터 로드
   useEffect(() => {
     if (activeTab === 'results' && election) {
       loadResultStats();
-      loadVillageStats();
       loadElection();
     }
-  }, [activeTab, election, loadResultStats, loadVillageStats, loadElection]);
+  }, [activeTab, election, loadResultStats, loadElection]);
 
   // 비고 로드
   const loadNotes = useCallback(async () => {
@@ -726,7 +672,10 @@ export default function ElectionDetailPage({
       tiedCandidates: []
     };
     
-    const candidatesWithVotes = candidates.filter(c => c.vote_count > 0);
+    // 득표순으로 정렬
+    const candidatesWithVotes = candidates
+      .filter(c => c.vote_count > 0)
+      .sort((a, b) => b.vote_count - a.vote_count);
     
     if (candidatesWithVotes.length === 0) {
       return { 
@@ -782,7 +731,10 @@ export default function ElectionDetailPage({
         // Find tied candidates (those at the cutoff who are competing for remaining slots)
         tiedCandidates = candidatesWithVotes.filter(c => c.vote_count === cutoffVotes);
         
-        if (tiedCandidates.length + confirmedWinners.length > election.max_selections) {
+        // 남은 자리 수 계산
+        const remainingSlots = election.max_selections - confirmedWinners.length;
+        
+        if (tiedCandidates.length > remainingSlots) {
           // There's a tie - only tied candidates are uncertain
           hasTie = true;
           winners = [...confirmedWinners, ...tiedCandidates];
@@ -795,11 +747,11 @@ export default function ElectionDetailPage({
       } else {
         // For non-plurality voting, use old logic
         const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
-        const tiedCandidates = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
+        const tiedCandidatesLocal = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
         
-        if (tiedCandidates.length > election.max_selections) {
+        if (tiedCandidatesLocal.length > election.max_selections) {
           hasTie = true;
-          winners = tiedCandidates;
+          winners = tiedCandidatesLocal;
         } else {
           winners = candidatesWithVotes.slice(0, election.max_selections);
         }
@@ -2014,36 +1966,6 @@ export default function ElectionDetailPage({
                     </div>
                   )}
                 </div>
-
-                {/* 마을별 투표율 */}
-                {election.election_type === 'delegate' && villageStats.length > 0 && (
-                  <div className="card-apple p-6">
-                    <h2 className="text-xl font-bold mb-6" style={{ color: '#1d1d1f' }}>마을별 투표율</h2>
-                    <div className="space-y-3">
-                      {villageStats.map((villageStat, index) => (
-                        <div key={index} className="border border-gray-200 rounded-xl p-4" style={{ background: 'white' }}>
-                          <div className="flex justify-between items-center mb-2">
-                            <div className="font-semibold" style={{ color: '#1d1d1f' }}>{villageStat.villageName}</div>
-                            <div className="text-right">
-                              <div className="text-lg font-bold" style={{ color: 'var(--color-secondary)' }}>
-                                {villageStat.participationRate.toFixed(1)}%
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                투표 {villageStat.usedCount} / 참석 {villageStat.attendedCount}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500"
-                              style={{ width: `${villageStat.participationRate}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })()}
