@@ -1703,8 +1703,8 @@ export default function ElectionDetailPage({
                   
                   <div className="grid grid-cols-2 gap-3">
                     {voteThresholds.map((threshold) => {
-                      const attendedCodes = resultStats.attendedCodes;
-                      const requiredVotes = Math.ceil(attendedCodes * (threshold.percentage / 100));
+                      const actualVoters = resultStats.uniqueVoters; // 실제 투표 참여자 수
+                      const requiredVotes = Math.ceil(actualVoters * (threshold.percentage / 100));
                       
                       return (
                         <div key={threshold.id} className="relative group bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
@@ -1741,7 +1741,7 @@ export default function ElectionDetailPage({
                               {requiredVotes}명
                             </div>
                             <div className="text-xs text-gray-500 pt-3 border-t border-blue-200">
-                              참석자 {attendedCodes}명 기준
+                              실제 투표자 {actualVoters}명 기준
                             </div>
                           </div>
                         </div>
