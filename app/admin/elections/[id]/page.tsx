@@ -720,6 +720,26 @@ export default function ElectionDetailPage({
     if (!meetsThreshold && criteria.type !== 'plurality') {
       winners = [];
       hasTie = false;
+    } else if (criteria.type === 'percentage' || criteria.type === 'absolute_majority') {
+      // 과반수 또는 특정 득표율 기준: 기준을 넘은 후보만 당선 (선출 인원과 무관)
+      const qualifiedCandidates = candidatesWithVotes.filter(c => c.vote_count >= requiredVotes);
+      
+      if (qualifiedCandidates.length > election.max_selections) {
+        // 기준을 넘은 사람이 선출 인원보다 많으면 상위 N명만 당선
+        winners = qualifiedCandidates.slice(0, election.max_selections);
+        confirmedWinners = winners;
+        tiedCandidates = [];
+      } else if (qualifiedCandidates.length > 0) {
+        // 기준을 넘은 사람만 당선 (선출 인원보다 적어도 됨)
+        winners = qualifiedCandidates;
+        confirmedWinners = winners;
+        tiedCandidates = [];
+      } else {
+        // 기준을 넘은 사람이 없으면 당선자 없음
+        winners = [];
+        confirmedWinners = [];
+        tiedCandidates = [];
+      }
     } else if (candidatesWithVotes.length >= election.max_selections) {
       // For plurality voting, separate confirmed winners from tied candidates
       if (criteria.type === 'plurality') {
@@ -743,17 +763,6 @@ export default function ElectionDetailPage({
           winners = candidatesWithVotes.slice(0, election.max_selections);
           confirmedWinners = winners;
           tiedCandidates = [];
-        }
-      } else {
-        // For non-plurality voting, use old logic
-        const cutoffVotes = candidatesWithVotes[election.max_selections - 1].vote_count;
-        const tiedCandidatesLocal = candidatesWithVotes.filter(c => c.vote_count >= cutoffVotes);
-        
-        if (tiedCandidatesLocal.length > election.max_selections) {
-          hasTie = true;
-          winners = tiedCandidatesLocal;
-        } else {
-          winners = candidatesWithVotes.slice(0, election.max_selections);
         }
       }
     } else {
@@ -1671,12 +1680,21 @@ export default function ElectionDetailPage({
                 {/* 득표 기준 계산기 */}
                 <div className="card-apple p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold" style={{ 
-                      color: '#1d1d1f',
-                      letterSpacing: '-0.02em'
-                    }}>
-                      📊 득표 기준 계산
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-semibold" style={{ 
+                        color: '#1d1d1f',
+                        letterSpacing: '-0.02em'
+                      }}>
+                        📊 득표 기준 계산
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        현재 투표 기준: <strong className="text-blue-600">
+                          {election.winning_criteria.type === 'plurality' ? '최다 득표' :
+                           election.winning_criteria.type === 'absolute_majority' ? '과반수' :
+                           `${election.winning_criteria.percentage}% (${election.winning_criteria.base === 'attended' ? '참석자' : '발급코드'} 기준)`}
+                        </strong>
+                      </p>
+                    </div>
                     <button
                       onClick={() => {
                         const percentage = prompt('비율을 입력하세요 (예: 50, 66.67, 75):');
@@ -1740,7 +1758,7 @@ export default function ElectionDetailPage({
                           <div className="text-center">
                             <div className="text-sm text-gray-600 mb-2">필요한 득표수</div>
                             <div className="text-4xl font-bold text-green-600 mb-2">
-                              {requiredVotes}명
+                              {requiredVotes}표
                             </div>
                             <div className="text-xs text-gray-500 pt-3 border-t border-blue-200">
                               실제 투표자 {actualVoters}명 기준
@@ -1851,8 +1869,8 @@ export default function ElectionDetailPage({
                       }`}>
                         <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
                           {hasTie ? '⚠️ 동점으로 당선자 미확정' : 
-                           election.max_selections === 1 ? '🏆 당선자' : 
-                           `🏆 당선자 (상위 ${election.max_selections}명)`}
+                           winners.length === 1 ? '🏆 당선자' : 
+                           `🏆 당선자 (${winners.length}명)`}
                         </h2>
                         {hasTie && (
                           <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
