@@ -1849,7 +1849,7 @@ export default function ElectionDetailPage({
                                 <div className="flex-1">
                                   <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{candidate.name}</div>
                                   <div className="text-sm text-gray-600">
-                                    {candidate.vote_count}표 ({resultStats.totalVotes > 0 ? ((candidate.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
+                                    {candidate.vote_count}표 ({resultStats.uniqueVoters > 0 ? ((candidate.vote_count / resultStats.uniqueVoters) * 100).toFixed(1) : 0}%)
                                   </div>
                                 </div>
                               </div>
@@ -1871,6 +1871,9 @@ export default function ElectionDetailPage({
                            winners.length === 1 ? '🏆 당선자' : 
                            `🏆 당선자 (${winners.length}명)`}
                         </h2>
+                        <p className="text-sm text-gray-600 mb-4">
+                          선출 인원: <strong>{election.max_selections}명</strong>
+                        </p>
                         {hasTie && (
                           <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
                             <p className="text-sm text-gray-700">
@@ -1897,7 +1900,7 @@ export default function ElectionDetailPage({
                                   <div className="flex-1">
                                     <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{winner.name}</div>
                                     <div className="text-sm text-gray-600">
-                                      {winner.vote_count}표 ({resultStats.totalVotes > 0 ? ((winner.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
+                                      {winner.vote_count}표 ({resultStats.uniqueVoters > 0 ? ((winner.vote_count / resultStats.uniqueVoters) * 100).toFixed(1) : 0}%)
                                     </div>
                                   </div>
                                 </div>
@@ -1922,7 +1925,7 @@ export default function ElectionDetailPage({
                     <div className="space-y-3">
                       {[...candidates].sort((a, b) => b.vote_count - a.vote_count).map((candidate, index) => {
                         const percentage = maxVotes > 0 ? (candidate.vote_count / maxVotes) * 100 : 0;
-                        const votePercentage = resultStats.totalVotes > 0 ? (candidate.vote_count / resultStats.totalVotes) * 100 : 0;
+                        const votePercentage = resultStats.uniqueVoters > 0 ? (candidate.vote_count / resultStats.uniqueVoters) * 100 : 0;
                         
                         // For plurality with tie: distinguish confirmed winners from tied candidates
                         const isConfirmedWinner = election.winning_criteria.type === 'plurality' && hasTie 
