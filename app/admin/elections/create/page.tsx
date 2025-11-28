@@ -82,7 +82,7 @@ function CreateElectionPageContent() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('villages')
-      .select('*')
+      .select('id, name, is_active')
       .order('name', { ascending: true });
 
     if (error) {
@@ -311,12 +311,13 @@ function CreateElectionPageContent() {
               return allElectionIds.some(id => accessible.includes(id));
             });
 
-            // 각 코드의 accessible_elections 업데이트
-            for (const code of groupCodes) {
+            // ✅ 최적화: 각 코드의 accessible_elections를 한 번에 업데이트
+            if (groupCodes.length > 0) {
+              const codeIds = groupCodes.map(c => c.id);
               await supabase
                 .from('voter_codes')
                 .update({ accessible_elections: allElectionIds })
-                .eq('id', code.id);
+                .in('id', codeIds);
             }
           }
         }

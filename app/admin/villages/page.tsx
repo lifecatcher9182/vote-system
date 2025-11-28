@@ -75,7 +75,7 @@ export default function VillagesPage() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('villages')
-      .select('*')
+      .select('id, name, is_active, created_at')
       .order('name');
 
     if (error) {

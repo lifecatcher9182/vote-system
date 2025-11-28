@@ -245,28 +245,27 @@ export default function ElectionDetailPage({
       return;
     }
 
-    // 각 코드에 대해 투표 여부 확인
-    const codesWithVoteStatus = await Promise.all(
-      (codesData || []).map(async (code) => {
-        const { data: voteData, error: voteError } = await supabase
-          .from('votes')
-          .select('id')
-          .eq('voter_code_id', code.id)
-          .eq('election_id', election.id);
+    // ✅ 최적화: 모든 투표를 한 번에 조회 (N+1 쿼리 제거)
+    const codeIds = (codesData || []).map(c => c.id);
+    
+    // 코드가 없으면 빈 Set 반환
+    let votedCodeIds = new Set<string>();
+    if (codeIds.length > 0) {
+      const { data: votesData } = await supabase
+        .from('votes')
+        .select('voter_code_id')
+        .eq('election_id', election.id)
+        .in('voter_code_id', codeIds);
 
-        if (voteError) {
-          console.error('투표 조회 오류 (코드 ID:', code.id, '):', voteError);
-        }
+      // 투표한 코드 ID를 Set으로 변환 (빠른 조회)
+      votedCodeIds = new Set(votesData?.map(v => v.voter_code_id) || []);
+    }
 
-        // 투표 데이터가 하나라도 있으면 투표 완료 (명시적 boolean 타입)
-        const hasVoted: boolean = !!(voteData && voteData.length > 0);
-
-        return {
-          ...code,
-          has_voted: hasVoted
-        };
-      })
-    );
+    // 각 코드에 투표 여부 추가
+    const codesWithVoteStatus = (codesData || []).map(code => ({
+      ...code,
+      has_voted: votedCodeIds.has(code.id)
+    }));
 
     console.log('총', codesWithVoteStatus.length, '개 코드 로드 완료');
     console.log('투표 완료:', codesWithVoteStatus.filter(c => c.has_voted).length, '개');
@@ -560,9 +559,9 @@ export default function ElectionDetailPage({
   useEffect(() => {
     if (activeTab === 'results' && election) {
       loadResultStats();
-      loadElection();
+      // loadElection()은 이미 초기화 시 호출되므로 제거 (중복 방지)
     }
-  }, [activeTab, election, loadResultStats, loadElection]);
+  }, [activeTab, election, loadResultStats]);
 
   // 비고 로드
   const loadNotes = useCallback(async () => {
@@ -571,7 +570,7 @@ export default function ElectionDetailPage({
     const supabase = createClient();
     const { data, error } = await supabase
       .from('election_notes')
-      .select('*')
+      .select('id, election_id, content, created_by, created_at, updated_at')
       .eq('election_id', election.id)
       .order('created_at', { ascending: false });
 

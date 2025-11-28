@@ -176,7 +176,7 @@ export default function ElectionGroupDetailPage({
 
     const { data, error } = await supabase
       .from('election_groups')
-      .select('*')
+      .select('id, title, description, group_type, status, created_at, updated_at')
       .eq('id', resolvedParams.id)
       .single();
 
@@ -307,36 +307,53 @@ export default function ElectionGroupDetailPage({
       .eq('group_id', group.id)
       .eq('election_type', 'delegate');
 
-    if (!delegateElections) return;
+    if (!delegateElections || delegateElections.length === 0) return;
+
+    const villageIds = delegateElections
+      .map(e => e.village_id)
+      .filter(Boolean) as string[];
+
+    if (villageIds.length === 0) return;
+
+    // ✅ 최적화: 모든 마을 정보를 한 번에 조회
+    const { data: villages } = await supabase
+      .from('villages')
+      .select('id, name')
+      .in('id', villageIds);
+
+    const villageMap = new Map(villages?.map(v => [v.id, v.name]) || []);
+
+    // ✅ 최적화: 모든 코드를 한 번에 조회
+    const electionIds = delegateElections.map(e => e.id);
+    const { data: allCodes } = await supabase
+      .from('voter_codes')
+      .select('id, first_login_at, is_used, village_id, accessible_elections')
+      .in('village_id', villageIds);
+
+    // 투표별로 코드 그룹화
+    const codesByElection = new Map<string, typeof allCodes>();
+    delegateElections.forEach(election => {
+      const electionCodes = (allCodes || []).filter(code => 
+        code.accessible_elections?.includes(election.id)
+      );
+      codesByElection.set(election.id, electionCodes);
+    });
 
     const villageStatsData = [];
-
     for (const delegateElection of delegateElections) {
       if (!delegateElection.village_id) continue;
 
-      // 해당 마을 정보 가져오기
-      const { data: village } = await supabase
-        .from('villages')
-        .select('id, name')
-        .eq('id', delegateElection.village_id)
-        .single();
+      const villageName = villageMap.get(delegateElection.village_id);
+      if (!villageName) continue;
 
-      if (!village) continue;
-
-      // 해당 총대 투표의 코드 통계
-      const { data: codes } = await supabase
-        .from('voter_codes')
-        .select('id, first_login_at, is_used')
-        .eq('village_id', village.id)
-        .contains('accessible_elections', [delegateElection.id]);
-
-      const codesCount = codes?.length || 0;
-      const attendedCount = codes?.filter(c => c.first_login_at !== null).length || 0;
-      const usedCount = codes?.filter(c => c.is_used).length || 0;
+      const codes = codesByElection.get(delegateElection.id) || [];
+      const codesCount = codes.length;
+      const attendedCount = codes.filter(c => c.first_login_at !== null).length;
+      const usedCount = codes.filter(c => c.is_used).length;
       const participationRate = attendedCount > 0 ? (usedCount / attendedCount) * 100 : 0;
 
       villageStatsData.push({
-        villageName: village.name,
+        villageName,
         codesCount,
         attendedCount,
         usedCount,
@@ -387,20 +404,24 @@ export default function ElectionGroupDetailPage({
 
     // 각 코드가 실제로 투표한 선거 개수 계산
     const codeIds = filteredCodes.map(c => c.id);
-    const { data: votesData } = await supabase
-      .from('votes')
-      .select('voter_code_id, election_id')
-      .in('voter_code_id', codeIds)
-      .in('election_id', electionIds);
-
+    
     // 코드별로 투표한 선거 ID를 Set으로 집계
     const voteCountMap = new Map<string, Set<string>>();
-    votesData?.forEach(vote => {
-      if (!voteCountMap.has(vote.voter_code_id)) {
-        voteCountMap.set(vote.voter_code_id, new Set());
-      }
-      voteCountMap.get(vote.voter_code_id)!.add(vote.election_id);
-    });
+    
+    if (codeIds.length > 0) {
+      const { data: votesData } = await supabase
+        .from('votes')
+        .select('voter_code_id, election_id')
+        .in('voter_code_id', codeIds)
+        .in('election_id', electionIds);
+
+      votesData?.forEach(vote => {
+        if (!voteCountMap.has(vote.voter_code_id)) {
+          voteCountMap.set(vote.voter_code_id, new Set());
+        }
+        voteCountMap.get(vote.voter_code_id)!.add(vote.election_id);
+      });
+    }
 
     // 각 코드에 completed_election_count 추가
     const codesWithVoteCount = filteredCodes.map(code => ({

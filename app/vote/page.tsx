@@ -29,7 +29,7 @@ export default function VotePage() {
       // 참여코드 확인 (대문자로 변환하여 검색)
       const { data: voterCode, error: codeError } = await supabase
         .from('voter_codes')
-        .select('*')
+        .select('id, code, accessible_elections')
         .eq('code', code.trim().toUpperCase())
         .single();
 

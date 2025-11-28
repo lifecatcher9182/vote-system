@@ -193,18 +193,28 @@ export default function ResultsPage({
       return;
     }
 
+    // ✅ 최적화: 모든 마을의 코드를 한 번에 조회
+    const { data: allCodes } = await supabase
+      .from('voter_codes')
+      .select('id, is_used, village_id')
+      .contains('accessible_elections', [resolvedParams.id])
+      .not('village_id', 'is', null);
+
+    // 마을별로 그룹화
+    const codesByVillage = new Map<string, typeof allCodes>();
+    (allCodes || []).forEach(code => {
+      if (!code.village_id) return;
+      if (!codesByVillage.has(code.village_id)) {
+        codesByVillage.set(code.village_id, []);
+      }
+      codesByVillage.get(code.village_id)!.push(code);
+    });
+
     const villageStatsData: VillageStats[] = [];
-
     for (const village of villages) {
-      // 각 마을의 코드 통계
-      const { data: codes } = await supabase
-        .from('voter_codes')
-        .select('id, is_used')
-        .eq('village_id', village.id)
-        .contains('accessible_elections', [resolvedParams.id]);
-
-      const codesCount = codes?.length || 0;
-      const usedCount = codes?.filter(c => c.is_used).length || 0;
+      const codes = codesByVillage.get(village.id) || [];
+      const codesCount = codes.length;
+      const usedCount = codes.filter(c => c.is_used).length;
       const participationRate = codesCount > 0 ? (usedCount / codesCount) * 100 : 0;
 
       if (codesCount > 0) {
