@@ -12,7 +12,7 @@ import AlertModal from '@/components/AlertModal';
 interface Village {
   id: string;
   name: string;
-  code: string;
+  is_active: boolean;
 }
 
 interface Candidate {
