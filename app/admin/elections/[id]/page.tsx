@@ -1624,7 +1624,9 @@ export default function ElectionDetailPage({
           {/* 결과 & 모니터링 탭 */}
           {activeTab === 'results' && (() => {
             const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage, confirmedWinners, tiedCandidates } = calculateWinners();
-            const candidatesWithVotes = candidates.filter(c => c.vote_count > 0);
+            const candidatesWithVotes = candidates
+              .filter(c => c.vote_count > 0)
+              .sort((a, b) => b.vote_count - a.vote_count);
             const maxVotes = Math.max(...candidates.map(c => c.vote_count), 1);
 
             return (

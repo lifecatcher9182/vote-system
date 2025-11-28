@@ -510,10 +510,6 @@ export default function ResultsPage({
                 <p className="text-sm text-gray-700 mb-2" style={{ letterSpacing: '-0.01em' }}>
                   <strong>당선 기준:</strong> {thresholdMessage}
                 </p>
-                <p className="text-sm text-gray-700" style={{ letterSpacing: '-0.01em' }}>
-                  <strong>최고 득표:</strong> {candidatesWithVotes[0]?.name} {candidatesWithVotes[0]?.vote_count}표
-                  {requiredVotes > 0 && ` (필요: ${requiredVotes}표)`}
-                </p>
                 <p className="text-sm text-red-600 mt-2 font-semibold">
                   → {election.round === 1 ? '2차 투표를 진행하거나' : election.round === 2 ? '3차 투표(최다득표)를 진행하거나' : ''} 
                   {' '}별도 규정에 따라 결정해주세요.
