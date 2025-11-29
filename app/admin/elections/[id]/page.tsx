@@ -711,16 +711,16 @@ export default function ElectionDetailPage({
       thresholdMessage = '최다 득표자';
       meetsThreshold = true;
     } else if (criteria.type === 'absolute_majority') {
-      const base = resultStats.attendedCodes > 0 ? resultStats.attendedCodes : resultStats.totalCodes;
+      const base = resultStats.uniqueVoters > 0 ? resultStats.uniqueVoters : resultStats.totalCodes;
       requiredVotes = Math.floor(base / 2) + 1;
-      thresholdMessage = `${base}명의 과반(${requiredVotes}표 이상)`;
+      thresholdMessage = `투표자 ${base}명의 과반(${requiredVotes}표 이상)`;
       meetsThreshold = candidatesWithVotes[0].vote_count > Math.floor(base / 2);
     } else if (criteria.type === 'percentage') {
       const base = criteria.base === 'attended' 
-        ? (resultStats.attendedCodes > 0 ? resultStats.attendedCodes : resultStats.totalCodes)
+        ? (resultStats.uniqueVoters > 0 ? resultStats.uniqueVoters : resultStats.totalCodes)
         : resultStats.totalCodes;
       requiredVotes = Math.ceil(base * ((criteria.percentage || 0) / 100));
-      const baseText = criteria.base === 'attended' ? '참석자' : '발급 코드';
+      const baseText = criteria.base === 'attended' ? '투표자' : '발급 코드';
       thresholdMessage = `${baseText} ${base}명의 ${criteria.percentage}%(${requiredVotes}표 이상)`;
       meetsThreshold = candidatesWithVotes[0].vote_count >= requiredVotes;
     }
@@ -1704,7 +1704,7 @@ export default function ElectionDetailPage({
                         현재 투표 기준: <strong className="text-blue-600">
                           {election.winning_criteria.type === 'plurality' ? '최다 득표' :
                            election.winning_criteria.type === 'absolute_majority' ? '과반수' :
-                           `${election.winning_criteria.percentage}% (${election.winning_criteria.base === 'attended' ? '참석자' : '발급코드'} 기준)`}
+                           `${election.winning_criteria.percentage}% (${election.winning_criteria.base === 'attended' ? '투표자' : '발급코드'} 기준)`}
                         </strong>
                       </p>
                     </div>

@@ -371,10 +371,6 @@ export default function ElectionGroupDetailPage({
     
     const supabase = createClient();
     
-    // 이 그룹의 모든 투표 ID 가져오기
-    const electionIds = elections.map(e => e.id);
-    if (electionIds.length === 0) return;
-    
     // voter_codes에서 이 그룹의 코드만 조회 (group_id로 필터링)
     const { data: codesData, error } = await supabase
       .from('voter_codes')
@@ -388,27 +384,20 @@ export default function ElectionGroupDetailPage({
       return;
     }
 
-    // accessible_elections에 이 그룹의 투표 ID가 포함된 코드만 필터링
-    const filteredCodes = (codesData || []).filter(code => {
-      // accessible_elections가 배열 형태로 저장되어 있는지 확인
-      const accessibleElections = (code as { accessible_elections?: string[] }).accessible_elections || [];
-      
-      // 조건 1: 이 그룹의 투표 ID를 최소 하나 이상 포함
-      const hasGroupElection = accessibleElections.some(id => electionIds.includes(id));
-      
-      // 조건 2: 다른 그룹의 투표 ID는 포함하지 않음 (모든 ID가 현재 그룹 것이어야 함)
-      const onlyGroupElections = accessibleElections.every(id => electionIds.includes(id));
-      
-      return hasGroupElection && onlyGroupElections;
-    });
+    // group_id로 필터링했으므로 추가 필터링 불필요
+    // 모든 코드를 그대로 사용
+    const filteredCodes = codesData || [];
 
     // 각 코드가 실제로 투표한 선거 개수 계산
     const codeIds = filteredCodes.map(c => c.id);
     
+    // 이 그룹의 모든 투표 ID 가져오기
+    const electionIds = elections.map(e => e.id);
+    
     // 코드별로 투표한 선거 ID를 Set으로 집계
     const voteCountMap = new Map<string, Set<string>>();
     
-    if (codeIds.length > 0) {
+    if (codeIds.length > 0 && electionIds.length > 0) {
       const { data: votesData } = await supabase
         .from('votes')
         .select('voter_code_id, election_id')
@@ -656,7 +645,12 @@ export default function ElectionGroupDetailPage({
                   max_selections: position.selections,
                   round: 1,
                   status: 'waiting',
-                  group_id: group.id
+                  group_id: group.id,
+                  winning_criteria: {
+                    type: 'percentage',
+                    percentage: 66.67,
+                    base: 'attended'
+                  }
                 })
                 .select('id')
                 .single();
