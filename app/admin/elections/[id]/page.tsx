@@ -207,6 +207,20 @@ export default function ElectionDetailPage({
 
     setElection(electionData);
 
+    // 투표 타입에 따라 득표 기준 계산기 기본값 설정
+    if (electionData.election_type === 'officer') {
+      // 임원 투표: 2/3만 표시
+      setVoteThresholds([
+        { id: '1', percentage: 66.67, label: '2/3' }
+      ]);
+    } else {
+      // 총대 투표: 과반수, 2/3 둘 다 표시
+      setVoteThresholds([
+        { id: '1', percentage: 50, label: '과반수' },
+        { id: '2', percentage: 66.67, label: '2/3' }
+      ]);
+    }
+
     const { data: candidatesData, error: candidatesError } = await supabase
       .from('candidates')
       .select('id, name, election_id, vote_count, created_at')
