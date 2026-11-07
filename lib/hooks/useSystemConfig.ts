@@ -44,7 +44,6 @@ export function useSystemConfig() {
 
     const cached = getCachedConfig();
     if (cached) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- 하이드레이션 후 localStorage 캐시 반영
       setConfig(cached);
     }
 

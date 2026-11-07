@@ -1,107 +1,52 @@
 'use client';
 
 import { QRCodeSVG } from 'qrcode.react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
-interface QRCodeSectionProps {
-  electionId: string;
-  title: string;
-}
+// 투표 입장 QR. 코드 입력 화면으로 연결된다 (선거별 링크는 없음).
+export default function QRCodeSection({ title }: { electionId?: string; title: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+  const url = typeof window !== 'undefined' ? `${window.location.origin}/vote` : '';
 
-export default function QRCodeSection({ electionId, title }: QRCodeSectionProps) {
-  const qrRef = useRef<HTMLDivElement>(null);
-  
-  // 투표 페이지 URL 생성
-  const voteUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/vote?election=${electionId}`
-    : '';
-
-  // PNG로 다운로드
-  const downloadPNG = () => {
-    const svg = qrRef.current?.querySelector('svg');
+  const download = () => {
+    const svg = ref.current?.querySelector('svg');
     if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
     const img = new Image();
-
-    canvas.width = 512;
-    canvas.height = 512;
-
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 512;
     img.onload = () => {
-      ctx?.drawImage(img, 0, 0, 512, 512);
-      const pngFile = canvas.toDataURL('image/png');
-      
-      const downloadLink = document.createElement('a');
-      downloadLink.download = `투표QR_${title.replace(/\s/g, '_')}.png`;
-      downloadLink.href = pngFile;
-      downloadLink.click();
+      canvas.getContext('2d')?.drawImage(img, 0, 0, 512, 512);
+      const a = document.createElement('a');
+      a.download = `투표QR_${title.replace(/\s/g, '_')}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
     };
-
-    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(svg))));
   };
 
-  // URL 복사
-  const copyUrl = () => {
-    navigator.clipboard.writeText(voteUrl);
-    alert('URL이 복사되었습니다!');
+  const copy = async () => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-xl font-bold mb-4">📱 투표 QR 코드</h2>
-      
-      <div className="text-center">
-        <div 
-          ref={qrRef}
-          className="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg mb-4"
-        >
-          <QRCodeSVG 
-            value={voteUrl}
-            size={200}
-            level="H"
-            includeMargin={true}
-          />
+    <section className="panel">
+      <h2>투표 입장 QR</h2>
+      <div className="flex flex-wrap items-center gap-5">
+        <div ref={ref} className="p-2 bg-white rounded-md" style={{ border: '1px solid var(--rule)' }}>
+          <QRCodeSVG value={url} size={144} level="H" />
         </div>
-
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <p className="text-xs text-gray-600 mb-2">투표 URL</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={voteUrl}
-              readOnly
-              className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded text-sm"
-            />
-            <button
-              onClick={copyUrl}
-              className="px-3 py-2 bg-[var(--color-secondary)] text-white rounded hover:opacity-90 text-sm whitespace-nowrap"
-            >
-              복사
-            </button>
+        <div className="flex-1 min-w-[200px]">
+          <p className="text-sm muted">스캔하면 코드 입력 화면이 열립니다. 주보나 안내문에 넣어 쓰세요.</p>
+          <p className="mt-2 text-xs mono faint break-all">{url}</p>
+          <div className="flex gap-2 mt-3">
+            <button onClick={download} className="btn btn-secondary btn-sm">PNG 저장</button>
+            <button onClick={copy} className="btn btn-ghost btn-sm">{copied ? '복사됨' : '링크 복사'}</button>
           </div>
         </div>
-
-        <div className="space-y-2">
-          <button
-            onClick={downloadPNG}
-            className="w-full px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:opacity-90 text-sm font-medium"
-          >
-            💾 PNG로 다운로드
-          </button>
-        </div>
-
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-700 text-left">
-          <p className="font-semibold mb-2">💡 활용 방법</p>
-          <ul className="space-y-1 list-disc list-inside">
-            <li>주보에 QR 코드를 넣어 배포하세요</li>
-            <li>현수막이나 포스터에 인쇄하세요</li>
-            <li>단체 카톡방에 이미지를 공유하세요</li>
-            <li>스캔만 하면 바로 투표 페이지로!</li>
-          </ul>
-        </div>
       </div>
-    </div>
+    </section>
   );
 }

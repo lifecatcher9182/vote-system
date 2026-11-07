@@ -76,7 +76,6 @@ export default function VoteWithCodePage({ params }: { params: Promise<{ code: s
     }
   }, [code, router]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- 마운트 시 1회 데이터 로드
   useEffect(() => { loadData(); }, [loadData]);
 
   // 2. 선택된 선거는 URL(?election=) 에서 파생. 뒤로가기 = 목록으로.
