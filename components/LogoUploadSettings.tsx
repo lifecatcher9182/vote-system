@@ -255,7 +255,7 @@ export default function LogoUploadSettings() {
             <button
               onClick={handleDelete}
               disabled={uploading}
-              className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               style={{ 
                 background: 'rgba(239, 68, 68, 0.1)',
                 color: '#ef4444',

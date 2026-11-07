@@ -115,7 +115,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
   return (
     <div className="card-apple p-8">
       <h2 className="text-2xl font-semibold mb-6" style={{ 
-        color: '#1d1d1f',
+        color: 'var(--ink)',
         letterSpacing: '-0.02em'
       }}>
         색상 테마
@@ -131,7 +131,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
             <div className="relative">
               <button
                 onClick={() => setShowPrimaryPicker(!showPrimaryPicker)}
-                className="w-24 h-24 rounded-2xl border-2 transition-all duration-200 hover:scale-105"
+                className="w-24 h-24 rounded-2xl border-2 transition-all duration-200"
                 style={{ 
                   backgroundColor: primaryColor,
                   borderColor: primaryColor === '#ffffff' ? '#e5e5e7' : 'transparent',
@@ -174,7 +174,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
             <div className="relative">
               <button
                 onClick={() => setShowSecondaryPicker(!showSecondaryPicker)}
-                className="w-24 h-24 rounded-2xl border-2 border-transparent transition-all duration-200 hover:scale-105"
+                className="w-24 h-24 rounded-2xl border-2 border-transparent transition-all duration-200"
                 style={{ 
                   backgroundColor: secondaryColor,
                   boxShadow: 'var(--shadow-md)'
@@ -212,7 +212,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{
               background: 'var(--color-secondary)',
               color: 'white',
@@ -229,10 +229,10 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
           </button>
           <button
             onClick={handleReset}
-            className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+            className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
             style={{
               background: 'rgba(0, 0, 0, 0.06)',
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.01em'
             }}
           >
@@ -243,7 +243,7 @@ export default function ColorThemeSettings({ onColorsChange }: ColorThemeSetting
         {/* Info Box */}
         <div className="mt-6 p-5 rounded-2xl" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'rgba(0, 113, 227, 0.1)' }}>
+            <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'color-mix(in oklch, var(--accent) 12%, transparent)' }}>
               <svg className="w-3.5 h-3.5" style={{ color: 'var(--color-secondary)' }} fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>

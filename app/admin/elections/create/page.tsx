@@ -348,7 +348,7 @@ function CreateElectionPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto mb-6"></div>
           <p className="text-lg text-gray-600" style={{ letterSpacing: '-0.01em' }}>준비 중...</p>
@@ -358,7 +358,7 @@ function CreateElectionPageContent() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       {/* Logo - 좌측 상단 고정 */}
       <div className="fixed top-6 left-6 z-50">
         <SystemLogo size="sm" linkToHome />
@@ -367,14 +367,14 @@ function CreateElectionPageContent() {
       {/* Header */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(20px)',
+        
         borderColor: 'rgba(0, 0, 0, 0.05)'
       }}>
         <div className="max-w-4xl mx-auto px-6 py-8">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-semibold mb-1" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 새 투표 생성
@@ -390,10 +390,10 @@ function CreateElectionPageContent() {
             </div>
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.06)',
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -411,14 +411,14 @@ function CreateElectionPageContent() {
           {/* 투표 제목 */}
           <div className="card-apple p-8">
             <h2 className="text-xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               기본 정보
             </h2>
             
             <div>
-              <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                 투표 제목 <span className="text-red-500">*</span>
               </label>
               <input
@@ -435,7 +435,7 @@ function CreateElectionPageContent() {
           {/* 투표 유형 */}
           <div className="card-apple p-8">
             <h2 className="text-xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               투표 유형
@@ -449,8 +449,8 @@ function CreateElectionPageContent() {
             {groupInfo ? (
               // 그룹에서 들어온 경우: 타입 고정, 변경 불가
               <div className="p-6 rounded-2xl" style={{
-                background: 'rgba(0, 113, 227, 0.05)',
-                border: '2px solid rgba(0, 113, 227, 0.2)'
+                background: 'color-mix(in oklch, var(--accent) 6%, transparent)',
+                border: '2px solid color-mix(in oklch, var(--accent) 22%, transparent)'
               }}>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{
@@ -483,8 +483,8 @@ function CreateElectionPageContent() {
                   className="p-8 rounded-2xl font-semibold text-lg transition-all duration-200"
                   style={{
                     border: electionType === 'delegate' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                    background: electionType === 'delegate' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                    color: electionType === 'delegate' ? 'var(--color-secondary)' : '#1d1d1f',
+                    background: electionType === 'delegate' ? 'color-mix(in oklch, var(--accent) 6%, transparent)' : 'white',
+                    color: electionType === 'delegate' ? 'var(--color-secondary)' : 'var(--ink)',
                     letterSpacing: '-0.01em',
                     transform: electionType === 'delegate' ? 'scale(1.02)' : 'scale(1)'
                   }}
@@ -504,8 +504,8 @@ function CreateElectionPageContent() {
                   className="p-8 rounded-2xl font-semibold text-lg transition-all duration-200"
                   style={{
                     border: electionType === 'officer' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                    background: electionType === 'officer' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                    color: electionType === 'officer' ? 'var(--color-secondary)' : '#1d1d1f',
+                    background: electionType === 'officer' ? 'color-mix(in oklch, var(--accent) 6%, transparent)' : 'white',
+                    color: electionType === 'officer' ? 'var(--color-secondary)' : 'var(--ink)',
                     letterSpacing: '-0.01em',
                     transform: electionType === 'officer' ? 'scale(1.02)' : 'scale(1)'
                   }}
@@ -526,7 +526,7 @@ function CreateElectionPageContent() {
             <div className="mt-6">
               {electionType === 'delegate' && (
                 <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     마을 <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -554,7 +554,7 @@ function CreateElectionPageContent() {
 
               {electionType === 'officer' && (
                 <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     직책 <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -573,7 +573,7 @@ function CreateElectionPageContent() {
           {/* 투표 설정 */}
           <div className="card-apple p-8">
             <h2 className="text-xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               투표 설정
@@ -581,7 +581,7 @@ function CreateElectionPageContent() {
             
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div>
-                <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                   라운드
                 </label>
                 <input
@@ -594,7 +594,7 @@ function CreateElectionPageContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                   최대 선택 수
                 </label>
                 <input
@@ -609,14 +609,14 @@ function CreateElectionPageContent() {
 
             {/* 당선 기준 설정 */}
             <div className="pt-6 border-t" style={{ borderColor: 'rgba(0, 0, 0, 0.05)' }}>
-              <label className="block text-base font-semibold mb-4" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+              <label className="block text-base font-semibold mb-4" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                 당선 기준 <span className="text-red-500">*</span>
               </label>
               
               <div className="space-y-3 mb-5">
                 <label className="flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01]" style={{
                   border: criteriaType === 'plurality' ? '2px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.08)',
-                  background: criteriaType === 'plurality' ? 'rgba(0, 113, 227, 0.03)' : 'white'
+                  background: criteriaType === 'plurality' ? 'color-mix(in oklch, var(--accent) 4%, transparent)' : 'white'
                 }}>
                   <input
                     type="radio"
@@ -628,7 +628,7 @@ function CreateElectionPageContent() {
                     style={{ accentColor: 'var(--color-secondary)' }}
                   />
                   <div className="flex-1">
-                    <div className="font-semibold text-sm mb-1" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    <div className="font-semibold text-sm mb-1" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                       최다 득표
                     </div>
                     <div className="text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
@@ -639,7 +639,7 @@ function CreateElectionPageContent() {
 
                 <label className="flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01]" style={{
                   border: criteriaType === 'absolute_majority' ? '2px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.08)',
-                  background: criteriaType === 'absolute_majority' ? 'rgba(0, 113, 227, 0.03)' : 'white'
+                  background: criteriaType === 'absolute_majority' ? 'color-mix(in oklch, var(--accent) 4%, transparent)' : 'white'
                 }}>
                   <input
                     type="radio"
@@ -651,7 +651,7 @@ function CreateElectionPageContent() {
                     style={{ accentColor: 'var(--color-secondary)' }}
                   />
                   <div className="flex-1">
-                    <div className="font-semibold text-sm mb-1" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    <div className="font-semibold text-sm mb-1" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                       절대 과반수
                     </div>
                     <div className="text-xs text-gray-600" style={{ letterSpacing: '-0.01em' }}>
@@ -662,7 +662,7 @@ function CreateElectionPageContent() {
 
                 <label className="flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01]" style={{
                   border: criteriaType === 'percentage' ? '2px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.08)',
-                  background: criteriaType === 'percentage' ? 'rgba(0, 113, 227, 0.03)' : 'white'
+                  background: criteriaType === 'percentage' ? 'color-mix(in oklch, var(--accent) 4%, transparent)' : 'white'
                 }}>
                   <input
                     type="radio"
@@ -674,7 +674,7 @@ function CreateElectionPageContent() {
                     style={{ accentColor: 'var(--color-secondary)' }}
                   />
                   <div className="flex-1">
-                    <div className="font-semibold text-sm mb-1" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                    <div className="font-semibold text-sm mb-1" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                       득표율 기준
                     </div>
                     <div className="text-xs text-gray-600 mb-3" style={{ letterSpacing: '-0.01em' }}>
@@ -787,7 +787,7 @@ function CreateElectionPageContent() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-xl font-semibold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   후보자 <span className="text-red-500">*</span>
@@ -799,7 +799,7 @@ function CreateElectionPageContent() {
               <button
                 type="button"
                 onClick={addCandidate}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{
                   background: 'var(--color-secondary)',
                   color: 'white',
@@ -830,7 +830,7 @@ function CreateElectionPageContent() {
                   <button
                     type="button"
                     onClick={() => removeCandidate(candidate.id)}
-                    className="flex-shrink-0 px-5 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-30 hover:scale-105"
+                    className="flex-shrink-0 px-5 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-30"
                     style={{ 
                       background: candidates.length <= 2 ? 'rgba(0, 0, 0, 0.06)' : 'rgba(239, 68, 68, 0.1)',
                       color: candidates.length <= 2 ? '#9ca3af' : '#ef4444',
@@ -850,7 +850,7 @@ function CreateElectionPageContent() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-1 px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               style={{
                 background: 'var(--color-secondary)',
                 color: 'white',
@@ -868,10 +868,10 @@ function CreateElectionPageContent() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-200 hover:scale-105"
+              className="px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.06)',
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -889,7 +889,7 @@ function CreateElectionPageContent() {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-base font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+              <h3 className="text-base font-semibold mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                 투표 생성 안내
               </h3>
               <ul className="space-y-2 text-sm text-gray-700" style={{ letterSpacing: '-0.01em' }}>
@@ -938,7 +938,7 @@ export default function CreateElectionPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>

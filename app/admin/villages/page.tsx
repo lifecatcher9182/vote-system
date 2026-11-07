@@ -240,7 +240,7 @@ export default function VillagesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin mx-auto mb-6" style={{ borderTopColor: 'var(--color-secondary)' }} />
           <p className="text-lg font-medium text-gray-600 mt-6" style={{ letterSpacing: '-0.01em' }}>마을 목록을 불러오는 중...</p>
@@ -250,11 +250,11 @@ export default function VillagesPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       {/* Header */}
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -263,7 +263,7 @@ export default function VillagesPage() {
               <SystemLogo size="md" linkToHome />
               <div>
                 <h1 className="text-3xl font-semibold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.03em'
                 }}>
                   마을 관리
@@ -275,10 +275,10 @@ export default function VillagesPage() {
             </div>
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.06)',
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -301,7 +301,7 @@ export default function VillagesPage() {
               }`}
               style={{ 
                 background: filter === 'all' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'all' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'all' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -314,7 +314,7 @@ export default function VillagesPage() {
               }`}
               style={{ 
                 background: filter === 'active' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'active' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'active' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -327,7 +327,7 @@ export default function VillagesPage() {
               }`}
               style={{ 
                 background: filter === 'inactive' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'inactive' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'inactive' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -337,7 +337,7 @@ export default function VillagesPage() {
           
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
             style={{
               background: 'var(--color-secondary)',
               color: 'white',
@@ -359,7 +359,7 @@ export default function VillagesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
               </svg>
             </div>
-            <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+            <h3 className="text-2xl font-semibold mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
               {filter === 'active' ? '활성화된 마을이 없습니다' : 
                filter === 'inactive' ? '비활성화된 마을이 없습니다' :
                '등록된 마을이 없습니다'}
@@ -367,7 +367,7 @@ export default function VillagesPage() {
             <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>총대 선출을 위한 마을을 추가하세요</p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
               style={{
                 background: 'var(--color-secondary)',
                 color: 'white',
@@ -390,7 +390,7 @@ export default function VillagesPage() {
                     <button
                       onClick={() => handleSort('name')}
                       className="flex items-center gap-2 text-sm font-semibold hover:text-gray-900 transition-colors"
-                      style={{ color: sortBy === 'name' ? '#1d1d1f' : '#6b7280', letterSpacing: '-0.01em' }}
+                      style={{ color: sortBy === 'name' ? 'var(--ink)' : '#6b7280', letterSpacing: '-0.01em' }}
                     >
                       마을 이름
                       {sortBy === 'name' && (
@@ -404,14 +404,14 @@ export default function VillagesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <th className="px-6 py-4 text-left text-sm font-semibold" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     상태
                   </th>
                   <th className="px-6 py-4 text-left">
                     <button
                       onClick={() => handleSort('created_at')}
                       className="flex items-center gap-2 text-sm font-semibold hover:text-gray-900 transition-colors"
-                      style={{ color: sortBy === 'created_at' ? '#1d1d1f' : '#6b7280', letterSpacing: '-0.01em' }}
+                      style={{ color: sortBy === 'created_at' ? 'var(--ink)' : '#6b7280', letterSpacing: '-0.01em' }}
                     >
                       생성일
                       {sortBy === 'created_at' && (
@@ -425,7 +425,7 @@ export default function VillagesPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <th className="px-6 py-4 text-right text-sm font-semibold" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     관리
                   </th>
                 </tr>
@@ -452,7 +452,7 @@ export default function VillagesPage() {
                     <td className="px-6 py-4">
                       <button
                         onClick={() => handleToggleActive(village.id, village.is_active)}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-200 hover:scale-105"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-200"
                         style={{ 
                           background: village.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(107, 114, 128, 0.1)',
                           color: village.is_active ? '#22c55e' : '#6b7280',
@@ -476,7 +476,7 @@ export default function VillagesPage() {
                             setEditingVillage(village);
                             setShowEditModal(true);
                           }}
-                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
+                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
                           style={{ 
                             background: 'rgba(59, 130, 246, 0.1)',
                             color: '#3b82f6',
@@ -487,7 +487,7 @@ export default function VillagesPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteVillage(village.id)}
-                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-105"
+                          className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
                           style={{ 
                             background: 'rgba(239, 68, 68, 0.1)',
                             color: '#ef4444',
@@ -508,10 +508,10 @@ export default function VillagesPage() {
 
       {/* 추가 모달 */}
       {showAddModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)',  }}>
           <div className="card-apple max-w-md w-full p-8 animate-[scale-in_0.2s_ease-out]">
             <h2 className="text-2xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               새 마을 추가
@@ -520,7 +520,7 @@ export default function VillagesPage() {
             <form onSubmit={handleAddVillage}>
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     마을 이름
                   </label>
                   <input
@@ -541,10 +541,10 @@ export default function VillagesPage() {
                     setShowAddModal(false);
                     setNewVillage({ name: '' });
                   }}
-                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                   style={{ 
                     background: 'rgba(0, 0, 0, 0.06)',
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.01em'
                   }}
                 >
@@ -552,7 +552,7 @@ export default function VillagesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                   style={{
                     background: 'var(--color-secondary)',
                     color: 'white',
@@ -570,10 +570,10 @@ export default function VillagesPage() {
 
       {/* 수정 모달 */}
       {showEditModal && editingVillage && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)',  }}>
           <div className="card-apple max-w-md w-full p-8 animate-[scale-in_0.2s_ease-out]">
             <h2 className="text-2xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               마을 수정
@@ -582,7 +582,7 @@ export default function VillagesPage() {
             <form onSubmit={handleEditVillage}>
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     마을 이름
                   </label>
                   <input
@@ -603,10 +603,10 @@ export default function VillagesPage() {
                     setShowEditModal(false);
                     setEditingVillage(null);
                   }}
-                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                   style={{ 
                     background: 'rgba(0, 0, 0, 0.06)',
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.01em'
                   }}
                 >
@@ -614,7 +614,7 @@ export default function VillagesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                  className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                   style={{
                     background: 'var(--color-secondary)',
                     color: 'white',

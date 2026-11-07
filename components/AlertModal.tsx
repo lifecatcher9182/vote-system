@@ -50,7 +50,7 @@ export default function AlertModal({ isOpen, onClose, message, title = '알림' 
         <div className="px-6 pb-6 flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all duration-200 shadow-lg shadow-blue-500/30"
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg shadow-blue-500/30"
           >
             확인
           </button>

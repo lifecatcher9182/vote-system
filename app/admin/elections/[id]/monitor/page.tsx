@@ -195,7 +195,7 @@ export default function MonitorPage({
   if (loading || !election) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
@@ -214,17 +214,17 @@ export default function MonitorPage({
     : [];
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-semibold" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 실시간 모니터링
@@ -258,7 +258,7 @@ export default function MonitorPage({
             <div className="flex items-center gap-4">
               <button
                 onClick={refreshData}
-                className="px-6 py-2.5 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all hover:scale-105 text-sm font-medium"
+                className="px-6 py-2.5 bg-[var(--color-secondary)] text-white rounded-lg hover:opacity-90 transition-all text-sm font-medium"
               >
                 🔄 새로고침
               </button>

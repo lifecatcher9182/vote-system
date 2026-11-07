@@ -101,7 +101,7 @@ export default function CreateElectionGroupPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
@@ -118,7 +118,7 @@ export default function CreateElectionGroupPage() {
       {/* 헤더 */}
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(24px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
         position: 'sticky',
         top: 0,
@@ -130,7 +130,7 @@ export default function CreateElectionGroupPage() {
               <SystemLogo size="md" linkToHome />
               <div>
                 <h1 className="text-2xl sm:text-3xl font-semibold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.03em'
                 }}>
                   새 투표 그룹 만들기
@@ -142,10 +142,10 @@ export default function CreateElectionGroupPage() {
             </div>
             <button
               onClick={() => router.back()}
-              className="hidden sm:flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+              className="hidden sm:flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.06)',
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -168,7 +168,7 @@ export default function CreateElectionGroupPage() {
             <div className="text-4xl">✨</div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 투표 그룹이란?
@@ -186,7 +186,7 @@ export default function CreateElectionGroupPage() {
           {/* 그룹 타입 선택 */}
           <div className="mb-12">
             <label className="block text-lg font-semibold mb-5" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               그룹 타입 <span className="text-red-500 text-base">*</span>
@@ -195,7 +195,7 @@ export default function CreateElectionGroupPage() {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, group_type: 'delegate' })}
-                className={`group p-8 rounded-3xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
+                className={`group p-8 rounded-3xl border-2 transition-all duration-300 text-left transform ${
                   formData.group_type === 'delegate'
                     ? 'border-[var(--color-secondary)] shadow-lg'
                     : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
@@ -206,9 +206,9 @@ export default function CreateElectionGroupPage() {
                     : 'white'
                 }}
               >
-                <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">📋</div>
+                <div className="text-5xl mb-4 transition-transform duration-300 ">📋</div>
                 <div className="font-bold text-xl mb-2.5" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   총대 투표
@@ -230,7 +230,7 @@ export default function CreateElectionGroupPage() {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, group_type: 'officer' })}
-                className={`group p-8 rounded-3xl border-2 transition-all duration-300 text-left transform hover:scale-[1.02] ${
+                className={`group p-8 rounded-3xl border-2 transition-all duration-300 text-left transform ${
                   formData.group_type === 'officer'
                     ? 'border-[var(--color-secondary)] shadow-lg'
                     : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
@@ -241,9 +241,9 @@ export default function CreateElectionGroupPage() {
                     : 'white'
                 }}
               >
-                <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">👔</div>
+                <div className="text-5xl mb-4 transition-transform duration-300 ">👔</div>
                 <div className="font-bold text-xl mb-2.5" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   임원 투표
@@ -267,7 +267,7 @@ export default function CreateElectionGroupPage() {
           {/* 그룹 제목 */}
           <div className="mb-10">
             <label htmlFor="title" className="block text-base font-semibold mb-3" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               그룹 제목 <span className="text-red-500">*</span>
@@ -290,7 +290,7 @@ export default function CreateElectionGroupPage() {
           {/* 그룹 설명 */}
           <div className="mb-12">
             <label htmlFor="description" className="block text-base font-semibold mb-3" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               그룹 설명 <span className="text-gray-400 text-sm font-normal ml-1">(선택사항)</span>
@@ -338,10 +338,10 @@ export default function CreateElectionGroupPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="sm:w-36 px-8 py-4 rounded-2xl font-semibold text-center transition-all duration-200 hover:scale-105"
+              className="sm:w-36 px-8 py-4 rounded-2xl font-semibold text-center transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.05)',
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -350,7 +350,7 @@ export default function CreateElectionGroupPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 py-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-1 py-4 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               style={{
                 background: submitting 
                   ? 'rgba(0, 0, 0, 0.4)'
@@ -382,7 +382,7 @@ export default function CreateElectionGroupPage() {
             className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-semibold transition-all duration-200"
             style={{ 
               background: 'rgba(0, 0, 0, 0.06)',
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.01em'
             }}
           >

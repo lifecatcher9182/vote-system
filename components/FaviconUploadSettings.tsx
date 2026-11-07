@@ -204,7 +204,7 @@ export default function FaviconUploadSettings() {
     <>
       <div className="card-apple p-8">
         <h2 className="text-2xl font-semibold mb-6" style={{ 
-          color: '#1d1d1f',
+          color: 'var(--ink)',
           letterSpacing: '-0.02em'
         }}>
           Favicon 설정
@@ -270,7 +270,7 @@ export default function FaviconUploadSettings() {
                 className="hidden"
               />
               <div
-                className="w-full px-6 py-3 rounded-2xl font-semibold text-center transition-all duration-200 hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full px-6 py-3 rounded-2xl font-semibold text-center transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: uploading ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
                   color: 'white',
@@ -300,7 +300,7 @@ export default function FaviconUploadSettings() {
               <button
                 onClick={handleRemoveFavicon}
                 disabled={uploading}
-                className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: 'rgba(239, 68, 68, 0.1)',
                   color: '#ef4444',

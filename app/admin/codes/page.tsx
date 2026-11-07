@@ -446,7 +446,7 @@ function CodesPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto mb-6"></div>
           <p className="text-lg text-gray-600" style={{ letterSpacing: '-0.01em' }}>코드 목록을 불러오는 중...</p>
@@ -456,7 +456,7 @@ function CodesPageContent() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       {/* Logo - 좌측 상단 고정 */}
       <div className="fixed top-6 left-6 z-50">
         <SystemLogo size="sm" linkToHome />
@@ -465,14 +465,14 @@ function CodesPageContent() {
       {/* Header */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(20px)',
+        
         borderColor: 'rgba(0, 0, 0, 0.05)'
       }}>
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-semibold mb-1" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 참여코드 관리
@@ -495,7 +495,7 @@ function CodesPageContent() {
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
                   style={{ 
                     background: 'rgba(0, 0, 0, 0.04)',
-                    color: '#1d1d1f'
+                    color: 'var(--ink)'
                   }}
                 >
                   ← 그룹으로
@@ -506,7 +506,7 @@ function CodesPageContent() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.04)',
-                  color: '#1d1d1f'
+                  color: 'var(--ink)'
                 }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -522,15 +522,15 @@ function CodesPageContent() {
       <main className="max-w-7xl mx-auto py-12 px-6">
         {/* 통계 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-          <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
+          <div className="card-apple p-6 group transition-transform duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>전체 코드</p>
-                <p className="text-4xl font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.03em' }}>
+                <p className="text-4xl font-semibold" style={{ color: 'var(--ink)', letterSpacing: '-0.03em' }}>
                   {stats.total}
                 </p>
               </div>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-200" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform  duration-200" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
                 <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                 </svg>
@@ -538,7 +538,7 @@ function CodesPageContent() {
             </div>
           </div>
 
-          <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
+          <div className="card-apple p-6 group transition-transform duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>투표 완료</p>
@@ -546,7 +546,7 @@ function CodesPageContent() {
                   {stats.used}
                 </p>
               </div>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-200" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform  duration-200" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
                 <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -554,7 +554,7 @@ function CodesPageContent() {
             </div>
           </div>
 
-          <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
+          <div className="card-apple p-6 group transition-transform duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>참석 확인</p>
@@ -562,7 +562,7 @@ function CodesPageContent() {
                   {codes.filter(c => c.first_login_at && !c.is_used).length}
                 </p>
               </div>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-200" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform  duration-200" style={{ background: 'rgba(59, 130, 246, 0.1)' }}>
                 <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -570,7 +570,7 @@ function CodesPageContent() {
             </div>
           </div>
 
-          <div className="card-apple p-6 group hover:scale-[1.02] transition-transform duration-200">
+          <div className="card-apple p-6 group transition-transform duration-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-2" style={{ letterSpacing: '-0.01em' }}>미참석</p>
@@ -578,7 +578,7 @@ function CodesPageContent() {
                   {codes.filter(c => !c.first_login_at).length}
                 </p>
               </div>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-200" style={{ background: 'rgba(107, 114, 128, 0.1)' }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center transition-transform  duration-200" style={{ background: 'rgba(107, 114, 128, 0.1)' }}>
                 <svg className="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -597,7 +597,7 @@ function CodesPageContent() {
               }`}
               style={{ 
                 background: filter === 'all' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'all' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'all' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -610,7 +610,7 @@ function CodesPageContent() {
               }`}
               style={{ 
                 background: filter === 'voted' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'voted' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'voted' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -623,7 +623,7 @@ function CodesPageContent() {
               }`}
               style={{ 
                 background: filter === 'attended' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'attended' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'attended' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -636,7 +636,7 @@ function CodesPageContent() {
               }`}
               style={{ 
                 background: filter === 'not_attended' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'not_attended' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'not_attended' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -672,7 +672,7 @@ function CodesPageContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+            <h3 className="text-2xl font-semibold mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
               참여코드가 없습니다
             </h3>
             <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>새로운 참여코드를 생성하세요</p>
@@ -719,7 +719,7 @@ function CodesPageContent() {
                   {filteredCodes.map((code) => (
                     <tr key={code.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-mono font-bold" style={{ color: '#1d1d1f', letterSpacing: '0.02em' }}>
+                        <div className="text-sm font-mono font-bold" style={{ color: 'var(--ink)', letterSpacing: '0.02em' }}>
                           {code.code}
                         </div>
                       </td>
@@ -786,10 +786,10 @@ function CodesPageContent() {
 
       {/* 코드 생성 모달 */}
       {showCreateModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)',  }}>
           <div className="card-apple max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 animate-[scale-in_0.2s_ease-out]">
             <h2 className="text-2xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               참여코드 생성
@@ -798,7 +798,7 @@ function CodesPageContent() {
             <div className="space-y-6">
               {/* 코드 유형 */}
               <div>
-                <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                   코드 유형 <span className="text-red-500">*</span>
                   {groupId && groupInfo && (
                     <span className="ml-2 text-xs font-normal text-gray-500">
@@ -810,7 +810,7 @@ function CodesPageContent() {
                   // 그룹 모드: 선택된 타입만 표시 (비활성화)
                   <div className="p-6 rounded-2xl font-semibold" style={{
                     border: '3px solid var(--color-secondary)',
-                    background: 'rgba(0, 113, 227, 0.05)',
+                    background: 'color-mix(in oklch, var(--accent) 6%, transparent)',
                     color: 'var(--color-secondary)',
                     letterSpacing: '-0.01em'
                   }}>
@@ -831,8 +831,8 @@ function CodesPageContent() {
                       className="p-6 rounded-2xl font-semibold transition-all duration-200"
                       style={{
                         border: codeType === 'delegate' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                        background: codeType === 'delegate' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                        color: codeType === 'delegate' ? 'var(--color-secondary)' : '#1d1d1f',
+                        background: codeType === 'delegate' ? 'color-mix(in oklch, var(--accent) 6%, transparent)' : 'white',
+                        color: codeType === 'delegate' ? 'var(--color-secondary)' : 'var(--ink)',
                         letterSpacing: '-0.01em'
                       }}
                     >
@@ -848,8 +848,8 @@ function CodesPageContent() {
                       className="p-6 rounded-2xl font-semibold transition-all duration-200"
                       style={{
                         border: codeType === 'officer' ? '3px solid var(--color-secondary)' : '2px solid rgba(0, 0, 0, 0.1)',
-                        background: codeType === 'officer' ? 'rgba(0, 113, 227, 0.05)' : 'white',
-                        color: codeType === 'officer' ? 'var(--color-secondary)' : '#1d1d1f',
+                        background: codeType === 'officer' ? 'color-mix(in oklch, var(--accent) 6%, transparent)' : 'white',
+                        color: codeType === 'officer' ? 'var(--color-secondary)' : 'var(--ink)',
                         letterSpacing: '-0.01em'
                       }}
                     >
@@ -861,7 +861,7 @@ function CodesPageContent() {
 
               {/* 생성 개수 */}
               <div>
-                <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                   생성 개수 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -880,7 +880,7 @@ function CodesPageContent() {
               {/* 마을 선택 (총대 코드인 경우) */}
               {codeType === 'delegate' && (
                 <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     마을 <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -900,15 +900,15 @@ function CodesPageContent() {
 
               {/* 접근 가능한 투표 선택 */}
               <div>
-                <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                   접근 가능한 투표 <span className="text-red-500">*</span>
                 </label>
                 
                 {groupId ? (
                   // 그룹 기반: 자동으로 그룹의 모든 투표 선택
                   <div className="border-2 rounded-2xl p-4" style={{ 
-                    borderColor: 'rgba(0, 113, 227, 0.3)',
-                    background: 'rgba(0, 113, 227, 0.05)'
+                    borderColor: 'color-mix(in oklch, var(--accent) 30%, transparent)',
+                    background: 'color-mix(in oklch, var(--accent) 6%, transparent)'
                   }}>
                     <div className="flex items-start gap-3 mb-3">
                       <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1007,7 +1007,7 @@ function CodesPageContent() {
                 className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.04)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
               >
@@ -1043,7 +1043,7 @@ export default function CodesPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
