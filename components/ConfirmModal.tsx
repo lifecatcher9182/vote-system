@@ -72,13 +72,13 @@ export default function ConfirmModal({
         <div className="px-6 pb-6 flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 active:scale-95 transition-all duration-200"
+            className="px-6 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-all duration-200"
           >
             {cancelText}
           </button>
           <button
             onClick={handleConfirm}
-            className={`px-6 py-2.5 text-white font-medium rounded-xl active:scale-95 transition-all duration-200 shadow-lg ${confirmButtonClass}`}
+            className={`px-6 py-2.5 text-white font-medium rounded-xl transition-all duration-200 shadow-lg ${confirmButtonClass}`}
           >
             {confirmText}
           </button>

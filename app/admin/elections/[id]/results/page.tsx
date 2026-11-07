@@ -1,5 +1,6 @@
 'use client';
 
+import { requiredVotes as calcRequired } from '@/lib/election';
 import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -250,7 +251,7 @@ export default function ResultsPage({
   if (loading || !election) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
@@ -302,7 +303,7 @@ export default function ResultsPage({
       const base = criteria.base === 'attended' 
         ? (stats.attendedCodes > 0 ? stats.attendedCodes : stats.totalCodes)
         : stats.totalCodes;
-      requiredVotes = Math.ceil(base * (criteria.percentage / 100));
+      requiredVotes = calcRequired(base, criteria.percentage);
       const baseText = criteria.base === 'attended' ? '참석자' : '발급 코드';
       thresholdMessage = `${baseText} ${base}명의 ${criteria.percentage}%(${requiredVotes}표 이상)`;
       meetsThreshold = candidatesWithVotes[0].vote_count >= requiredVotes;
@@ -375,17 +376,17 @@ export default function ResultsPage({
   const { winners, hasTie, meetsThreshold, requiredVotes, thresholdMessage, confirmedWinners, tiedCandidates } = calculateWinners();
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-semibold" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 투표 결과
@@ -416,7 +417,7 @@ export default function ResultsPage({
         {/* 투표 정보 */}
         <div className="card-apple p-8 mb-6">
           <h2 className="text-xl font-semibold mb-6" style={{ 
-            color: '#1d1d1f',
+            color: 'var(--ink)',
             letterSpacing: '-0.02em'
           }}>
             투표 정보
@@ -511,7 +512,7 @@ export default function ResultsPage({
               border: '2px solid rgba(239, 68, 68, 0.2)'
             }}>
               <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 ❌ 당선자 없음 (기준 미달)

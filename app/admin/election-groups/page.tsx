@@ -107,7 +107,7 @@ export default function ElectionGroupsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
@@ -163,10 +163,10 @@ export default function ElectionGroupsPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -175,7 +175,7 @@ export default function ElectionGroupsPage() {
               <SystemLogo size="md" linkToHome />
               <div>
                 <h1 className="text-3xl font-semibold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.03em'
                 }}>
                   투표 그룹 관리
@@ -188,7 +188,7 @@ export default function ElectionGroupsPage() {
             <div className="flex gap-3">
               <Link 
                 href="/admin/election-groups/create"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{
                   background: 'var(--color-secondary)',
                   color: 'white',
@@ -203,10 +203,10 @@ export default function ElectionGroupsPage() {
               </Link>
               <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
               >
@@ -282,7 +282,7 @@ export default function ElectionGroupsPage() {
               </p>
               <Link 
                 href="/admin/election-groups/create"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{
                   background: 'var(--color-secondary)',
                   color: 'white',

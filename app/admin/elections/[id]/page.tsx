@@ -1,5 +1,6 @@
 'use client';
 
+import { requiredVotes as calcRequired } from '@/lib/election';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -719,7 +720,7 @@ export default function ElectionDetailPage({
       const base = criteria.base === 'attended' 
         ? (resultStats.uniqueVoters > 0 ? resultStats.uniqueVoters : resultStats.totalCodes)
         : resultStats.totalCodes;
-      requiredVotes = Math.ceil(base * ((criteria.percentage || 0) / 100));
+      requiredVotes = calcRequired(base, criteria.percentage || 0);
       const baseText = criteria.base === 'attended' ? '투표자' : '발급 코드';
       thresholdMessage = `${baseText} ${base}명의 ${criteria.percentage}%(${requiredVotes}표 이상)`;
       meetsThreshold = candidatesWithVotes[0].vote_count >= requiredVotes;
@@ -811,7 +812,7 @@ export default function ElectionDetailPage({
   if (loading || !election) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
@@ -824,16 +825,16 @@ export default function ElectionDetailPage({
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-semibold" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.03em'
             }}>
               투표 관리
@@ -844,7 +845,7 @@ export default function ElectionDetailPage({
                 className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{
                   background: 'rgba(0, 0, 0, 0.04)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em',
                   display: 'inline-block'
                 }}
@@ -857,7 +858,7 @@ export default function ElectionDetailPage({
                   className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                   style={{
                     background: 'rgba(0, 0, 0, 0.06)',
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.01em',
                     display: 'inline-block'
                   }}
@@ -1018,7 +1019,7 @@ export default function ElectionDetailPage({
                         className="px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                         style={{
                           background: 'rgba(0, 0, 0, 0.04)',
-                          color: '#1d1d1f',
+                          color: 'var(--ink)',
                           letterSpacing: '-0.01em'
                         }}
                       >
@@ -1179,7 +1180,7 @@ export default function ElectionDetailPage({
                     }`}
                     style={{ 
                       background: codeFilter === 'all' ? 'var(--color-secondary)' : 'white',
-                      boxShadow: codeFilter === 'all' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                      boxShadow: codeFilter === 'all' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                       letterSpacing: '-0.01em'
                     }}
                   >
@@ -1192,7 +1193,7 @@ export default function ElectionDetailPage({
                     }`}
                     style={{ 
                       background: codeFilter === 'voted' ? 'var(--color-secondary)' : 'white',
-                      boxShadow: codeFilter === 'voted' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                      boxShadow: codeFilter === 'voted' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                       letterSpacing: '-0.01em'
                     }}
                   >
@@ -1205,7 +1206,7 @@ export default function ElectionDetailPage({
                     }`}
                     style={{ 
                       background: codeFilter === 'attended' ? 'var(--color-secondary)' : 'white',
-                      boxShadow: codeFilter === 'attended' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                      boxShadow: codeFilter === 'attended' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                       letterSpacing: '-0.01em'
                     }}
                   >
@@ -1218,7 +1219,7 @@ export default function ElectionDetailPage({
                     }`}
                     style={{ 
                       background: codeFilter === 'not_attended' ? 'var(--color-secondary)' : 'white',
-                      boxShadow: codeFilter === 'not_attended' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                      boxShadow: codeFilter === 'not_attended' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                       letterSpacing: '-0.01em'
                     }}
                   >
@@ -1229,7 +1230,7 @@ export default function ElectionDetailPage({
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowCreateCodeModal(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                     style={{
                       background: 'var(--color-secondary)',
                       color: 'white',
@@ -1248,10 +1249,10 @@ export default function ElectionDetailPage({
                         setIsDeleteMode(false);
                         setSelectedCodeIds([]);
                       }}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                       style={{
                         background: 'rgba(0, 0, 0, 0.06)',
-                        color: '#1d1d1f',
+                        color: 'var(--ink)',
                         letterSpacing: '-0.01em'
                       }}
                     >
@@ -1267,7 +1268,7 @@ export default function ElectionDetailPage({
                         setSelectedCodeIds([]);
                       }}
                       disabled={voterCodes.length === 0}
-                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                       style={{
                         background: voterCodes.length === 0 
                           ? 'rgba(0, 0, 0, 0.1)' 
@@ -1289,7 +1290,7 @@ export default function ElectionDetailPage({
 
               <div className="card-apple p-8">
                 <h2 className="text-2xl font-semibold mb-4" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   참여 코드 관리
@@ -1305,7 +1306,7 @@ export default function ElectionDetailPage({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                    <h3 className="text-2xl font-semibold mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
                       생성된 코드가 없습니다
                     </h3>
                     <p className="text-gray-500" style={{ letterSpacing: '-0.01em' }}>
@@ -1318,7 +1319,7 @@ export default function ElectionDetailPage({
                     {isDeleteMode && selectedCodeIds.length > 0 && (
                       <button
                         onClick={handleBulkDeleteCodes}
-                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-[1.02]"
+                        className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                         style={{
                           background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                           color: 'white',
@@ -1455,7 +1456,7 @@ export default function ElectionDetailPage({
                             )}
                             <code className="px-3 py-1.5 rounded-lg text-lg font-mono font-semibold" style={{ 
                               background: 'rgba(0, 0, 0, 0.04)',
-                              color: '#1d1d1f',
+                              color: 'var(--ink)',
                               letterSpacing: '0.05em'
                             }}>
                               {code.code}
@@ -1487,7 +1488,7 @@ export default function ElectionDetailPage({
                                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                                 style={{ 
                                   background: 'rgba(0, 0, 0, 0.04)',
-                                  color: '#1d1d1f'
+                                  color: 'var(--ink)'
                                 }}
                               >
                                 복사
@@ -1530,7 +1531,7 @@ export default function ElectionDetailPage({
                             className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             style={{ 
                               background: 'rgba(0, 0, 0, 0.04)',
-                              color: '#1d1d1f'
+                              color: 'var(--ink)'
                             }}
                           >
                             ← 이전
@@ -1571,7 +1572,7 @@ export default function ElectionDetailPage({
                             className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             style={{ 
                               background: 'rgba(0, 0, 0, 0.04)',
-                              color: '#1d1d1f'
+                              color: 'var(--ink)'
                             }}
                           >
                             다음 →
@@ -1585,17 +1586,17 @@ export default function ElectionDetailPage({
 
               {/* 코드 생성 모달 */}
               {showCreateCodeModal && (
-                <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+                <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)',  }}>
                   <div className="card-apple max-w-md w-full p-8 animate-[scale-in_0.2s_ease-out]">
                     <h2 className="text-2xl font-semibold mb-6" style={{ 
-                      color: '#1d1d1f',
+                      color: 'var(--ink)',
                       letterSpacing: '-0.02em'
                     }}>
                       참여 코드 생성
                     </h2>
                     
                     <div className="mb-6">
-                      <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                      <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                         생성 개수
                       </label>
                       <input
@@ -1622,7 +1623,7 @@ export default function ElectionDetailPage({
                         className="flex-1 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                         style={{ 
                           background: 'rgba(0, 0, 0, 0.04)',
-                          color: '#1d1d1f',
+                          color: 'var(--ink)',
                           letterSpacing: '-0.01em'
                         }}
                         disabled={generatingCodes}
@@ -1695,7 +1696,7 @@ export default function ElectionDetailPage({
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold" style={{ 
-                        color: '#1d1d1f',
+                        color: 'var(--ink)',
                         letterSpacing: '-0.02em'
                       }}>
                         📊 득표 기준 계산
@@ -1724,9 +1725,9 @@ export default function ElectionDetailPage({
                           }
                         }
                       }}
-                      className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                      className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                       style={{
-                        background: 'rgba(0, 113, 227, 0.1)',
+                        background: 'color-mix(in oklch, var(--accent) 12%, transparent)',
                         color: 'var(--color-secondary)'
                       }}
                     >
@@ -1737,7 +1738,7 @@ export default function ElectionDetailPage({
                   <div className="grid grid-cols-2 gap-3">
                     {voteThresholds.map((threshold) => {
                       const actualVoters = resultStats.uniqueVoters; // 실제 투표 참여자 수
-                      const requiredVotes = Math.ceil(actualVoters * (threshold.percentage / 100));
+                      const requiredVotes = calcRequired(actualVoters, threshold.percentage);
                       
                       return (
                         <div key={threshold.id} className="relative group bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
@@ -1789,7 +1790,7 @@ export default function ElectionDetailPage({
                     background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, rgba(249, 115, 22, 0.05) 100%)',
                     border: '2px solid rgba(239, 68, 68, 0.2)'
                   }}>
-                    <h2 className="text-xl font-semibold mb-3 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                    <h2 className="text-xl font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
                       ❌ 당선자 없음 (기준 미달)
                     </h2>
                     <div className="p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
@@ -1810,7 +1811,7 @@ export default function ElectionDetailPage({
                     {/* Confirmed Winners Section - Only for plurality with tie */}
                     {election.winning_criteria.type === 'plurality' && hasTie && confirmedWinners.length > 0 && (
                       <div className="p-6 rounded-xl bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-400">
-                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
                           🏆 당선 확정
                         </h2>
                         <p className="text-sm text-gray-700 mb-4">
@@ -1827,7 +1828,7 @@ export default function ElectionDetailPage({
                                     {actualRank}
                                   </div>
                                   <div className="flex-1">
-                                    <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{winner.name}</div>
+                                    <div className="font-bold text-lg" style={{ color: 'var(--ink)' }}>{winner.name}</div>
                                     <div className="text-sm text-gray-600">
                                       {winner.vote_count}표 ({resultStats.totalVotes > 0 ? ((winner.vote_count / resultStats.totalVotes) * 100).toFixed(1) : 0}%)
                                     </div>
@@ -1843,7 +1844,7 @@ export default function ElectionDetailPage({
                     {/* Tied Candidates Section - Only for plurality with tie */}
                     {election.winning_criteria.type === 'plurality' && hasTie && tiedCandidates.length > 0 && (
                       <div className="p-6 rounded-xl bg-gradient-to-br from-orange-50 to-red-100 border-2 border-orange-400">
-                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
                           ⚠️ 동점으로 당선자 미확정
                         </h2>
                         <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.8)' }}>
@@ -1861,7 +1862,7 @@ export default function ElectionDetailPage({
                                   ?
                                 </div>
                                 <div className="flex-1">
-                                  <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{candidate.name}</div>
+                                  <div className="font-bold text-lg" style={{ color: 'var(--ink)' }}>{candidate.name}</div>
                                   <div className="text-sm text-gray-600">
                                     {candidate.vote_count}표 ({resultStats.uniqueVoters > 0 ? ((candidate.vote_count / resultStats.uniqueVoters) * 100).toFixed(1) : 0}%)
                                   </div>
@@ -1880,7 +1881,7 @@ export default function ElectionDetailPage({
                           ? 'bg-gradient-to-br from-orange-50 to-red-100 border-2 border-orange-400'
                           : 'bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-yellow-400'
                       }`}>
-                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                        <h2 className="text-xl font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
                           {hasTie ? '⚠️ 동점으로 당선자 미확정' : 
                            winners.length === 1 ? '🏆 당선자' : 
                            `🏆 당선자 (${winners.length}명)`}
@@ -1912,7 +1913,7 @@ export default function ElectionDetailPage({
                                     {hasTie ? '?' : actualRank}
                                   </div>
                                   <div className="flex-1">
-                                    <div className="font-bold text-lg" style={{ color: '#1d1d1f' }}>{winner.name}</div>
+                                    <div className="font-bold text-lg" style={{ color: 'var(--ink)' }}>{winner.name}</div>
                                     <div className="text-sm text-gray-600">
                                       {winner.vote_count}표 ({resultStats.uniqueVoters > 0 ? ((winner.vote_count / resultStats.uniqueVoters) * 100).toFixed(1) : 0}%)
                                     </div>
@@ -1929,7 +1930,7 @@ export default function ElectionDetailPage({
 
                 {/* 전체 후보자 득표 결과 */}
                 <div className="card-apple p-6">
-                  <h2 className="text-xl font-bold mb-6" style={{ color: '#1d1d1f' }}>전체 후보자 득표 결과</h2>
+                  <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--ink)' }}>전체 후보자 득표 결과</h2>
                   
                   {candidates.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
@@ -1969,7 +1970,7 @@ export default function ElectionDetailPage({
                                   {isTied ? '?' : actualRank}
                                 </div>
                                 <div>
-                                  <div className="font-semibold flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+                                  <div className="font-semibold flex items-center gap-2" style={{ color: 'var(--ink)' }}>
                                     {candidate.name}
                                     {isConfirmedWinner && <span className="text-xs px-2 py-0.5 bg-yellow-500 text-yellow-900 rounded-full font-bold">당선</span>}
                                     {isTied && <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-800 rounded-full font-bold">미확정</span>}
@@ -1980,7 +1981,7 @@ export default function ElectionDetailPage({
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="text-xl font-bold" style={{ color: '#1d1d1f' }}>
+                                <div className="text-xl font-bold" style={{ color: 'var(--ink)' }}>
                                   {candidate.vote_count}
                                 </div>
                                 <div className="text-xs text-gray-500">표</div>
@@ -2010,7 +2011,7 @@ export default function ElectionDetailPage({
           {activeTab === 'results' && (
             <div className="space-y-6 mt-6">
               <div className="card-apple p-6">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: '#1d1d1f' }}>
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
@@ -2078,7 +2079,7 @@ export default function ElectionDetailPage({
                               className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                               style={{ 
                                 background: 'rgba(0, 0, 0, 0.04)',
-                                color: '#1d1d1f'
+                                color: 'var(--ink)'
                               }}
                             >
                               취소
@@ -2111,7 +2112,7 @@ export default function ElectionDetailPage({
                                   setEditingNoteContent(note.content);
                                 }}
                                 className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:bg-gray-100"
-                                style={{ color: '#1d1d1f' }}
+                                style={{ color: 'var(--ink)' }}
                               >
                                 수정
                               </button>

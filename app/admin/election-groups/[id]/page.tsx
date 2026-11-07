@@ -767,7 +767,7 @@ export default function ElectionGroupDetailPage({
   if (loading || !group) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>
@@ -783,10 +783,10 @@ export default function ElectionGroupDetailPage({
   const completedElections = elections.filter(e => e.status === 'closed').length;
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -796,7 +796,7 @@ export default function ElectionGroupDetailPage({
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-3xl font-semibold" style={{ 
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.03em'
                   }}>
                     {group.title}
@@ -810,10 +810,10 @@ export default function ElectionGroupDetailPage({
             <div className="flex gap-3">
               <Link
                 href="/admin/dashboard"
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.04)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
               >
@@ -825,10 +825,10 @@ export default function ElectionGroupDetailPage({
               </Link>
               <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
               >
@@ -848,7 +848,7 @@ export default function ElectionGroupDetailPage({
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
               <h2 className="text-xl font-semibold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 그룹 정보
@@ -874,7 +874,7 @@ export default function ElectionGroupDetailPage({
             <div className="flex gap-3">
               <button
                 onClick={handleDelete}
-                className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="px-6 py-2.5 rounded-2xl font-semibold transition-all duration-200"
                 style={{
                   background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                   color: 'white',
@@ -914,7 +914,7 @@ export default function ElectionGroupDetailPage({
         {group.group_type === 'delegate' && villageStats.length > 0 && (
           <div className="card-apple p-8 mb-6">
             <h2 className="text-xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               📊 마을별 투표율
@@ -923,7 +923,7 @@ export default function ElectionGroupDetailPage({
               {villageStats.map((villageStat, index) => (
                 <div key={index} className="border border-gray-200 rounded-xl p-5" style={{ background: 'white' }}>
                   <div className="flex justify-between items-start mb-3">
-                    <div className="font-semibold text-lg" style={{ color: '#1d1d1f' }}>{villageStat.villageName}</div>
+                    <div className="font-semibold text-lg" style={{ color: 'var(--ink)' }}>{villageStat.villageName}</div>
                     <div className="text-right">
                       <div className="text-2xl font-bold" style={{ color: 'var(--color-secondary)' }}>
                         {villageStat.participationRate.toFixed(1)}%
@@ -953,7 +953,7 @@ export default function ElectionGroupDetailPage({
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-xl font-semibold mb-2" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   🎟️ 참여코드 관리
@@ -968,7 +968,7 @@ export default function ElectionGroupDetailPage({
                 <button
                   onClick={() => setShowCreateCodeModal(true)}
                   disabled={elections.length === 0}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   style={{
                     background: elections.length === 0 ? 'rgba(0, 0, 0, 0.1)' : 'var(--color-secondary)',
                     color: 'white',
@@ -988,10 +988,10 @@ export default function ElectionGroupDetailPage({
                       setIsDeleteMode(false);
                       setSelectedCodeIds([]);
                     }}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                     style={{
                       background: 'rgba(0, 0, 0, 0.06)',
-                      color: '#1d1d1f',
+                      color: 'var(--ink)',
                       letterSpacing: '-0.01em'
                     }}
                   >
@@ -1007,7 +1007,7 @@ export default function ElectionGroupDetailPage({
                       setSelectedCodeIds([]);
                     }}
                     disabled={voterCodes.length === 0}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     style={{
                       background: voterCodes.length === 0 
                         ? 'rgba(0, 0, 0, 0.1)' 
@@ -1116,7 +1116,7 @@ export default function ElectionGroupDetailPage({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                <h3 className="text-2xl font-semibold mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
                   생성된 코드가 없습니다
                 </h3>
                 <p className="text-gray-500" style={{ letterSpacing: '-0.01em' }}>
@@ -1172,7 +1172,7 @@ export default function ElectionGroupDetailPage({
                       {isDeleteMode && selectedCodeIds.length > 0 && (
                         <button
                           onClick={handleBulkDeleteCodes}
-                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105"
+                          className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                           style={{ 
                             background: '#dc2626',
                             color: 'white',
@@ -1248,7 +1248,7 @@ export default function ElectionGroupDetailPage({
                         )}
                         <code className="px-3 py-1.5 rounded-lg text-lg font-mono font-semibold" style={{ 
                           background: 'rgba(0, 0, 0, 0.04)',
-                          color: '#1d1d1f',
+                          color: 'var(--ink)',
                           letterSpacing: '0.05em'
                         }}>
                           {code.code}
@@ -1296,7 +1296,7 @@ export default function ElectionGroupDetailPage({
                             className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                             style={{ 
                               background: 'rgba(0, 0, 0, 0.04)',
-                              color: '#1d1d1f'
+                              color: 'var(--ink)'
                             }}
                           >
                             복사
@@ -1326,7 +1326,7 @@ export default function ElectionGroupDetailPage({
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{ 
                           background: 'rgba(0, 0, 0, 0.04)',
-                          color: '#1d1d1f'
+                          color: 'var(--ink)'
                         }}
                       >
                         ← 이전
@@ -1367,7 +1367,7 @@ export default function ElectionGroupDetailPage({
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         style={{ 
                           background: 'rgba(0, 0, 0, 0.04)',
-                          color: '#1d1d1f'
+                          color: 'var(--ink)'
                         }}
                       >
                         다음 →
@@ -1385,7 +1385,7 @@ export default function ElectionGroupDetailPage({
               <div className="text-5xl">🎟️</div>
               <div className="flex-1">
                 <h3 className="text-xl font-semibold mb-2" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   참여코드 관리
@@ -1406,7 +1406,7 @@ export default function ElectionGroupDetailPage({
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-xl font-semibold" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 하위 투표 목록 ({elections.length})
@@ -1418,7 +1418,7 @@ export default function ElectionGroupDetailPage({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBatchModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{
                   background: 'var(--color-secondary)',
                   color: 'white',
@@ -1433,10 +1433,10 @@ export default function ElectionGroupDetailPage({
               </button>
               <Link
                 href={`/admin/elections/create?group_id=${group.id}`}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
               >
@@ -1543,17 +1543,17 @@ export default function ElectionGroupDetailPage({
 
       {/* 코드 생성 모달 (임원 투표용) */}
       {showCreateCodeModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50" style={{ background: 'rgba(0, 0, 0, 0.4)',  }}>
           <div className="card-apple max-w-md w-full p-8 animate-[scale-in_0.2s_ease-out]">
             <h2 className="text-2xl font-semibold mb-6" style={{ 
-              color: '#1d1d1f',
+              color: 'var(--ink)',
               letterSpacing: '-0.02em'
             }}>
               참여 코드 생성
             </h2>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                 생성 개수
               </label>
               <input
@@ -1577,10 +1577,10 @@ export default function ElectionGroupDetailPage({
                   setShowCreateCodeModal(false);
                   setCodeQuantity(10);
                 }}
-                className="flex-1 px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                className="flex-1 px-8 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
                 disabled={generatingCodes}
@@ -1589,7 +1589,7 @@ export default function ElectionGroupDetailPage({
               </button>
               <button
                 onClick={handleGenerateCodes}
-                className="flex-1 px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="flex-1 px-8 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: generatingCodes ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
                   color: 'white',
@@ -1617,7 +1617,7 @@ export default function ElectionGroupDetailPage({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto" style={{ boxShadow: 'var(--shadow-lg)' }}>
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+              <h2 className="text-2xl font-semibold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
                 {group.group_type === 'delegate' ? '총대 투표 일괄 생성' : '임원 투표 일괄 생성'}
               </h2>
               <p className="text-sm text-gray-600 mt-2">
@@ -1720,10 +1720,10 @@ export default function ElectionGroupDetailPage({
               <button
                 onClick={() => setShowBatchModal(false)}
                 disabled={batchCreating}
-                className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.06)',
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.01em'
                 }}
               >
@@ -1732,7 +1732,7 @@ export default function ElectionGroupDetailPage({
               <button
                 onClick={handleBatchCreate}
                 disabled={batchCreating || (group.group_type === 'delegate' ? villages.filter(v => v.selections > 0).length === 0 : positions.filter(p => p.selections > 0).length === 0)}
-                className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: batchCreating ? 'rgba(0, 0, 0, 0.4)' : 'var(--color-secondary)',
                   color: 'white',

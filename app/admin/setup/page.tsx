@@ -68,7 +68,7 @@ export default function SetupCheckPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ 
-        background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' 
+        background: 'var(--paper)' 
       }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto"></div>

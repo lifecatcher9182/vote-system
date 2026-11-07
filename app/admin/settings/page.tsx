@@ -309,7 +309,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-gray-200 rounded-full animate-spin mx-auto mb-6" style={{ borderTopColor: 'var(--color-secondary)' }} />
           <p className="text-lg font-medium text-gray-600 mt-6" style={{ letterSpacing: '-0.01em' }}>설정을 불러오는 중...</p>
@@ -319,11 +319,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       {/* Header - Glass Effect */}
       <header style={{ 
         background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
+        
         borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
@@ -332,7 +332,7 @@ export default function SettingsPage() {
               <SystemLogo size="md" linkToHome />
               <div>
                 <h1 className="text-3xl font-semibold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.03em'
                 }}>
                   시스템 설정
@@ -344,10 +344,10 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold transition-all duration-200"
               style={{ 
                 background: 'rgba(0, 0, 0, 0.06)',
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -376,7 +376,7 @@ export default function SettingsPage() {
             {/* 시스템 이름 설정 */}
             <div className="card-apple p-8">
               <h2 className="text-2xl font-semibold mb-6" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 시스템 정보
@@ -418,7 +418,7 @@ export default function SettingsPage() {
                 <button
                   onClick={handleSaveSystemName}
                   disabled={saving}
-                  className="w-full px-6 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full px-6 py-3 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   style={{
                     background: 'var(--color-secondary)',
                     color: 'white',
@@ -440,13 +440,13 @@ export default function SettingsPage() {
             <div className="card-apple p-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   관리자 목록
                 </h2>
                 <span className="px-3 py-1 rounded-full text-sm font-medium" style={{ 
-                  background: 'rgba(0, 113, 227, 0.1)',
+                  background: 'color-mix(in oklch, var(--accent) 12%, transparent)',
                   color: 'var(--color-secondary)'
                 }}>
                   {adminEmails.length}명
@@ -473,7 +473,7 @@ export default function SettingsPage() {
                   />
                   <button
                     onClick={handleAddAdmin}
-                    className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 whitespace-nowrap"
+                    className="px-8 py-3 rounded-2xl font-semibold transition-all duration-200 whitespace-nowrap"
                     style={{
                       background: 'var(--color-secondary)',
                       color: 'white',
@@ -512,10 +512,10 @@ export default function SettingsPage() {
                       className="flex items-center justify-between p-5 rounded-2xl transition-all duration-200"
                       style={{ 
                         background: admin.email === currentUserEmail 
-                          ? 'rgba(0, 113, 227, 0.05)' 
+                          ? 'color-mix(in oklch, var(--accent) 6%, transparent)' 
                           : 'rgba(0, 0, 0, 0.02)',
                         border: admin.email === currentUserEmail 
-                          ? '2px solid rgba(0, 113, 227, 0.2)' 
+                          ? '2px solid color-mix(in oklch, var(--accent) 22%, transparent)' 
                           : '2px solid transparent'
                       }}
                     >
@@ -525,7 +525,7 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                            <span className="font-medium" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                               {admin.email}
                             </span>
                             {admin.email === currentUserEmail && (
@@ -551,7 +551,7 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleDeleteAdmin(admin.id, admin.email)}
                         disabled={admin.email === currentUserEmail || admin.email === 'lifecatcher9182@gmail.com'}
-                        className="px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200 hover:scale-105 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        className="px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:scale-100"
                         style={{ 
                           background: (admin.email === currentUserEmail || admin.email === 'lifecatcher9182@gmail.com') ? 'transparent' : 'rgba(239, 68, 68, 0.1)',
                           color: '#ef4444',
@@ -603,7 +603,7 @@ export default function SettingsPage() {
             {/* 시스템 정보 */}
             <div className="card-apple p-6">
               <h2 className="text-lg font-semibold mb-5" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 시스템 정보
@@ -612,15 +612,15 @@ export default function SettingsPage() {
               <div className="space-y-4 text-sm">
                 <div className="flex justify-between items-center pb-4 border-b" style={{ borderColor: 'rgba(0, 0, 0, 0.06)' }}>
                   <span className="text-gray-600">현재 사용자</span>
-                  <span className="font-medium" style={{ color: '#1d1d1f' }}>{currentUserEmail}</span>
+                  <span className="font-medium" style={{ color: 'var(--ink)' }}>{currentUserEmail}</span>
                 </div>
                 <div className="flex justify-between items-center pb-4 border-b" style={{ borderColor: 'rgba(0, 0, 0, 0.06)' }}>
                   <span className="text-gray-600">등록된 관리자</span>
-                  <span className="font-medium" style={{ color: '#1d1d1f' }}>{adminEmails.length}명</span>
+                  <span className="font-medium" style={{ color: 'var(--ink)' }}>{adminEmails.length}명</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">시스템 버전</span>
-                  <span className="font-medium" style={{ color: '#1d1d1f' }}>v1.0.0</span>
+                  <span className="font-medium" style={{ color: 'var(--ink)' }}>v1.0.0</span>
                 </div>
               </div>
             </div>
@@ -628,7 +628,7 @@ export default function SettingsPage() {
             {/* 도움말 */}
             <div className="card-apple p-6">
               <h2 className="text-lg font-semibold mb-5" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 도움말
@@ -636,7 +636,7 @@ export default function SettingsPage() {
               
               <div className="space-y-4 text-sm">
                 <div>
-                  <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <p className="font-semibold mb-2" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     관리자 추가
                   </p>
                   <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>
@@ -644,7 +644,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <p className="font-semibold mb-2" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     시스템 정보
                   </p>
                   <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>
@@ -652,7 +652,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-semibold mb-2" style={{ color: '#1d1d1f', letterSpacing: '-0.01em' }}>
+                  <p className="font-semibold mb-2" style={{ color: 'var(--ink)', letterSpacing: '-0.01em' }}>
                     투표 QR 코드
                   </p>
                   <p className="text-gray-600 text-xs leading-relaxed" style={{ letterSpacing: '-0.01em' }}>

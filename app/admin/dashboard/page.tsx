@@ -149,7 +149,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto mb-6"></div>
           <p className="text-lg text-gray-600" style={{ letterSpacing: '-0.01em' }}>대시보드를 불러오는 중...</p>
@@ -159,11 +159,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       {/* Header - Glass Effect */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(20px)',
+        
         borderColor: 'rgba(0, 0, 0, 0.05)'
       }}>
         <div className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
             <SystemLogo size="md" linkToHome />
             <div className="border-l pl-3" style={{ borderColor: 'rgba(0, 0, 0, 0.1)' }}>
               <h1 className="text-2xl font-semibold" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 대시보드
@@ -184,10 +184,10 @@ export default function AdminDashboard() {
           </div>
           <button
             onClick={handleSignOut}
-            className="px-6 py-2.5 rounded-full font-medium transition-all duration-200 hover:scale-105"
+            className="px-6 py-2.5 rounded-full font-medium transition-all duration-200"
             style={{ 
               background: 'rgba(0, 0, 0, 0.04)',
-              color: '#1d1d1f'
+              color: 'var(--ink)'
             }}
           >
             로그아웃
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl font-bold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 환영합니다! 👋
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
               </p>
               <button
                 onClick={() => router.push('/admin/election-groups/create')}
-                className="px-8 py-3 rounded-full font-semibold text-white transition-all duration-200 hover:scale-105 shadow-lg"
+                className="px-8 py-3 rounded-full font-semibold text-white transition-all duration-200 shadow-lg"
                 style={{ 
                   background: 'var(--color-secondary)',
                 }}
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
         {/* Stats Grid - Modern Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* 투표 그룹 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+          <div className="card-apple p-6 group transition-transform duration-200 overflow-hidden relative" style={{
             background: '#ffffff',
             border: '2px solid rgba(168, 85, 247, 0.3)'
           }}>
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
                 }}>투표 그룹</p>
               </div>
               <p className="text-5xl font-bold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.totalGroups || 0}
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* 전체 투표 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+          <div className="card-apple p-6 group transition-transform duration-200 overflow-hidden relative" style={{
             background: '#ffffff',
             border: '2px solid rgba(59, 130, 246, 0.3)'
           }}>
@@ -270,7 +270,7 @@ export default function AdminDashboard() {
                 }}>전체 투표</p>
               </div>
               <p className="text-5xl font-bold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.totalElections}
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* 활성 투표 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+          <div className="card-apple p-6 group transition-transform duration-200 overflow-hidden relative" style={{
             background: '#ffffff',
             border: '2px solid rgba(34, 197, 94, 0.3)'
           }}>
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
                 }}>활성 투표</p>
               </div>
               <p className="text-5xl font-bold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.activeElections}
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* 활성화된 마을 */}
-          <div className="card-apple p-6 group hover:scale-105 transition-transform duration-200 overflow-hidden relative" style={{
+          <div className="card-apple p-6 group transition-transform duration-200 overflow-hidden relative" style={{
             background: '#ffffff',
             border: '2px solid rgba(249, 115, 22, 0.3)'
           }}>
@@ -322,7 +322,7 @@ export default function AdminDashboard() {
                 }}>활성화된 마을</p>
               </div>
               <p className="text-5xl font-bold mb-2" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 {stats.activeVillages}
@@ -339,7 +339,7 @@ export default function AdminDashboard() {
           <div className="lg:col-span-2 space-y-6">
             <div className="card-apple p-6">
               <h2 className="text-2xl font-bold mb-6" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.02em'
               }}>
                 🚀 빠른 작업
@@ -348,7 +348,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button 
                   onClick={() => router.push('/admin/election-groups/create')}
-                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  className="group p-6 text-left transition-all duration-200 rounded-2xl"
                   style={{
                     background: 'rgba(0, 0, 0, 0.02)',
                     border: '2px solid rgba(0, 0, 0, 0.06)'
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
                     <span className="text-2xl">✨</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ 
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.02em'
                   }}>
                     새 투표 그룹
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
 
                 <button 
                   onClick={() => router.push('/admin/election-groups')}
-                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  className="group p-6 text-left transition-all duration-200 rounded-2xl"
                   style={{
                     background: 'rgba(0, 0, 0, 0.02)',
                     border: '2px solid rgba(0, 0, 0, 0.06)'
@@ -382,7 +382,7 @@ export default function AdminDashboard() {
                     <span className="text-2xl">📁</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ 
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.02em'
                   }}>
                     투표 그룹 관리
@@ -394,7 +394,7 @@ export default function AdminDashboard() {
 
                 <button 
                   onClick={() => router.push('/admin/villages')}
-                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  className="group p-6 text-left transition-all duration-200 rounded-2xl"
                   style={{
                     background: 'rgba(0, 0, 0, 0.02)',
                     border: '2px solid rgba(0, 0, 0, 0.06)'
@@ -404,7 +404,7 @@ export default function AdminDashboard() {
                     <span className="text-2xl">🏘️</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ 
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.02em'
                   }}>
                     마을 관리
@@ -416,7 +416,7 @@ export default function AdminDashboard() {
 
                 <button 
                   onClick={() => router.push('/admin/settings')}
-                  className="group p-6 text-left transition-all duration-200 hover:scale-105 rounded-2xl"
+                  className="group p-6 text-left transition-all duration-200 rounded-2xl"
                   style={{
                     background: 'rgba(0, 0, 0, 0.02)',
                     border: '2px solid rgba(0, 0, 0, 0.06)'
@@ -426,7 +426,7 @@ export default function AdminDashboard() {
                     <span className="text-2xl">⚙️</span>
                   </div>
                   <h3 className="text-lg font-bold mb-2" style={{ 
-                    color: '#1d1d1f',
+                    color: 'var(--ink)',
                     letterSpacing: '-0.02em'
                   }}>
                     시스템 설정
@@ -444,7 +444,7 @@ export default function AdminDashboard() {
             <div className="card-apple p-6 flex-1 flex flex-col">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-bold" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   📊 최근 활동
@@ -485,7 +485,7 @@ export default function AdminDashboard() {
                     <button
                       key={activity.id}
                       onClick={() => router.push(`/admin/election-groups/${activity.id}`)}
-                      className="w-full p-3.5 rounded-xl text-left transition-all duration-200 hover:scale-105"
+                      className="w-full p-3.5 rounded-xl text-left transition-all duration-200"
                       style={{
                         background: 'rgba(0, 0, 0, 0.02)',
                         border: '1px solid rgba(0, 0, 0, 0.05)'
@@ -496,7 +496,7 @@ export default function AdminDashboard() {
                           {activity.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-sm mb-0.5 truncate" style={{ color: '#1d1d1f' }}>
+                          <h3 className="font-semibold text-sm mb-0.5 truncate" style={{ color: 'var(--ink)' }}>
                             {activity.title}
                           </h3>
                           <p className="text-xs text-gray-500 mb-0.5">
@@ -527,7 +527,7 @@ export default function AdminDashboard() {
               {/* Quick Info - 같은 카드 안에 */}
               <div className="mt-5 pt-5 border-t" style={{ borderColor: 'rgba(0, 0, 0, 0.06)' }}>
                 <h2 className="text-lg font-bold mb-3" style={{ 
-                  color: '#1d1d1f',
+                  color: 'var(--ink)',
                   letterSpacing: '-0.02em'
                 }}>
                   💡 빠른 정보
@@ -536,7 +536,7 @@ export default function AdminDashboard() {
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
                     <span className="text-sm text-gray-600">활성화율</span>
-                    <span className="text-sm font-bold" style={{ color: '#1d1d1f' }}>
+                    <span className="text-sm font-bold" style={{ color: 'var(--ink)' }}>
                       {stats.totalElections > 0 
                         ? Math.round((stats.activeElections / stats.totalElections) * 100) 
                         : 0}%
@@ -544,7 +544,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
                     <span className="text-sm text-gray-600">그룹당 평균 투표</span>
-                    <span className="text-sm font-bold" style={{ color: '#1d1d1f' }}>
+                    <span className="text-sm font-bold" style={{ color: 'var(--ink)' }}>
                       {stats.totalGroups > 0 
                         ? (stats.totalElections / stats.totalGroups).toFixed(1)
                         : 0}개

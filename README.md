@@ -45,6 +45,12 @@ Supabase SQL Editor에서 다음 파일을 순서대로 실행하세요:
 1. `supabase-schema.sql` - 기본 테이블 생성
 2. `migrations/supabase-migration-v5-election-groups.sql` - 투표 그룹 기능
 3. `migrations/supabase-migration-election-notes.sql` - 투표 비고 기능
+4. `migrations/add-group-id-to-voter-codes.sql`, `migrations/add-abstain-feature.sql`
+5. **`migrations/2026-11-cast-vote-and-admin-rls.sql`** - 보안·정합성 (필수)
+   - 투표 제출을 `cast_vote()` 한 번으로 처리 (중복·동시 제출 DB 에서 차단)
+   - 참여코드·투표기록·후보 득표수는 더 이상 공개 조회 불가, `enter_code()` / `list_candidates()` RPC 로만 접근
+   - 쓰기 권한은 `admin_emails` 에 등록된 계정만 (`is_admin()`)
+   - 이 파일을 실행하기 전까지는 새 투표 화면이 동작하지 않는다
 
 ### 3. 개발 서버 실행
 
@@ -55,7 +61,14 @@ npm run dev
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 여세요.
 
-### 4. 관리자 설정
+### 4. 태블릿(키오스크) 모드 — 임원 투표
+
+투표소에 둘 태블릿·PC 에서 `https://<도메인>/vote?kiosk=1` 로 한 번 접속한다.
+그 탭에서는 홈 링크가 사라지고, 제출이 끝나면 8초 뒤 자동으로 코드 입력 화면으로 돌아오며
+뒤로가기로 투표용지에 되돌아갈 수 없다. iOS 는 사용법 유도(Guided Access), Android 는 화면 고정과 함께 쓰면 된다.
+총대 투표는 기존대로 참여코드를 휴대폰에서 입력한다.
+
+### 5. 관리자 설정
 
 1. Google OAuth로 로그인
 2. Supabase의 `admin_emails` 테이블에 이메일 추가
@@ -193,6 +206,15 @@ npm run dev
 - `election_notes`: 투표 비고/메모
 
 ## 🔄 최근 업데이트
+
+### 2026-11-08
+
+- 투표 제출 원자화: `cast_vote()` RPC. 뒤로가기·새로고침·연타로 인한 중복 제출을 DB 가 막는다
+- 보안: 참여코드·투표기록·득표수 공개 조회 제거, 쓰기 권한을 등록 관리자로 제한 (`is_admin()`)
+- 2/3 기준 필요 득표수 계산 오차 수정: 27명 → 18표 (기존 19표). `lib/election.ts`
+- 임원 투표용 태블릿 키오스크 모드 (`/vote?kiosk=1`)
+- 디자인 전면 정리: 토큰 기반 스타일(`globals.css`), 공개 화면 5개 재설계, 관리자 화면 색상 토큰 치환
+- 미사용 패키지 9개·Geist 폰트 제거
 
 ### 2025-11-20
 

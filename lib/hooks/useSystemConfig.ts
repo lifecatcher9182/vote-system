@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 
 interface SystemConfig {
   systemName: string;
@@ -15,7 +16,7 @@ const STORAGE_KEY = 'system_config_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5분
 
 export function useSystemConfig() {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const [config, setConfig] = useState<SystemConfig>({
     systemName: '청년위원회 투표 시스템',
     systemDescription: '투명하고 안전한 온라인 투표 시스템',
@@ -25,8 +26,6 @@ export function useSystemConfig() {
   });
 
   useEffect(() => {
-    setMounted(true);
-    
     // 캐시 확인
     const getCachedConfig = () => {
       try {
@@ -45,6 +44,7 @@ export function useSystemConfig() {
 
     const cached = getCachedConfig();
     if (cached) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 하이드레이션 후 localStorage 캐시 반영
       setConfig(cached);
     }
 

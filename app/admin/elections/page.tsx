@@ -149,7 +149,7 @@ export default function ElectionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--paper)' }}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-[var(--color-secondary)] mx-auto mb-6"></div>
           <p className="text-lg text-gray-600" style={{ letterSpacing: '-0.01em' }}>투표 목록을 불러오는 중...</p>
@@ -159,7 +159,7 @@ export default function ElectionsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, var(--color-primary) 0%, #fafafa 100%)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--paper)' }}>
       {/* Logo - 좌측 상단 고정 */}
       <div className="fixed top-6 left-6 z-50">
         <SystemLogo size="sm" linkToHome />
@@ -168,14 +168,14 @@ export default function ElectionsPage() {
       {/* Header - Glass Effect */}
       <header className="glass-effect border-b" style={{ 
         background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(20px)',
+        
         borderColor: 'rgba(0, 0, 0, 0.05)'
       }}>
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-semibold mb-1" style={{ 
-                color: '#1d1d1f',
+                color: 'var(--ink)',
                 letterSpacing: '-0.03em'
               }}>
                 투표 관리
@@ -199,7 +199,7 @@ export default function ElectionsPage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-200"
                 style={{ 
                   background: 'rgba(0, 0, 0, 0.04)',
-                  color: '#1d1d1f'
+                  color: 'var(--ink)'
                 }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +225,7 @@ export default function ElectionsPage() {
               }`}
               style={{ 
                 background: filter === 'all' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'all' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'all' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -240,7 +240,7 @@ export default function ElectionsPage() {
               }`}
               style={{ 
                 background: filter === 'active' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'active' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'active' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -255,7 +255,7 @@ export default function ElectionsPage() {
               }`}
               style={{ 
                 background: filter === 'closed' ? 'var(--color-secondary)' : 'white',
-                boxShadow: filter === 'closed' ? '0 2px 8px rgba(0, 113, 227, 0.25)' : 'var(--shadow-sm)',
+                boxShadow: filter === 'closed' ? '0 2px 8px color-mix(in oklch, var(--accent) 25%, transparent)' : 'var(--shadow-sm)',
                 letterSpacing: '-0.01em'
               }}
             >
@@ -281,7 +281,7 @@ export default function ElectionsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 className="text-2xl font-semibold mb-3" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+            <h3 className="text-2xl font-semibold mb-3" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
               투표가 없습니다
             </h3>
             <p className="text-gray-500 mb-8" style={{ letterSpacing: '-0.01em' }}>새로운 투표를 생성하여 시작하세요</p>
@@ -305,7 +305,7 @@ export default function ElectionsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
-                      <h3 className="text-xl font-semibold" style={{ color: '#1d1d1f', letterSpacing: '-0.02em' }}>
+                      <h3 className="text-xl font-semibold" style={{ color: 'var(--ink)', letterSpacing: '-0.02em' }}>
                         {election.title}
                       </h3>
                       {getStatusBadge(election.status)}
