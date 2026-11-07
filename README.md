@@ -207,6 +207,13 @@ npm run dev
 
 ## 🔄 최근 업데이트
 
+### 2026-11-08 (2차) 관리자 화면 전면 리뉴얼
+
+- 관리자 13개 화면을 모두 새로 작성. 공통 틀(`components/admin/Shell.tsx`: 사이드 메뉴·인증 1회 확인)과 공용 조각(`components/ui.tsx`)
+- 라우트 그룹 `app/admin/(app)/` 로 이동 (URL 은 그대로). 페이지마다 있던 인증 코드 제거
+- 참여코드 생성 로직을 `lib/codes.ts` 로, 코드 목록을 `components/admin/CodeList.tsx` 로 통합
+- 당선 판정 로직은 그대로 (`결과` 탭·결과 보고서)
+
 ### 2026-11-08
 
 - 투표 제출 원자화: `cast_vote()` RPC. 뒤로가기·새로고침·연타로 인한 중복 제출을 DB 가 막는다
