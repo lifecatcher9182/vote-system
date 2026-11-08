@@ -95,7 +95,7 @@ export type Database = {
           id: string
           title: string
           description: string | null
-          group_type: 'delegate' | 'officer'
+          group_type: 'delegate' | 'officer' | 'mixed'
           status: 'waiting' | 'active' | 'closed'
           created_at: string
           updated_at: string
@@ -104,7 +104,7 @@ export type Database = {
           id?: string
           title: string
           description?: string | null
-          group_type: 'delegate' | 'officer'
+          group_type: 'delegate' | 'officer' | 'mixed'
           status?: 'waiting' | 'active' | 'closed'
           created_at?: string
           updated_at?: string
@@ -113,7 +113,7 @@ export type Database = {
           id?: string
           title?: string
           description?: string | null
-          group_type?: 'delegate' | 'officer'
+          group_type?: 'delegate' | 'officer' | 'mixed'
           status?: 'waiting' | 'active' | 'closed'
           created_at?: string
           updated_at?: string

@@ -237,7 +237,7 @@ export default function ElectionDetailPage({ params }: { params: Promise<{ id: s
           <>
             <Link href={`/admin/elections/${election.id}/monitor`} className="btn btn-secondary">모니터</Link>
             <Link href={`/admin/elections/${election.id}/results`} className="btn btn-secondary">결과 보고서</Link>
-            {election.group_id && <Link href={`/admin/election-groups/${election.group_id}`} className="btn btn-ghost">그룹으로</Link>}
+            {election.group_id && <Link href={`/admin/election-groups/${election.group_id}`} className="btn btn-ghost">회차로</Link>}
           </>
         } />
 
@@ -293,7 +293,7 @@ export default function ElectionDetailPage({ params }: { params: Promise<{ id: s
                 <dt>생성</dt><dd>{fmtTime(election.created_at)}</dd>
               </dl>
             </section>
-            {!isDel && <p className="notice mt-4">임원 투표의 참여코드는 투표 그룹 페이지에서 발급합니다. 코드 하나로 그룹의 모든 선거에 참여합니다.</p>}
+            {!isDel && <p className="notice mt-4">임원 투표의 참여코드는 회차 페이지에서 발급합니다. 코드 하나로 회차의 모든 임원 선거에 참여합니다.</p>}
             <div className="mt-4"><QRCodeSection title={election.title} /></div>
           </div>
         </div>

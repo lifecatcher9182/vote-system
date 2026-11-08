@@ -6,20 +6,12 @@ export async function middleware(request: NextRequest) {
     return await updateSession(request)
   } catch (error) {
     console.error('Middleware error:', error)
-    // 오류 발생 시 그냥 통과
     return NextResponse.next()
   }
 }
 
+// 세션 갱신은 관리자 화면에만 필요하다.
+// 투표자 화면(/, /vote)은 로그인이 없으므로 요청마다 Supabase Auth 를 호출하지 않는다.
 export const config = {
-  matcher: [
-    /*
-     * 다음을 제외한 모든 경로에 적용:
-     * - _next/static (정적 파일)
-     * - _next/image (이미지 최적화)
-     * - favicon.ico (파비콘)
-     * - public 폴더의 파일들
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/admin/:path*'],
 }
