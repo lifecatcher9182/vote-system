@@ -14,10 +14,11 @@ type Criteria = 'plurality' | 'absolute_majority' | 'percentage';
 
 function CreateElectionPageContent() {
   const router = useRouter();
-  const groupId = useSearchParams().get('group_id');
+  const searchParams = useSearchParams();
+  const groupId = searchParams.get('group_id');
   const [submitting, setSubmitting] = useState(false);
   const [villages, setVillages] = useState<Village[]>([]);
-  const [groupInfo, setGroupInfo] = useState<{ title: string; group_type: 'delegate' | 'officer' } | null>(null);
+  const [groupInfo, setGroupInfo] = useState<{ title: string; group_type: 'delegate' | 'officer' | 'mixed' } | null>(null);
 
   const [title, setTitle] = useState('');
   const [electionType, setElectionType] = useState<'delegate' | 'officer'>('delegate');
@@ -36,12 +37,19 @@ function CreateElectionPageContent() {
     (async () => {
       if (groupId) {
         const { data } = await supabase.from('election_groups').select('title, group_type').eq('id', groupId).single();
-        if (data) { setGroupInfo(data); setElectionType(data.group_type); }
+        if (data) {
+          setGroupInfo(data);
+          const t = searchParams.get('type');
+          if (data.group_type === 'delegate' || data.group_type === 'officer') setElectionType(data.group_type);
+          else if (t === 'delegate' || t === 'officer') setElectionType(t);
+        }
       }
-      const { data: v } = await supabase.from('villages').select('id, name, is_active').order('name');
+      // 회차에 등록된 마을만. 회차 마을이 없으면(예전 회차) 전체 마을로 대체
+      const scoped = groupId ? (await supabase.from('villages').select('id, name, is_active').eq('group_id', groupId).order('name')).data : null;
+      const v = scoped && scoped.length > 0 ? scoped : (await supabase.from('villages').select('id, name, is_active').order('name')).data;
       setVillages(v || []);
     })();
-  }, [groupId]);
+  }, [groupId, searchParams]);
 
   const validCandidates = candidates.filter((c) => c.name.trim());
 
@@ -96,7 +104,7 @@ function CreateElectionPageContent() {
 
   return (
     <>
-      <PageHead eyebrow={groupInfo ? `그룹 · ${groupInfo.title}` : '선거'} title="새 선거" desc="선거 정보와 후보를 입력합니다. 만든 뒤 상태를 진행중으로 바꾸면 투표가 열립니다." />
+      <PageHead eyebrow={groupInfo ? `회차 · ${groupInfo.title}` : '선거'} title="새 선거" desc="선거 정보와 후보를 입력합니다. 만든 뒤 상태를 진행중으로 바꾸면 투표가 열립니다." />
 
       <form onSubmit={submit} className="max-w-2xl">
         <section className="panel">
@@ -105,8 +113,8 @@ function CreateElectionPageContent() {
             <input id="title" className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 2026년 1차 회장 선출" required />
           </Field>
 
-          <Field label="유형" required hint={groupInfo ? '그룹 유형을 따릅니다.' : undefined}>
-            {groupInfo ? <Badge tone="accent">{electionType === 'delegate' ? '총대 선출' : '임원 선출'}</Badge> : (
+          <Field label="유형" required hint={groupInfo && groupInfo.group_type !== 'mixed' ? '회차 유형을 따릅니다.' : undefined}>
+            {groupInfo && groupInfo.group_type !== 'mixed' ? <Badge tone="accent">{electionType === 'delegate' ? '총대 선출' : '임원 선출'}</Badge> : (
               <div className="choice">
                 <button type="button" className="row" aria-pressed={electionType === 'delegate'} onClick={() => setElectionType('delegate')}><strong>총대 선출</strong><span>마을 대표</span></button>
                 <button type="button" className="row" aria-pressed={electionType === 'officer'} onClick={() => setElectionType('officer')}><strong>임원 선출</strong><span>회장·총무 등 직책</span></button>
@@ -116,7 +124,7 @@ function CreateElectionPageContent() {
 
           {electionType === 'delegate' ? (
             <Field label="마을" required htmlFor="village"
-              hint={villages.length === 0 ? <>마을이 없습니다. <Link href="/admin/villages" className="underline">마을 관리</Link>에서 먼저 추가하세요.</> : undefined}>
+              hint={villages.length === 0 ? <>마을이 없습니다. {groupId ? <Link href={`/admin/election-groups/${groupId}`} className="underline">회차 페이지</Link> : '회차 페이지'}에서 먼저 마을을 추가하세요.</> : undefined}>
               <select id="village" className="input select" value={villageId} onChange={(e) => setVillageId(e.target.value)} required>
                 <option value="">마을을 선택하세요</option>
                 {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}

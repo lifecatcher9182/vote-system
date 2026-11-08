@@ -12,12 +12,10 @@ const AdminCtx = createContext<{ email: string }>({ email: '' });
 export const useAdmin = () => useContext(AdminCtx);
 
 const NAV = [
-  { href: '/admin/dashboard', label: '대시보드' },
-  { href: '/admin/election-groups', label: '투표 그룹' },
-  { href: '/admin/elections', label: '선거' },
-  { href: '/admin/codes', label: '참여코드' },
-  { href: '/admin/villages', label: '마을' },
-  { href: '/admin/settings', label: '설정' },
+  { href: '/admin/dashboard', label: '대시보드', match: ['/admin/dashboard'] },
+  { href: '/admin/election-groups', label: '회차', match: ['/admin/election-groups', '/admin/elections'] },
+  { href: '/admin/codes', label: '참여코드', match: ['/admin/codes'] },
+  { href: '/admin/settings', label: '설정', match: ['/admin/settings', '/admin/setup'] },
 ];
 
 // 관리자 화면 공통 틀. 인증은 여기서 한 번만 확인한다.
@@ -58,7 +56,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <strong>{systemName}</strong>
       </div>
       {NAV.map((n) => (
-        <Link key={n.href} href={n.href} className="nav-link" aria-current={pathname.startsWith(n.href) ? 'page' : undefined}>
+        <Link key={n.href} href={n.href} className="nav-link" aria-current={n.match.some((m) => pathname.startsWith(m)) ? 'page' : undefined}>
           {n.label}
         </Link>
       ))}

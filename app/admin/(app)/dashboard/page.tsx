@@ -4,81 +4,113 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { PageHead, Stat, Tabs, Badge, fmtTime } from '@/components/ui';
+import { PageHead, Stat, Badge, StatusBadge, Empty, fmtDate } from '@/components/ui';
 
-interface Stats { totalElections: number; activeElections: number; totalGroups: number; activeVillages: number; }
-interface Group { id: string; title: string; group_type: 'delegate' | 'officer'; created_at: string; updated_at: string; }
+interface Group { id: string; title: string; status: string; created_at: string; }
+interface Election { id: string; title: string; election_type: 'delegate' | 'officer'; position: string | null; status: string; round: number; group_id: string | null; villages?: { name: string } | null; voters: number; }
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [sort, setSort] = useState<'updated_at' | 'created_at'>('updated_at');
+  const [groups, setGroups] = useState<Group[] | null>(null);
+  const [elections, setElections] = useState<Election[]>([]);
+  const [codes, setCodes] = useState<{ total: number; used: number }>({ total: 0, used: 0 });
 
   useEffect(() => {
     const supabase = createClient();
-    const count = async (table: string, filter?: [string, string]) => {
-      let q = supabase.from(table).select('*', { count: 'exact', head: true });
-      if (filter) q = q.eq(filter[0], filter[1]);
-      return (await q).count || 0;
-    };
-    Promise.all([
-      count('elections'), count('elections', ['status', 'active']), count('election_groups'), count('villages', ['is_active', 'true']),
-      supabase.from('election_groups').select('id, title, group_type, created_at, updated_at').limit(10),
-    ]).then(([totalElections, activeElections, totalGroups, activeVillages, g]) => {
-      setStats({ totalElections, activeElections, totalGroups, activeVillages });
-      setGroups((g.data as Group[]) || []);
-    });
+    (async () => {
+      const { data: gs } = await supabase.from('election_groups').select('id, title, status, created_at').order('created_at', { ascending: false });
+      const list = (gs || []) as Group[];
+      setGroups(list);
+      const current = list.find((g) => g.status !== 'closed');
+      if (!current) return;
+      const [{ data: es }, { data: cs }] = await Promise.all([
+        supabase.from('elections').select('id, title, election_type, position, status, round, group_id, villages ( name )').eq('group_id', current.id).order('created_at'),
+        supabase.from('voter_codes').select('id, is_used').eq('group_id', current.id),
+      ]);
+      const ids = (es || []).map((e) => e.id);
+      const { data: votes } = ids.length ? await supabase.from('votes').select('election_id, voter_code_id').in('election_id', ids) : { data: [] };
+      setElections(((es || []) as unknown as Omit<Election, 'voters'>[]).map((e) => ({
+        ...e, voters: new Set((votes || []).filter((v) => v.election_id === e.id).map((v) => v.voter_code_id)).size,
+      })));
+      setCodes({ total: cs?.length || 0, used: cs?.filter((c) => c.is_used).length || 0 });
+    })();
   }, []);
 
-  const recent = [...groups].sort((a, b) => new Date(b[sort]).getTime() - new Date(a[sort]).getTime()).slice(0, 5);
+  if (groups === null) return <div className="py-16 flex justify-center"><span className="spinner" /></div>;
+
+  const current = groups.find((g) => g.status !== 'closed');
+  const past = groups.filter((g) => g !== current);
+  const officers = elections.filter((e) => e.election_type === 'officer');
+  const delegates = elections.filter((e) => e.election_type === 'delegate');
 
   return (
     <>
       <PageHead eyebrow="선거관리위원회" title="대시보드"
-        actions={<Link href="/admin/election-groups/create" className="btn btn-primary">새 투표 그룹</Link>} />
+        actions={<Link href="/admin/election-groups/create" className="btn btn-primary">새 회차</Link>} />
 
-      <div className="stats">
-        <Stat label="투표 그룹" value={stats?.totalGroups ?? '–'} />
-        <Stat label="전체 선거" value={stats?.totalElections ?? '–'} />
-        <Stat label="진행 중" value={stats?.activeElections ?? '–'} accent />
-        <Stat label="활성 마을" value={stats?.activeVillages ?? '–'} />
-      </div>
+      {!current ? (
+        <Empty title="진행 중인 회차가 없습니다" desc="새 회차를 만들면 이 자리에 이번 선거 현황이 보입니다."
+          action={<Link href="/admin/election-groups/create" className="btn btn-primary">새 회차 만들기</Link>} />
+      ) : (
+        <>
+          <section className="panel">
+            <div className="section-head">
+              <h2 className="flex items-center gap-3 flex-wrap">{current.title} <Badge tone="ok">진행 중</Badge></h2>
+              <Link href={`/admin/election-groups/${current.id}`} className="btn btn-secondary btn-sm">회차 관리</Link>
+            </div>
+            <div className="stats">
+              <Stat label="임원 선거" value={officers.length} hint={`진행 ${officers.filter((e) => e.status === 'active').length} · 종료 ${officers.filter((e) => e.status === 'closed').length}`} />
+              <Stat label="총대 선거" value={delegates.length} hint={`진행 ${delegates.filter((e) => e.status === 'active').length} · 종료 ${delegates.filter((e) => e.status === 'closed').length}`} />
+              <Stat label="임원 참여코드" value={codes.total} hint={`투표 완료 ${codes.used}`} accent />
+            </div>
+          </section>
 
-      <section className="section">
-        <div className="section-head">
-          <h2>최근 투표 그룹</h2>
-          <Tabs value={sort} onChange={setSort} items={[{ value: 'updated_at', label: '최근 수정' }, { value: 'created_at', label: '최근 생성' }]} />
-        </div>
-        {recent.length === 0 ? (
-          <p className="muted text-sm">아직 투표 그룹이 없습니다. 오른쪽 위에서 첫 그룹을 만드세요.</p>
-        ) : (
+          {elections.length > 0 && (
+            <section className="section">
+              <h2>선거 현황</h2>
+              <div className="table-wrap">
+                <table className="table">
+                  <thead><tr><th>선거</th><th>구분</th><th className="num">차수</th><th className="num">투표자</th><th>상태</th><th></th></tr></thead>
+                  <tbody>
+                    {elections.map((e) => (
+                      <tr key={e.id}>
+                        <td className="font-medium"><Link href={`/admin/elections/${e.id}`} className="hover:underline">{e.title}</Link></td>
+                        <td className="muted">{e.election_type === 'officer' ? `임원 · ${e.position ?? ''}` : `총대 · ${e.villages?.name ?? ''}`}</td>
+                        <td className="num">{e.round}차</td>
+                        <td className="num">{e.voters}</td>
+                        <td><StatusBadge status={e.status} /></td>
+                        <td className="text-right whitespace-nowrap">
+                          <Link href={`/admin/elections/${e.id}/monitor`} className="btn btn-ghost btn-sm">모니터</Link>
+                          <Link href={`/admin/elections/${e.id}/results`} className="btn btn-ghost btn-sm">결과</Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {past.length > 0 && (
+        <section className="section">
+          <h2>지난 회차</h2>
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>제목</th><th>유형</th><th>{sort === 'updated_at' ? '수정' : '생성'}</th></tr></thead>
               <tbody>
-                {recent.map((g) => (
+                {past.map((g) => (
                   <tr key={g.id} className="is-link" onClick={() => router.push(`/admin/election-groups/${g.id}`)}>
                     <td className="font-medium">{g.title}</td>
-                    <td><Badge tone="plain">{g.group_type === 'delegate' ? '총대' : '임원'}</Badge></td>
-                    <td className="muted">{fmtTime(g[sort])}</td>
+                    <td><StatusBadge status={g.status === 'closed' ? 'closed' : g.status} /></td>
+                    <td className="muted text-right">{fmtDate(g.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        )}
-      </section>
-
-      <section className="section">
-        <h2>바로 가기</h2>
-        <div className="choice">
-          <Link href="/admin/election-groups" className="row"><strong>투표 그룹</strong><span>총대·임원 선거를 묶어 관리</span></Link>
-          <Link href="/admin/codes" className="row"><strong>참여코드</strong><span>투표자에게 나눠줄 코드 발급</span></Link>
-          <Link href="/admin/villages" className="row"><strong>마을</strong><span>총대 선출 단위 관리</span></Link>
-          <Link href="/admin/settings" className="row"><strong>설정</strong><span>로고·색상·관리자 계정</span></Link>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }
