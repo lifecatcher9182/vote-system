@@ -48,6 +48,7 @@ Supabase SQL Editor에서 다음 파일을 순서대로 실행하세요:
 4. `migrations/add-group-id-to-voter-codes.sql`, `migrations/add-abstain-feature.sql`
 5. **`migrations/2026-11-cast-vote-and-admin-rls.sql`** - 보안·정합성 (필수)
 6. **`migrations/2026-11-rounds-and-indexes.sql`** - 회차 구조 + 인덱스 (필수)
+7. **`migrations/2026-11-enter-code-with-candidates.sql`** - `enter_code()` 가 후보까지 돌려줌 (필수, 투표자 요청 수 절반)
    - 마을이 회차(election_groups) 소속이 됩니다 (`villages.group_id`). 새 회차는 임원·총대를 함께 담습니다 (`group_type = 'mixed'`)
    - 동시 접속 대비 인덱스(코드 접근 배열 GIN, 선거·코드 복합)
    - 투표 제출을 `cast_vote()` 한 번으로 처리 (중복·동시 제출 DB 에서 차단)
@@ -216,6 +217,7 @@ npm run dev
 - 회차 하나 = 한 번의 선거. 마을·임원 선거·총대 선거·임원 코드·결과가 회차에 남고, 보관하면 수정이 잠김
 - 새 회차 만들 때 지난 회차 마을을 가져와 고쳐 쓴다. 전역 마을 목록은 없어짐 (기존 데이터는 그대로)
 - 성능: 미들웨어 세션 갱신을 `/admin` 에서만 실행 (투표자 요청마다 Auth 호출하던 것 제거), 인덱스 추가
+- 성능: 투표자 1명당 Supabase 호출 = 설정 1 + 코드 입력 1 + 제출 1. 설정(system_config)은 `lib/systemConfig.ts` 하나로 모아 5분 캐시, 후보는 `enter_code()` 응답에 포함, 코드 입력 결과는 sessionStorage 로 투표 화면에 전달
 
 ### 2026-11-08 (2차) 관리자 화면 전면 리뉴얼
 

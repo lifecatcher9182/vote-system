@@ -6,28 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import ConfirmModal from '@/components/ConfirmModal';
 import AlertModal from '@/components/AlertModal';
 import { useKiosk } from '@/lib/kiosk';
-
-interface Election {
-  id: string;
-  title: string;
-  election_type: 'delegate' | 'officer';
-  position: string | null;
-  max_selections: number;
-  round: number;
-  status: string;
-  village_name: string | null;
-}
-
-interface Candidate { id: string; name: string; }
-
-interface CodeInfo {
-  id: string;
-  code: string;
-  code_type: 'delegate' | 'officer';
-  accessible_elections: string[];
-  voted: string[];
-  elections: Election[];
-}
+import { takeCodeInfo, type CodeInfo, type VoterElection } from '@/lib/voterSession';
 
 type Notice = { title: string; message: string; onClose?: () => void };
 
@@ -42,7 +21,7 @@ const CAST_ERRORS: Record<string, string> = {
   INVALID_CANDIDATE: '후보 정보가 바뀌었습니다. 다시 선택해 주세요.',
 };
 
-function describe(e: Election) {
+function describe(e: VoterElection) {
   return e.election_type === 'delegate'
     ? `총대 선출 · ${e.village_name || '-'}`
     : `임원 선출 · ${e.position || ''}`;
@@ -59,18 +38,21 @@ export default function VoteWithCodePage({ params }: { params: Promise<{ code: s
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<Notice | null>(null);
 
-  // 1. 코드 확인 + 참석 기록 + 선거 목록 (RPC 한 번)
+  // 1. 코드 확인. 입력 화면에서 넘어온 결과가 있으면 재조회하지 않는다.
   const loadData = useCallback(async () => {
-    const supabase = createClient();
-    const { data, error } = await supabase.rpc('enter_code', { p_code: code });
-    setLoading(false);
-    if (error || !data) {
-      setNotice({ title: '오류', message: '올바르지 않은 참여코드입니다.', onClose: () => router.replace('/vote') });
-      return;
+    let d = takeCodeInfo(code);
+    if (!d) {
+      const { data, error } = await createClient().rpc('enter_code', { p_code: code });
+      if (error || !data) {
+        setLoading(false);
+        setNotice({ title: '오류', message: '올바르지 않은 참여코드입니다.', onClose: () => router.replace('/vote') });
+        return;
+      }
+      d = data as CodeInfo;
     }
-    const d = data as CodeInfo;
     setInfo(d);
     setVotedIds(new Set(d.voted));
+    setLoading(false);
     if (d.elections.length === 0) {
       setNotice({ title: '투표 없음', message: '현재 참여 가능한 투표가 없습니다.\n투표가 시작되면 다시 시도해 주세요.', onClose: () => router.replace('/vote') });
     }
@@ -172,23 +154,19 @@ export default function VoteWithCodePage({ params }: { params: Promise<{ code: s
 }
 
 // 투표용지. key={election.id} 로 마운트되므로 선거가 바뀌면 상태가 자동 초기화된다.
+// 후보 목록은 enter_code() 응답에 들어 있어 추가 조회가 없다.
 function Ballot({ code, election, onSubmitted, onNotice }: {
   code: string;
-  election: Election;
+  election: VoterElection;
   onSubmitted: (remaining: number, title: string) => void;
   onNotice: (n: Notice) => void;
 }) {
   const router = useRouter();
-  const [candidates, setCandidates] = useState<Candidate[] | null>(null);
+  const candidates = election.candidates ?? [];
   const [picked, setPicked] = useState<string[]>([]);
   const [abstain, setAbstain] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-
-  useEffect(() => {
-    createClient().rpc('list_candidates', { p_election_id: election.id })
-      .then(({ data }) => setCandidates((data as Candidate[]) || []));
-  }, [election.id]);
 
   const togglePick = (id: string) => {
     setAbstain(false);
@@ -238,9 +216,7 @@ function Ballot({ code, election, onSubmitted, onNotice }: {
 
       <hr className="rule mt-6" />
 
-      {candidates === null ? (
-        <div className="mt-10 flex justify-center"><span className="spinner" /></div>
-      ) : candidates.length === 0 ? (
+      {candidates.length === 0 ? (
         <p className="mt-8 text-center" style={{ color: 'var(--ink-3)' }}>후보자가 없습니다</p>
       ) : (
         <div className="mt-6 space-y-3" role="group" aria-label="후보자">
@@ -280,7 +256,7 @@ function Ballot({ code, election, onSubmitted, onNotice }: {
         title="투표 제출"
         message={abstain
           ? '기권으로 제출하시겠습니까?\n제출 후에는 변경할 수 없습니다.'
-          : `${picked.map((id) => candidates?.find((c) => c.id === id)?.name).filter(Boolean).join(', ')}\n\n위 후보에게 투표하시겠습니까?\n제출 후에는 변경할 수 없습니다.`}
+          : `${picked.map((id) => candidates.find((c) => c.id === id)?.name).filter(Boolean).join(', ')}\n\n위 후보에게 투표하시겠습니까?\n제출 후에는 변경할 수 없습니다.`}
         confirmText={abstain ? '기권 제출' : '투표하기'}
         cancelText="취소"
         variant="primary"

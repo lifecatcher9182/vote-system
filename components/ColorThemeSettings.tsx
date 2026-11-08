@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { HexColorPicker } from 'react-colorful';
 import { createClient } from '@/lib/supabase/client';
+import { invalidateSystemConfig } from '@/lib/systemConfig';
 import { Field } from '@/components/ui';
 import AlertModal from './AlertModal';
 
@@ -32,6 +33,7 @@ export default function ColorThemeSettings() {
       : await supabase.from('system_config').insert([{ secondary_color: color }]);
     setSaving(false);
     if (error) { setAlert(`저장에 실패했습니다.\n${error.message}`); return; }
+    invalidateSystemConfig();
     apply(color);
     setAlert('강조색을 저장했습니다.');
   };

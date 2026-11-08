@@ -1,87 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { useEffect, useState } from 'react';
 import { useIsClient } from '@/lib/hooks/useIsClient';
+import { getSystemConfig } from '@/lib/systemConfig';
 
-interface SystemConfig {
-  systemName: string;
-  systemDescription: string;
-  logoUrl: string | null;
-  primaryColor: string;
-  secondaryColor: string;
-}
-
-const STORAGE_KEY = 'system_config_cache';
-const CACHE_DURATION = 5 * 60 * 1000; // 5분
+const DEFAULTS = {
+  systemName: '청년위원회 투표 시스템',
+  systemDescription: '투명하고 안전한 온라인 투표 시스템',
+  logoUrl: null as string | null,
+  primaryColor: '#f5f5f7',
+  secondaryColor: '#1d4ed8',
+};
 
 export function useSystemConfig() {
   const mounted = useIsClient();
-  const [config, setConfig] = useState<SystemConfig>({
-    systemName: '청년위원회 투표 시스템',
-    systemDescription: '투명하고 안전한 온라인 투표 시스템',
-    logoUrl: null,
-    primaryColor: '#f5f5f7',
-    secondaryColor: '#0071e3',
-  });
+  const [config, setConfig] = useState(DEFAULTS);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    // 캐시 확인
-    const getCachedConfig = () => {
-      try {
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CACHE_DURATION) {
-            return data;
-          }
-        }
-      } catch (e) {
-        console.error('Error reading cache:', e);
+    let alive = true;
+    getSystemConfig().then((c) => {
+      if (!alive) return;
+      if (c) {
+        setConfig({
+          systemName: c.system_name || DEFAULTS.systemName,
+          systemDescription: c.system_description || DEFAULTS.systemDescription,
+          logoUrl: c.logo_url,
+          primaryColor: c.primary_color || DEFAULTS.primaryColor,
+          secondaryColor: c.secondary_color || DEFAULTS.secondaryColor,
+        });
       }
-      return null;
-    };
-
-    const cached = getCachedConfig();
-    if (cached) {
-      setConfig(cached);
-    }
-
-    // 데이터 로드
-    const loadConfig = async () => {
-      const supabase = createClient();
-      
-      const { data } = await supabase
-        .from('system_config')
-        .select('system_name, system_description, logo_url, primary_color, secondary_color')
-        .limit(1)
-        .single();
-
-      if (data) {
-        const newConfig = {
-          systemName: data.system_name || '청년위원회 투표 시스템',
-          systemDescription: data.system_description || '투명하고 안전한 온라인 투표 시스템',
-          logoUrl: data.logo_url,
-          primaryColor: data.primary_color || '#f5f5f7',
-          secondaryColor: data.secondary_color || '#0071e3',
-        };
-        
-        setConfig(newConfig);
-        
-        // 캐시에 저장
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            data: newConfig,
-            timestamp: Date.now()
-          }));
-        } catch (e) {
-          console.error('Error saving cache:', e);
-        }
-      }
-    };
-
-    loadConfig();
+      setLoaded(true);
+    });
+    return () => { alive = false; };
   }, []);
 
-  return { ...config, loading: !mounted };
+  return { ...config, loading: !mounted || !loaded };
 }
