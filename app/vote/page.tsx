@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import SystemLogo from '@/components/SystemLogo';
 import { enableKiosk, useKiosk } from '@/lib/kiosk';
+import { stashCodeInfo, type CodeInfo } from '@/lib/voterSession';
 
 function VoteEntry() {
   const router = useRouter();
@@ -26,23 +27,21 @@ function VoteEntry() {
     if (!trimmed) { setError('참여코드를 입력하세요.'); return; }
 
     setLoading(true);
-    const supabase = createClient();
-    const { data, error: rpcError } = await supabase.rpc('enter_code', { p_code: trimmed });
-
+    const { data, error: rpcError } = await createClient().rpc('enter_code', { p_code: trimmed });
     if (rpcError || !data) {
       setError('올바르지 않은 참여코드입니다.');
       setLoading(false);
       return;
     }
 
-    const accessible: string[] = data.accessible_elections ?? [];
-    const voted: string[] = data.voted ?? [];
-    if (accessible.length > 0 && accessible.every((id) => voted.includes(id))) {
+    const info = data as CodeInfo;
+    if (info.accessible_elections.length > 0 && info.accessible_elections.every((id) => info.voted.includes(id))) {
       setError('이미 모든 투표를 완료한 참여코드입니다.');
       setLoading(false);
       return;
     }
 
+    stashCodeInfo(trimmed, info); // 투표 화면이 재조회하지 않도록 넘긴다
     router.push(`/vote/${trimmed}`);
   };
 

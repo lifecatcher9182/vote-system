@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
+import { invalidateSystemConfig } from '@/lib/systemConfig';
 import AlertModal from './AlertModal';
 
 export default function FaviconUploadSettings() {
@@ -22,6 +23,7 @@ export default function FaviconUploadSettings() {
       ? await supabase.from('system_config').update({ favicon_url: url, updated_at: new Date().toISOString() }).eq('id', existing.id)
       : await supabase.from('system_config').insert([{ favicon_url: url }]);
     if (r.error) throw r.error;
+    invalidateSystemConfig();
   };
 
   const removeStored = async (url: string) => {

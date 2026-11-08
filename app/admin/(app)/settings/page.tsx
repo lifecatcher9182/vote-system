@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { invalidateSystemConfig } from '@/lib/systemConfig';
 import { useAdmin } from '@/components/admin/Shell';
 import { PageHead, Field, Badge, fmtDate } from '@/components/ui';
 import LogoUploadSettings from '@/components/LogoUploadSettings';
@@ -71,6 +72,7 @@ export default function SettingsPage() {
       ? await supabase.from('system_config').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', existing.id)
       : await supabase.from('system_config').insert([payload]);
     setSaving(false);
+    if (!error) invalidateSystemConfig();
     setAlert(error ? { title: '오류', message: '저장에 실패했습니다.' } : { title: '저장 완료', message: '시스템 정보가 저장되었습니다.' });
   };
 

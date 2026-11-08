@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
+import { invalidateSystemConfig } from '@/lib/systemConfig';
 import AlertModal from './AlertModal';
 import ConfirmModal from './ConfirmModal';
 
@@ -25,6 +26,7 @@ export default function LogoUploadSettings() {
     const { data: existing } = await supabase.from('system_config').select('id').limit(1).single();
     if (existing) await supabase.from('system_config').update({ logo_url: url, updated_at: new Date().toISOString() }).eq('id', existing.id);
     else await supabase.from('system_config').insert([{ logo_url: url }]);
+    invalidateSystemConfig();
   };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
