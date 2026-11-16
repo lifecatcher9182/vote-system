@@ -38,7 +38,7 @@ export default function SettingsPage() {
   }, [loadAdmins]);
 
   const addAdmin = async () => {
-    const email = newEmail.trim();
+    const email = newEmail.trim().toLowerCase(); // is_admin() 은 로그인 이메일(소문자)과 정확히 비교
     if (!email) { setAlert({ title: '입력 오류', message: '이메일을 입력하세요.' }); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setAlert({ title: '입력 오류', message: '올바른 이메일 형식이 아닙니다.' }); return; }
     if (admins.some((a) => a.email === email)) { setAlert({ title: '등록 불가', message: '이미 등록된 관리자입니다.' }); return; }

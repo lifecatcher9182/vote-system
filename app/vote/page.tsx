@@ -35,7 +35,8 @@ function VoteEntry() {
     }
 
     const info = data as CodeInfo;
-    if (info.accessible_elections.length > 0 && info.accessible_elections.every((id) => info.voted.includes(id))) {
+    // 진행 중인 선거 기준. 대기·마감 선거가 섞여 있어도 지금 할 게 없으면 완료로 본다.
+    if (info.elections.length > 0 && info.elections.every((e) => info.voted.includes(e.id))) {
       setError('이미 모든 투표를 완료한 참여코드입니다.');
       setLoading(false);
       return;
