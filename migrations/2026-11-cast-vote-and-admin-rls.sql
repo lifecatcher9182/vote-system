@@ -91,7 +91,11 @@ begin
   select coalesce(jsonb_agg(jsonb_build_object(
            'id', e.id, 'title', e.title, 'election_type', e.election_type,
            'position', e.position, 'max_selections', e.max_selections,
-           'round', e.round, 'status', e.status, 'village_name', v.name
+           'round', e.round, 'status', e.status, 'village_name', v.name,
+           'candidates', coalesce((
+             select jsonb_agg(jsonb_build_object('id', c.id, 'name', c.name) order by c.name)
+               from candidates c where c.election_id = e.id
+           ), '[]')
          ) order by e.created_at desc), '[]')
     into els
     from elections e left join villages v on v.id = e.village_id

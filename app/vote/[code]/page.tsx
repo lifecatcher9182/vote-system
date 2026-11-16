@@ -69,8 +69,11 @@ export default function VoteWithCodePage({ params }: { params: Promise<{ code: s
     if (!loading && info && electionId && !selected) router.replace(`/vote/${code}`);
   }, [loading, info, electionId, selected, code, router]);
 
+  // 서버의 remaining 은 대기·마감 선거까지 센다. 화면 이동은 지금 진행 중인 선거 기준으로 판단해야
+  // 직책별로 하나씩 여는 임원 선거에서 태블릿이 빈 목록에 멈추지 않는다.
   const onSubmitted = (remaining: number, title: string) => {
-    if (remaining === 0) {
+    const left = elections.filter((e) => !votedIds.has(e.id) && e.id !== selected?.id).length;
+    if (remaining === 0 || left === 0) {
       router.replace(`/vote/complete?election=${encodeURIComponent(title)}`);
       return;
     }
