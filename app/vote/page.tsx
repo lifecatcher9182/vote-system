@@ -68,7 +68,7 @@ function VoteEntry() {
             autoFocus
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="AB1234"
+            placeholder="AB123"
             maxLength={8}
             disabled={loading}
             className="input text-center"
