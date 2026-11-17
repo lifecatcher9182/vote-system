@@ -1,22 +1,23 @@
 import { createClient } from '@/lib/supabase/client';
 
-// 참여코드: 알파벳 2자 + 숫자 4자 (예: AB1234)
-export function generateVoterCode(): string {
+// 참여코드: 알파벳 2자 + 숫자 (총대 3자리 AB123 · 임원 2자리 AB12)
+// ponytail: 임원 코드는 67,600가지뿐. 현장 태블릿 전용이라 충분, 원격 투표로 바뀌면 자릿수 늘릴 것.
+export function generateVoterCode(type: 'delegate' | 'officer'): string {
   const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', N = '0123456789';
   let s = '';
   for (let i = 0; i < 2; i++) s += L[Math.floor(Math.random() * 26)];
-  for (let i = 0; i < 4; i++) s += N[Math.floor(Math.random() * 10)];
+  for (let i = 0; i < (type === 'officer' ? 2 : 3); i++) s += N[Math.floor(Math.random() * 10)];
   return s;
 }
 
-export async function generateUniqueVoterCode(): Promise<string> {
+export async function generateUniqueVoterCode(type: 'delegate' | 'officer'): Promise<string> {
   const supabase = createClient();
   for (let i = 0; i < 10; i++) {
-    const code = generateVoterCode();
+    const code = generateVoterCode(type);
     const { data, error } = await supabase.from('voter_codes').select('code').eq('code', code).maybeSingle();
     if (!data && !error) return code;
   }
-  return generateVoterCode() + Date.now().toString().slice(-2);
+  return generateVoterCode(type) + Date.now().toString().slice(-2);
 }
 
 export interface NewCode {
@@ -31,7 +32,7 @@ export async function insertCodes(n: number, base: NewCode): Promise<string | nu
   const supabase = createClient();
   for (let retry = 0; retry < 3; retry++) {
     const rows = [];
-    for (let i = 0; i < n; i++) rows.push({ ...base, code: await generateUniqueVoterCode(), is_used: false });
+    for (let i = 0; i < n; i++) rows.push({ ...base, code: await generateUniqueVoterCode(base.code_type), is_used: false });
     const { error } = await supabase.from('voter_codes').insert(rows);
     if (!error) return null;
     if (error.code !== '23505') { console.error(error); return '코드 생성에 실패했습니다.'; }
